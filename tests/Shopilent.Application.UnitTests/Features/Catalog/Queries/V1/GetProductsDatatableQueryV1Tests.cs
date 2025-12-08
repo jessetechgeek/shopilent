@@ -4,6 +4,7 @@ using Shopilent.Application.Features.Catalog.Queries.GetProductsDatatable.V1;
 using Shopilent.Application.UnitTests.Common;
 using Shopilent.Domain.Catalog.DTOs;
 using Shopilent.Domain.Common.Models;
+using Shopilent.Domain.Common.Results;
 
 namespace Shopilent.Application.UnitTests.Features.Catalog.Queries.V1;
 
@@ -15,7 +16,18 @@ public class GetProductsDatatableQueryV1Tests : TestBase
     {
         _handler = new GetProductsDatatableQueryHandlerV1(
             Fixture.MockUnitOfWork.Object,
-            Fixture.GetLogger<GetProductsDatatableQueryHandlerV1>());
+            Fixture.GetLogger<GetProductsDatatableQueryHandlerV1>(),
+            Fixture.MockS3StorageService.Object);
+
+        // Setup S3 service to return presigned URLs
+        Fixture.MockS3StorageService
+            .Setup(s => s.GetPresignedUrlAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string bucket, string key, TimeSpan expiry, CancellationToken ct) =>
+                Result.Success($"https://s3.example.com/{bucket}/{key}"));
     }
 
     [Fact]

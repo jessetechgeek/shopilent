@@ -547,7 +547,20 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
                     p.slug AS Slug,
                     p.is_active AS IsActive,
                     p.created_at AS CreatedAt,
-                    p.updated_at AS UpdatedAt
+                    p.updated_at AS UpdatedAt,
+                    -- Images as JSON array
+                    COALESCE(
+                        (SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'imageKey', pi.image_key,
+                                'thumbnailKey', pi.thumbnail_key,
+                                'altText', pi.alt_text,
+                                'isDefault', pi.is_default,
+                                'displayOrder', pi.display_order
+                            ) ORDER BY pi.display_order, pi.is_default DESC
+                        )
+                        FROM product_images pi
+                        WHERE pi.product_id = p.id), '[]'::jsonb)::text AS ImagesJson
                 FROM products p");
 
             // Count query
@@ -629,9 +642,56 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
                 ? await Connection.ExecuteScalarAsync<int>(finalCountSql, parameters)
                 : totalCount;
 
-            var data = await Connection.QueryAsync<ProductDto>(finalSelectSql, parameters);
+            var productDtos = new List<ProductDto>();
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
 
-            return new DataTableResult<ProductDto>(request.Draw, totalCount, filteredCount, data.AsList());
+            using (var reader = await Connection.ExecuteReaderAsync(finalSelectSql, parameters))
+            {
+                while (reader.Read())
+                {
+                    var product = new ProductDto
+                    {
+                        Id = reader.GetGuid(reader.GetOrdinal("Id")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        Description = reader.IsDBNull(reader.GetOrdinal("Description"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("Description")),
+                        BasePrice = reader.GetDecimal(reader.GetOrdinal("BasePrice")),
+                        Currency = reader.GetString(reader.GetOrdinal("Currency")),
+                        Sku = reader.IsDBNull(reader.GetOrdinal("Sku"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("Sku")),
+                        Slug = reader.GetString(reader.GetOrdinal("Slug")),
+                        IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                        Metadata = new Dictionary<string, object>(),
+                        Images = new List<ProductImageDto>()
+                    };
+
+                    // Parse images
+                    string imagesJson = reader.GetString(reader.GetOrdinal("ImagesJson"));
+                    if (!string.IsNullOrEmpty(imagesJson) && imagesJson != "[]")
+                    {
+                        try
+                        {
+                            product.Images = JsonSerializer.Deserialize<List<ProductImageDto>>(
+                                imagesJson, jsonOptions) ?? new List<ProductImageDto>();
+                        }
+                        catch
+                        {
+                            product.Images = new List<ProductImageDto>();
+                        }
+                    }
+
+                    productDtos.Add(product);
+                }
+            }
+
+            return new DataTableResult<ProductDto>(request.Draw, totalCount, filteredCount, productDtos);
         }
         catch (Exception ex)
         {
@@ -904,7 +964,7 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
                     JOIN attributes a ON pa.attribute_id = a.id
                     WHERE pa.product_id = p.id
                     GROUP BY pa.product_id), '[]'::jsonb)::text AS AttributesJson,
-                -- Variants as JSON array with nested attributes
+                -- Variants as JSON array with nested attributes and images
                 COALESCE(
                     (SELECT jsonb_agg(
                         jsonb_build_object(
@@ -931,12 +991,37 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
                                 FROM variant_attributes va
                                 JOIN attributes a2 ON va.attribute_id = a2.id
                                 WHERE va.variant_id = pv.id
-                                GROUP BY va.variant_id), '[]'::jsonb)
+                                GROUP BY va.variant_id), '[]'::jsonb),
+                            'images', COALESCE(
+                                (SELECT jsonb_agg(
+                                    jsonb_build_object(
+                                        'imageKey', pvi.image_key,
+                                        'thumbnailKey', pvi.thumbnail_key,
+                                        'altText', pvi.alt_text,
+                                        'isDefault', pvi.is_default,
+                                        'displayOrder', pvi.display_order
+                                    ) ORDER BY pvi.display_order, pvi.is_default DESC
+                                )
+                                FROM product_variant_images pvi
+                                WHERE pvi.variant_id = pv.id), '[]'::jsonb)
                         )
                     )
                     FROM product_variants pv
                     WHERE pv.product_id = p.id
-                    GROUP BY pv.product_id), '[]'::jsonb)::text AS VariantsJson
+                    GROUP BY pv.product_id), '[]'::jsonb)::text AS VariantsJson,
+                -- Product images as JSON array
+                COALESCE(
+                    (SELECT jsonb_agg(
+                        jsonb_build_object(
+                            'imageKey', pi.image_key,
+                            'thumbnailKey', pi.thumbnail_key,
+                            'altText', pi.alt_text,
+                            'isDefault', pi.is_default,
+                            'displayOrder', pi.display_order
+                        ) ORDER BY pi.display_order, pi.is_default DESC
+                    )
+                    FROM product_images pi
+                    WHERE pi.product_id = p.id), '[]'::jsonb)::text AS ImagesJson
             FROM selected_products p";
 
             // Create a list to hold the results
@@ -981,7 +1066,8 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
                         Metadata = new Dictionary<string, object>(),
                         Categories = new List<CategoryDto>(),
                         Attributes = new List<ProductAttributeDto>(),
-                        Variants = new List<ProductVariantDto>()
+                        Variants = new List<ProductVariantDto>(),
+                        Images = new List<ProductImageDto>()
                     };
 
                     // Metadata is automatically handled by JsonDictionaryTypeHandler
@@ -1009,6 +1095,21 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
                     {
                         product.Variants = JsonSerializer.Deserialize<List<ProductVariantDto>>(
                             variantsJson, jsonOptions);
+                    }
+
+                    // Parse product images
+                    string imagesJson = reader.GetString(reader.GetOrdinal("ImagesJson"));
+                    if (!string.IsNullOrEmpty(imagesJson) && imagesJson != "[]")
+                    {
+                        try
+                        {
+                            product.Images = JsonSerializer.Deserialize<List<ProductImageDto>>(
+                                imagesJson, jsonOptions) ?? new List<ProductImageDto>();
+                        }
+                        catch
+                        {
+                            product.Images = new List<ProductImageDto>();
+                        }
                     }
 
                     productDtos.Add(product);
