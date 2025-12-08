@@ -52,9 +52,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.MigrateDatabase();
-await app.SeedDatabaseAsync();
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi("/openapi/{documentName}.json");
