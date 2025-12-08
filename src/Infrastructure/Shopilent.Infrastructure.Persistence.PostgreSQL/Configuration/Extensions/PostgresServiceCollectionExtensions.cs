@@ -90,8 +90,6 @@ public static class PostgresServiceCollectionExtensions
 
         services.AddHealthChecks(configuration);
 
-        services.AddSeedingServices(configuration);
-
         return services;
     }
 
