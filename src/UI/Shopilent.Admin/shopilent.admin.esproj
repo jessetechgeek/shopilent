@@ -14,4 +14,7 @@
       <Link>.dockerignore</Link>
     </Script>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\assets\" />
+  </ItemGroup>
 </Project>
