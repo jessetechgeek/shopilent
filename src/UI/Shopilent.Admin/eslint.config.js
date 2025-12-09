@@ -25,4 +25,11 @@ export default tseslint.config(
       ],
     },
   },
+  // Disable duplicate enum values rule for API endpoints
+  {
+    files: ['src/api/endpoints/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-duplicate-enum-values': 'off',
+    },
+  },
 )
