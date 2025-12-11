@@ -4,6 +4,6 @@ namespace Shopilent.API.Endpoints.Users.GetUser.V1;
 
 public class GetUserRequestV1
 {
-    [QueryParam]
+    [BindFrom("id")]
     public Guid Id { get; set; }
 }

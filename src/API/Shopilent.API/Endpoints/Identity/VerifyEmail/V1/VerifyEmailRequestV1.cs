@@ -4,6 +4,6 @@ namespace Shopilent.API.Endpoints.Identity.VerifyEmail.V1;
 
 public class VerifyEmailRequestV1
 {
-    [QueryParam]
+    [BindFrom("token")]
     public string Token { get; init; }
 }
