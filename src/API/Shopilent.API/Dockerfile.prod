@@ -1,0 +1,74 @@
+# Multi-stage build for production deployment
+# Stage 1: Build the application
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /build
+
+# Copy solution and project files for dependency restoration
+COPY ["Directory.Build.props", "./"]
+COPY ["src/API/Shopilent.API/Shopilent.API.csproj", "API/Shopilent.API/"]
+COPY ["src/Core/Shopilent.Application/Shopilent.Application.csproj", "Core/Shopilent.Application/"]
+COPY ["src/Core/Shopilent.Domain/Shopilent.Domain.csproj", "Core/Shopilent.Domain/"]
+COPY ["src/Infrastructure/Shopilent.Infrastructure/Shopilent.Infrastructure.csproj", "Infrastructure/Shopilent.Infrastructure/"]
+COPY ["src/Infrastructure/Shopilent.Infrastructure.Cache.Redis/Shopilent.Infrastructure.Cache.Redis.csproj", "Infrastructure/Shopilent.Infrastructure.Cache.Redis/"]
+COPY ["src/Infrastructure/Shopilent.Infrastructure.Identity/Shopilent.Infrastructure.Identity.csproj", "Infrastructure/Shopilent.Infrastructure.Identity/"]
+COPY ["src/Infrastructure/Shopilent.Infrastructure.Logging/Shopilent.Infrastructure.Logging.csproj", "Infrastructure/Shopilent.Infrastructure.Logging/"]
+COPY ["src/Infrastructure/Shopilent.Infrastructure.Payments/Shopilent.Infrastructure.Payments.csproj", "Infrastructure/Shopilent.Infrastructure.Payments/"]
+COPY ["src/Infrastructure/Shopilent.Infrastructure.Persistence.PostgreSQL/Shopilent.Infrastructure.Persistence.PostgreSQL.csproj", "Infrastructure/Shopilent.Infrastructure.Persistence.PostgreSQL/"]
+COPY ["src/Infrastructure/Shopilent.Infrastructure.Realtime.SignalR/Shopilent.Infrastructure.Realtime.SignalR.csproj", "Infrastructure/Shopilent.Infrastructure.Realtime.SignalR/"]
+COPY ["src/Infrastructure/Shopilent.Infrastructure.S3ObjectStorage/Shopilent.Infrastructure.S3ObjectStorage.csproj", "Infrastructure/Shopilent.Infrastructure.S3ObjectStorage/"]
+COPY ["src/Infrastructure/Shopilent.Infrastructure.Search.Meilisearch/Shopilent.Infrastructure.Search.Meilisearch.csproj", "Infrastructure/Shopilent.Infrastructure.Search.Meilisearch/"]
+
+# Restore dependencies
+RUN dotnet restore "API/Shopilent.API/Shopilent.API.csproj"
+
+# Copy all source code
+COPY src/ .
+
+# Build the application
+WORKDIR "/build/API/Shopilent.API"
+RUN dotnet build "Shopilent.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# Stage 2: Publish the application
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "Shopilent.API.csproj" \
+    -c $BUILD_CONFIGURATION \
+    -o /app/publish \
+    /p:UseAppHost=false \
+    --no-restore
+
+# Stage 3: Create final runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS production
+
+# Set working directory
+WORKDIR /app
+
+# Create a non-root user for running the application
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Copy published application from publish stage
+COPY --from=publish /app/publish .
+
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose HTTP port only (HTTPS handled by reverse proxy)
+EXPOSE 8080
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Set environment variables for production
+ENV ASPNETCORE_ENVIRONMENT=Production \
+    ASPNETCORE_HTTP_PORTS=8080 \
+    ASPNETCORE_URLS=http://+:8080 \
+    DOTNET_RUNNING_IN_CONTAINER=true \
+    DOTNET_EnableDiagnostics=0
+
+# Entry point
+ENTRYPOINT ["dotnet", "Shopilent.API.dll"]
