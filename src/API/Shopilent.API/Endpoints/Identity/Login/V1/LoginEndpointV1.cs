@@ -1,6 +1,7 @@
 using FastEndpoints;
 using MediatR;
 using Shopilent.API.Common.Models;
+using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Features.Identity.Commands.Login.V1;
 using Shopilent.Domain.Common.Errors;
 
@@ -9,10 +10,12 @@ namespace Shopilent.API.Endpoints.Identity.Login.V1;
 public class LoginEndpointV1 : Endpoint<LoginRequestV1, ApiResponse<LoginResponseV1>>
 {
     private readonly IMediator _mediator;
+    private readonly IAuthCookieService _authCookieService;
 
-    public LoginEndpointV1(IMediator mediator)
+    public LoginEndpointV1(IMediator mediator, IAuthCookieService authCookieService)
     {
         _mediator = mediator;
+        _authCookieService = authCookieService;
     }
 
     public override void Configure()
@@ -69,8 +72,15 @@ public class LoginEndpointV1 : Endpoint<LoginRequestV1, ApiResponse<LoginRespons
         }
 
         // Handle successful login
-        // var (user, accessToken, refreshToken) = result.Value;
         var loginResponse = result.Value;
+        var isWebClient = _authCookieService.IsWebClient();
+
+        // For web clients, set cookies and remove tokens from response body
+        if (isWebClient)
+        {
+            _authCookieService.SetAuthCookies(loginResponse.AccessToken, loginResponse.RefreshToken);
+        }
+
         var response = new ApiResponse<LoginResponseV1>
         {
             Succeeded = true,
@@ -83,8 +93,8 @@ public class LoginEndpointV1 : Endpoint<LoginRequestV1, ApiResponse<LoginRespons
                 FirstName = loginResponse.User.FullName.FirstName,
                 LastName = loginResponse.User.FullName.LastName,
                 EmailVerified = loginResponse.User.EmailVerified,
-                AccessToken = loginResponse.AccessToken,
-                RefreshToken = loginResponse.RefreshToken
+                AccessToken = isWebClient ? string.Empty : loginResponse.AccessToken,
+                RefreshToken = isWebClient ? string.Empty : loginResponse.RefreshToken
             }
         };
 

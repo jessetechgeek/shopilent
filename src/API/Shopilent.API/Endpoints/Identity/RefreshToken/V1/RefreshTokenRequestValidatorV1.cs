@@ -8,7 +8,7 @@ public class RefreshTokenRequestValidatorV1 : Validator<RefreshTokenRequestV1>
     public RefreshTokenRequestValidatorV1()
     {
         RuleFor(x => x.RefreshToken)
-            .NotEmpty().WithMessage("Refresh token is required.")
-            .MaximumLength(255).WithMessage("Refresh token is too long.");
+            .MaximumLength(255).WithMessage("Refresh token is too long.")
+            .When(x => !string.IsNullOrEmpty(x.RefreshToken));
     }
 }

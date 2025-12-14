@@ -25,11 +25,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
-      const accessToken = localStorage.getItem('accessToken');
-      const refreshToken = localStorage.getItem('refreshToken');
       const storedUser = localStorage.getItem('user');
 
-      if (accessToken && refreshToken && storedUser) {
+      if (storedUser) {
         try {
           // Set user from localStorage
           const userData = JSON.parse(storedUser);
@@ -58,8 +56,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
         } catch (err) {
           console.error("Error parsing stored user data:", err);
           // Clear invalid user data
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
         }
       }
@@ -77,24 +73,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
       const response = await authApi.login(data);
 
       if (response.data.succeeded) {
-        const {accessToken, refreshToken, email, id, fullName} = response.data.data;
+        const {email, id, firstName, lastName, emailVerified} = response.data.data;
 
         // Create a new user object from the response data
+        // Tokens are now stored in HttpOnly cookies by the backend
         const userData = {
           id,
           email,
-          firstName: fullName?.split(' ')[0] || '',
-          lastName: fullName?.split(' ')[1] || '',
+          firstName: firstName || '',
+          lastName: lastName || '',
           role: UserRole.Admin, // Assuming default role or extract from response if available
           isActive: true,
-          emailVerified: true,
+          emailVerified: emailVerified,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
 
-        // Store tokens and user data
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+        // Store only user data in localStorage (not tokens)
         localStorage.setItem('user', JSON.stringify(userData));
 
         // Update state with new user data
@@ -114,17 +109,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({children}
     try {
       console.log('Logging out...');
       setIsLoading(true);
-      const refreshToken = localStorage.getItem('refreshToken');
 
-      if (refreshToken) {
-        await authApi.logout(refreshToken);
-      }
+      // Call logout API - refresh token is sent via HttpOnly cookie
+      await authApi.logout();
     } catch (err) {
       console.error('Error during logout:', err);
     } finally {
-      // Clear tokens and user data regardless of API success
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      // Clear user data regardless of API success
+      // Cookies are cleared by the backend
       localStorage.removeItem('user');
       setUser(null);
       navigate('/login');

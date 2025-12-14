@@ -43,6 +43,21 @@ internal static class JwtConfigurationExtensions
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
+
+                // Add support for reading JWT from cookies
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        // Check Authorization header first
+                        if (string.IsNullOrEmpty(context.Token))
+                        {
+                            // Fallback to cookie for web clients
+                            context.Token = context.Request.Cookies["accessToken"];
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         return services;

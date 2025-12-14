@@ -1,6 +1,7 @@
 using FastEndpoints;
 using MediatR;
 using Shopilent.API.Common.Models;
+using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Features.Identity.Commands.RefreshToken.V1;
 using Shopilent.Domain.Common.Errors;
 
@@ -9,10 +10,12 @@ namespace Shopilent.API.Endpoints.Identity.RefreshToken.V1;
 public class RefreshTokenEndpointV1 : Endpoint<RefreshTokenRequestV1, ApiResponse<RefreshTokenResponseV1>>
 {
     private readonly IMediator _mediator;
+    private readonly IAuthCookieService _authCookieService;
 
-    public RefreshTokenEndpointV1(IMediator mediator)
+    public RefreshTokenEndpointV1(IMediator mediator, IAuthCookieService authCookieService)
     {
         _mediator = mediator;
+        _authCookieService = authCookieService;
     }
 
     public override void Configure()
@@ -28,6 +31,24 @@ public class RefreshTokenEndpointV1 : Endpoint<RefreshTokenRequestV1, ApiRespons
 
     public override async Task HandleAsync(RefreshTokenRequestV1 req, CancellationToken ct)
     {
+        var isWebClient = _authCookieService.IsWebClient();
+
+        // For web clients, get refresh token from cookie with fallback to request body
+        var refreshToken = isWebClient
+            ? _authCookieService.GetRefreshTokenFromCookie() ?? req.RefreshToken
+            : req.RefreshToken;
+
+        // Validate that we have a refresh token
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            var errorResponse = ApiResponse<RefreshTokenResponseV1>.Failure(
+                new[] { "Refresh token is required" },
+                StatusCodes.Status400BadRequest);
+
+            await SendAsync(errorResponse, errorResponse.StatusCode, ct);
+            return;
+        }
+
         if (ValidationFailed)
         {
             var errorResponse = ApiResponse<RefreshTokenResponseV1>.Failure(
@@ -37,10 +58,11 @@ public class RefreshTokenEndpointV1 : Endpoint<RefreshTokenRequestV1, ApiRespons
             await SendAsync(errorResponse, errorResponse.StatusCode, ct);
             return;
         }
+
         // Map the request to command
         var command = new RefreshTokenCommandV1
         {
-            RefreshToken = req.RefreshToken,
+            RefreshToken = refreshToken,
             IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
             UserAgent = HttpContext.Request.Headers.UserAgent.ToString()
         };
@@ -73,6 +95,14 @@ public class RefreshTokenEndpointV1 : Endpoint<RefreshTokenRequestV1, ApiRespons
         }
 
         // Handle successful token refresh
+        var tokenResponse = result.Value;
+
+        // For web clients, set cookies and remove tokens from response body
+        if (isWebClient)
+        {
+            _authCookieService.SetAuthCookies(tokenResponse.AccessToken, tokenResponse.RefreshToken);
+        }
+
         var response = new ApiResponse<RefreshTokenResponseV1>
         {
             Succeeded = true,
@@ -80,11 +110,11 @@ public class RefreshTokenEndpointV1 : Endpoint<RefreshTokenRequestV1, ApiRespons
             StatusCode = StatusCodes.Status200OK,
             Data = new RefreshTokenResponseV1
             {
-                Id = result.Value.User.Id,
-                Email = result.Value.User.Email.Value,
-                FullName = $"{result.Value.User.FullName.FirstName} {result.Value.User.FullName.LastName}",
-                AccessToken = result.Value.AccessToken,
-                RefreshToken = result.Value.RefreshToken
+                Id = tokenResponse.User.Id,
+                Email = tokenResponse.User.Email.Value,
+                FullName = $"{tokenResponse.User.FullName.FirstName} {tokenResponse.User.FullName.LastName}",
+                AccessToken = isWebClient ? string.Empty : tokenResponse.AccessToken,
+                RefreshToken = isWebClient ? string.Empty : tokenResponse.RefreshToken
             }
         };
 
