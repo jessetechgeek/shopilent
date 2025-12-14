@@ -27,6 +27,11 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime
         Client = factory.CreateClient();
         Client.BaseAddress = new Uri(Client.BaseAddress!, "api/");
 
+        // Set mobile client header for integration tests to receive tokens in response body
+        // This ensures tests continue to work without cookie handling complexity
+        // Web client (cookie) behavior should be tested separately if needed
+        Client.DefaultRequestHeaders.Add("X-Client-Platform", "mobile");
+
         JsonOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

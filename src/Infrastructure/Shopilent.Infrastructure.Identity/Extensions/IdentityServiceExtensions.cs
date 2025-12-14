@@ -22,9 +22,11 @@ public static class IdentityServiceExtensions
             options.HashSize = 32;
             options.Iterations = 10000;
         });
+        services.Configure<Configuration.CookieSettings>(configuration.GetSection("Cookies"));
 
         // Register services
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+        services.AddScoped<IAuthCookieService, AuthCookieService>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
         // Register AuthenticationService using factory

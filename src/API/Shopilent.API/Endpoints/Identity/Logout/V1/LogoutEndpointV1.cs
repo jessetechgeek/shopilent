@@ -1,6 +1,7 @@
 using FastEndpoints;
 using MediatR;
 using Shopilent.API.Common.Models;
+using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Common.Constants;
 using Shopilent.Application.Features.Identity.Commands.Logout.V1;
 using Shopilent.Domain.Common.Errors;
@@ -10,10 +11,12 @@ namespace Shopilent.API.Endpoints.Identity.Logout.V1;
 public class LogoutEndpointV1 : Endpoint<LogoutRequestV1, ApiResponse<string>>
 {
     private readonly IMediator _mediator;
+    private readonly IAuthCookieService _authCookieService;
 
-    public LogoutEndpointV1(IMediator mediator)
+    public LogoutEndpointV1(IMediator mediator, IAuthCookieService authCookieService)
     {
         _mediator = mediator;
+        _authCookieService = authCookieService;
     }
 
     public override void Configure()
@@ -29,6 +32,24 @@ public class LogoutEndpointV1 : Endpoint<LogoutRequestV1, ApiResponse<string>>
 
     public override async Task HandleAsync(LogoutRequestV1 req, CancellationToken ct)
     {
+        var isWebClient = _authCookieService.IsWebClient();
+
+        // For web clients, get refresh token from cookie with fallback to request body
+        var refreshToken = isWebClient
+            ? _authCookieService.GetRefreshTokenFromCookie() ?? req.RefreshToken
+            : req.RefreshToken;
+
+        // Validate that we have a refresh token
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            var errorResponse = ApiResponse<string>.Failure(
+                new[] { "Refresh token is required." },
+                StatusCodes.Status400BadRequest);
+
+            await SendAsync(errorResponse, errorResponse.StatusCode, ct);
+            return;
+        }
+
         if (ValidationFailed)
         {
             var errorResponse = ApiResponse<string>.Failure(
@@ -38,10 +59,11 @@ public class LogoutEndpointV1 : Endpoint<LogoutRequestV1, ApiResponse<string>>
             await SendAsync(errorResponse, errorResponse.StatusCode, ct);
             return;
         }
+
         // Map the request to command
         var command = new LogoutCommandV1()
         {
-            RefreshToken = req.RefreshToken,
+            RefreshToken = refreshToken,
             Reason = req.Reason
         };
 
@@ -73,7 +95,12 @@ public class LogoutEndpointV1 : Endpoint<LogoutRequestV1, ApiResponse<string>>
         }
 
         // Handle successful logout
-        var loginResponse = result.IsSuccess;
+        // For web clients, clear cookies
+        if (isWebClient)
+        {
+            _authCookieService.ClearAuthCookies();
+        }
+
         var response = new ApiResponse<String>
         {
             Succeeded = true,

@@ -1,6 +1,7 @@
 using FastEndpoints;
 using MediatR;
 using Shopilent.API.Common.Models;
+using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Features.Identity.Commands.Register.V1;
 using Shopilent.Domain.Common.Errors;
 
@@ -9,10 +10,12 @@ namespace Shopilent.API.Endpoints.Identity.Register.V1;
 public class RegisterEndpointV1 : Endpoint<RegisterRequestV1, ApiResponse<RegisterResponseV1>>
 {
     private readonly IMediator _mediator;
+    private readonly IAuthCookieService _authCookieService;
 
-    public RegisterEndpointV1(IMediator mediator)
+    public RegisterEndpointV1(IMediator mediator, IAuthCookieService authCookieService)
     {
         _mediator = mediator;
+        _authCookieService = authCookieService;
     }
 
     public override void Configure()
@@ -85,6 +88,15 @@ public class RegisterEndpointV1 : Endpoint<RegisterRequestV1, ApiResponse<Regist
         }
 
         // Handle successful registration
+        var registerResponse = result.Value;
+        var isWebClient = _authCookieService.IsWebClient();
+
+        // For web clients, set cookies and remove tokens from response body
+        if (isWebClient)
+        {
+            _authCookieService.SetAuthCookies(registerResponse.AccessToken, registerResponse.RefreshToken);
+        }
+
         var response = new ApiResponse<RegisterResponseV1>
         {
             Succeeded = true,
@@ -92,17 +104,17 @@ public class RegisterEndpointV1 : Endpoint<RegisterRequestV1, ApiResponse<Regist
             StatusCode = StatusCodes.Status201Created,
             Data = new RegisterResponseV1
             {
-                Id = result.Value.User.Id,
-                Email = result.Value.User.Email.Value,
-                FirstName = result.Value.User.FullName.FirstName,
-                LastName = result.Value.User.FullName.LastName,
-                EmailVerified = result.Value.User.EmailVerified,
+                Id = registerResponse.User.Id,
+                Email = registerResponse.User.Email.Value,
+                FirstName = registerResponse.User.FullName.FirstName,
+                LastName = registerResponse.User.FullName.LastName,
+                EmailVerified = registerResponse.User.EmailVerified,
                 Message = "Please check your email to verify your account",
-                AccessToken = result.Value.AccessToken,
-                RefreshToken = result.Value.RefreshToken
+                AccessToken = isWebClient ? string.Empty : registerResponse.AccessToken,
+                RefreshToken = isWebClient ? string.Empty : registerResponse.RefreshToken
             }
         };
 
-        await SendCreatedAtAsync("GetUserById", new { id = result.Value.User.Id }, response, cancellation: ct);
+        await SendCreatedAtAsync("GetUserById", new { id = registerResponse.User.Id }, response, cancellation: ct);
     }
 }
