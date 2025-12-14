@@ -27,10 +27,11 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  // user: User;
-  email: string;
   id: string;
-  fullName: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  emailVerified: boolean;
   accessToken: string;
   refreshToken: string;
 }
