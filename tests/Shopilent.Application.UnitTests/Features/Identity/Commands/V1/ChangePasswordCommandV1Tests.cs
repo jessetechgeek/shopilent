@@ -139,7 +139,8 @@ public class ChangePasswordCommandV1Tests : TestBase
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Error.Code.Should().Be("Validation.Failed");
+        result.Error.Code.Should().Be("ChangePassword.SameAsCurrent");
+        result.Error.Message.Should().Contain("The new password must be different from the current password.");
 
         // Verify auth service was not called
         Fixture.MockAuthenticationService.Verify(auth => auth.ChangePasswordAsync(
@@ -168,6 +169,7 @@ public class ChangePasswordCommandV1Tests : TestBase
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Error.Code.Should().Be(UserErrors.PasswordTooShort.Code);
+        result.Error.Message.Should().Contain("Password must be at least 8 characters long");
 
         // Verify auth service was not called
         Fixture.MockAuthenticationService.Verify(auth => auth.ChangePasswordAsync(

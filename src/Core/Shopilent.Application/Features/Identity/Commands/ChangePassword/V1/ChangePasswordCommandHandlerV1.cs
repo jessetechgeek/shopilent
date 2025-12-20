@@ -32,6 +32,15 @@ internal sealed class ChangePasswordCommandHandlerV1 : ICommandHandler<ChangePas
                         message: "The new password and confirmation password do not match."));
             }
 
+            if (request.NewPassword == request.CurrentPassword)
+            {
+                return Result.Failure(
+                    Error.Validation(
+                        code: "ChangePassword.SameAsCurrent",
+                        message: "The new password must be different from the current password.")
+                );
+            }
+
             var result = await _authenticationService.ChangePasswordAsync(
                 request.UserId,
                 request.CurrentPassword,

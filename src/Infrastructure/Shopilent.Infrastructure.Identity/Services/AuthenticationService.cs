@@ -59,6 +59,9 @@ public class AuthenticationService : IAuthenticationService
                 if (user == null)
                     return Result.Failure<AuthTokenResponse>(UserErrors.InvalidCredentials);
 
+                // Try to auto-unlock if lockout period has expired
+                user.TryAutoUnlock();
+
                 // Check if user is active
                 if (!user.IsActive)
                 {
@@ -490,6 +493,15 @@ public class AuthenticationService : IAuthenticationService
                         code: "EmailVerification.InvalidToken",
                         message: "The verification token is invalid or has expired."));
 
+                // Check if token has expired
+                if (user.EmailVerificationExpires.HasValue &&
+                    user.EmailVerificationExpires.Value < DateTime.UtcNow)
+                {
+                    return Result.Failure(Error.Validation(
+                        code: "EmailVerification.TokenExpired",
+                        message: "The verification link has expired. Please request a new one."));
+                }
+
                 // Verify email
                 var result = user.VerifyEmail();
                 if (result.IsFailure)
@@ -582,6 +594,15 @@ public class AuthenticationService : IAuthenticationService
                     return Result.Failure(Error.Validation(
                         code: "PasswordReset.InvalidToken",
                         message: "The reset token is invalid or has expired."));
+
+                // Check if token has expired (1 hour validity)
+                if (user.PasswordResetExpires.HasValue &&
+                    user.PasswordResetExpires.Value < DateTime.UtcNow)
+                {
+                    return Result.Failure(Error.Validation(
+                        code: "PasswordReset.TokenExpired",
+                        message: "The password reset link has expired. Please request a new one."));
+                }
 
                 // Hash new password
                 var passwordHash = _passwordService.HashPassword(newPassword);

@@ -285,6 +285,7 @@ public class RegisterCommandV1Tests : TestBase
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Error.Code.Should().Be(UserErrors.PasswordTooShort.Code);
+        result.Error.Message.Should().Contain("Password must be at least 8 characters long");
 
     }
 

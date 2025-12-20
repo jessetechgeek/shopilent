@@ -16,7 +16,7 @@ public static class IdentityServiceExtensions
     {
         // Configure options
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
-        services.Configure<PasswordOptions>(options =>
+        services.Configure<Configuration.Settings.PasswordOptions>(options =>
         {
             options.SaltSize = 16;
             options.HashSize = 32;
