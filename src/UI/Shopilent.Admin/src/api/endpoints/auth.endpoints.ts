@@ -20,7 +20,7 @@ export enum AuthEndpoint {
  * Auth-related user endpoints (password, profile)
  */
 export enum AuthUserEndpoint {
-  ChangePassword = '/v1/user/change-password',
+  ChangePassword = '/v1/users/change-password',
 }
 
 /**
