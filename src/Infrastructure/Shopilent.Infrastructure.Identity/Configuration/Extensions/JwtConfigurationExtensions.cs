@@ -18,9 +18,18 @@ internal static class JwtConfigurationExtensions
 
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
 
-        if (string.IsNullOrEmpty(jwtSettings.Secret))
+        if (string.IsNullOrWhiteSpace(jwtSettings.Secret))
         {
-            throw new InvalidOperationException("JWT Secret key is not configured.");
+            throw new InvalidOperationException(
+                "JWT Secret is not configured. Please set 'Jwt:Secret' in appsettings.json");
+        }
+
+        if (jwtSettings.Secret.Length < 32)
+        {
+            throw new InvalidOperationException(
+                "JWT Secret must be at least 32 characters (256 bits) for security. " +
+                "Current length: " + jwtSettings.Secret.Length + ". " +
+                "Generate a secure secret with: openssl rand -base64 32");
         }
 
         services.AddAuthentication(options =>

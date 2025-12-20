@@ -161,6 +161,13 @@ public class User : AggregateRoot
 
     public Result RecordLoginFailure()
     {
+        // Reset attempts if last failure was more than 15 minutes ago
+        if (LastFailedAttempt.HasValue &&
+            DateTime.UtcNow - LastFailedAttempt.Value > TimeSpan.FromMinutes(15))
+        {
+            FailedLoginAttempts = 0;
+        }
+
         FailedLoginAttempts++;
         LastFailedAttempt = DateTime.UtcNow;
 
@@ -171,6 +178,19 @@ public class User : AggregateRoot
             return Result.Failure(UserErrors.AccountLocked);
         }
 
+        return Result.Success();
+    }
+
+    public Result TryAutoUnlock()
+    {
+        // Auto-unlock if locked due to failed attempts and 30 minutes have passed
+        if (!IsActive && LastFailedAttempt.HasValue)
+        {
+            if (DateTime.UtcNow - LastFailedAttempt.Value > TimeSpan.FromMinutes(30))
+            {
+                return Activate();
+            }
+        }
         return Result.Success();
     }
 
