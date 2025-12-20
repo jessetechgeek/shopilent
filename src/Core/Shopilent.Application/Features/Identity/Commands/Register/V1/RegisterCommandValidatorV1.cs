@@ -1,4 +1,5 @@
 using FluentValidation;
+using Shopilent.Application.Common.Validators;
 
 namespace Shopilent.Application.Features.Identity.Commands.Register.V1;
 
