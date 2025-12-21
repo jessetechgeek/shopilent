@@ -155,9 +155,9 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
                     var imageId = Guid.NewGuid().ToString();
                     var imageKey = "products/" + product.Id + "/" + imageId + ".webp";
                     var thumbnailKey = "products/" + product.Id + "/thumbs/" + imageId + ".webp";
-                    var imageUpload = await _s3StorageService.UploadFileAsync("shopilent", imageKey,
+                    var imageUpload = await _s3StorageService.UploadFileAsync(imageKey,
                         image.MainImage, "image/webp", cancellationToken: cancellationToken);
-                    var thumbnailUpload = await _s3StorageService.UploadFileAsync("shopilent", thumbnailKey,
+                    var thumbnailUpload = await _s3StorageService.UploadFileAsync(thumbnailKey,
                         image.Thumbnail, "image/webp", cancellationToken: cancellationToken);
 
                     // Create ProductImage value object
@@ -203,8 +203,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
             // Add this to the response mapping in the handler
             var attributes = product.Attributes.Select(pa => new ProductAttributeResponseDto
             {
-                AttributeId = pa.AttributeId,
-                Values = pa.Values
+                AttributeId = pa.AttributeId, Values = pa.Values
             }).ToList();
 
             // Map images for response

@@ -35,7 +35,8 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
         _logger = logger;
     }
 
-    public async Task<Result<UpdateProductResponseV1>> Handle(UpdateProductCommandV1 request, CancellationToken cancellationToken)
+    public async Task<Result<UpdateProductResponseV1>> Handle(UpdateProductCommandV1 request,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -49,7 +50,8 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
             // Check if slug already exists (but exclude current product)
             if (product.Slug.Value != request.Slug)
             {
-                var slugExists = await _unitOfWork.ProductWriter.SlugExistsAsync(request.Slug, request.Id, cancellationToken);
+                var slugExists =
+                    await _unitOfWork.ProductWriter.SlugExistsAsync(request.Slug, request.Id, cancellationToken);
                 if (slugExists)
                 {
                     return Result.Failure<UpdateProductResponseV1>(ProductErrors.DuplicateSlug(request.Slug));
@@ -59,7 +61,8 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
             // Check if SKU exists (but exclude current product)
             if (!string.IsNullOrWhiteSpace(request.Sku) && request.Sku != product.Sku)
             {
-                var skuExists = await _unitOfWork.ProductWriter.SkuExistsAsync(request.Sku, request.Id, cancellationToken);
+                var skuExists =
+                    await _unitOfWork.ProductWriter.SkuExistsAsync(request.Sku, request.Id, cancellationToken);
                 if (skuExists)
                 {
                     return Result.Failure<UpdateProductResponseV1>(ProductErrors.DuplicateSku(request.Sku));
@@ -111,12 +114,12 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
             {
                 // Get current category IDs
                 var currentCategoryIds = product.Categories.Select(pc => pc.CategoryId).ToList();
-                
+
                 // Categories to remove (in current but not in request)
                 var categoriesToRemove = currentCategoryIds
                     .Where(categoryId => !request.CategoryIds.Contains(categoryId))
                     .ToList();
-                
+
                 foreach (var categoryId in categoriesToRemove)
                 {
                     // Load the category to remove
@@ -126,7 +129,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                         product.RemoveCategory(categoryToRemove);
                     }
                 }
-                
+
                 // Categories to add (in request but not in current)
                 var categoriesToAdd = request.CategoryIds.Except(currentCategoryIds).ToList();
                 foreach (var categoryId in categoriesToAdd)
@@ -138,7 +141,8 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                     }
                     else
                     {
-                        _logger.LogWarning("Category with ID {CategoryId} not found while updating product", categoryId);
+                        _logger.LogWarning("Category with ID {CategoryId} not found while updating product",
+                            categoryId);
                     }
                 }
             }
@@ -154,7 +158,8 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                 {
                     if (!attributeEntities.ContainsKey(attributeDto.AttributeId))
                     {
-                        var attribute = await _unitOfWork.AttributeWriter.GetByIdAsync(attributeDto.AttributeId, cancellationToken);
+                        var attribute =
+                            await _unitOfWork.AttributeWriter.GetByIdAsync(attributeDto.AttributeId, cancellationToken);
                         if (attribute != null)
                         {
                             attributeEntities[attributeDto.AttributeId] = attribute;
@@ -166,7 +171,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                         }
                     }
                 }
-                
+
                 // Now clear all existing product attributes and re-add them
                 // This is typically done through a domain method on the Product entity
                 var clearResult = product.ClearAttributes();
@@ -174,7 +179,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                 {
                     _logger.LogWarning("Failed to clear existing attributes: {Error}", clearResult.Error.Message);
                 }
-                
+
                 // Add all attributes from the request
                 foreach (var attributeDto in request.Attributes)
                 {
@@ -204,12 +209,12 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                     {
                         _logger.LogWarning("Failed to remove image: {Error}", removeResult.Error.Message);
                     }
-                    
+
                     // Optionally, delete the image files from S3 storage
                     try
                     {
-                        await _s3StorageService.DeleteFileAsync("shopilent", image.ImageKey, cancellationToken);
-                        await _s3StorageService.DeleteFileAsync("shopilent", image.ThumbnailKey, cancellationToken);
+                        await _s3StorageService.DeleteFileAsync(image.ImageKey, cancellationToken);
+                        await _s3StorageService.DeleteFileAsync(image.ThumbnailKey, cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -229,7 +234,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                         var removeResult = product.RemoveImage(image);
                         if (removeResult.IsFailure)
                         {
-                            _logger.LogWarning("Failed to remove selected image {ImageKey}: {Error}", 
+                            _logger.LogWarning("Failed to remove selected image {ImageKey}: {Error}",
                                 image.ImageKey, removeResult.Error.Message);
                         }
                         else
@@ -237,12 +242,14 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                             // Delete image files from S3 storage
                             try
                             {
-                                await _s3StorageService.DeleteFileAsync("shopilent", image.ImageKey, cancellationToken);
-                                await _s3StorageService.DeleteFileAsync("shopilent", image.ThumbnailKey, cancellationToken);
+                                await _s3StorageService.DeleteFileAsync(image.ImageKey, cancellationToken);
+                                await _s3StorageService.DeleteFileAsync(image.ThumbnailKey,
+                                    cancellationToken);
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning(ex, "Failed to delete image from storage: {ImageKey}", image.ImageKey);
+                                _logger.LogWarning(ex, "Failed to delete image from storage: {ImageKey}",
+                                    image.ImageKey);
                             }
                         }
                     }
@@ -259,9 +266,9 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                     var imageId = Guid.NewGuid().ToString();
                     var imageKey = "products/" + product.Id + "/" + imageId + ".webp";
                     var thumbnailKey = "products/" + product.Id + "/thumbs/" + imageId + ".webp";
-                    var imageUpload = await _s3StorageService.UploadFileAsync("shopilent", imageKey,
+                    var imageUpload = await _s3StorageService.UploadFileAsync(imageKey,
                         image.MainImage, "image/webp", cancellationToken: cancellationToken);
-                    var thumbnailUpload = await _s3StorageService.UploadFileAsync("shopilent", thumbnailKey,
+                    var thumbnailUpload = await _s3StorageService.UploadFileAsync(thumbnailKey,
                         image.Thumbnail, "image/webp", cancellationToken: cancellationToken);
 
                     // Create ProductImage value object
@@ -293,19 +300,19 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
             {
                 var existingImages = product.Images.ToList();
                 var imageOrderMap = request.ImageOrders.ToDictionary(io => io.ImageKey, io => io);
-    
+
                 // Create a list of tuples for reordering
                 var imageReorderList = new List<(ProductImage Image, int Order)>();
-    
+
                 // Track if we need to update default image
                 ProductImage newDefaultImage = null;
-    
+
                 foreach (var existingImage in existingImages)
                 {
                     if (imageOrderMap.TryGetValue(existingImage.ImageKey, out var orderInfo))
                     {
                         imageReorderList.Add((existingImage, orderInfo.DisplayOrder));
-            
+
                         // Check if this image should be the new default
                         if (orderInfo.IsDefault == true)
                         {
@@ -318,7 +325,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                         imageReorderList.Add((existingImage, existingImage.DisplayOrder));
                     }
                 }
-    
+
                 // Apply the reordering
                 if (imageReorderList.Any())
                 {
@@ -328,7 +335,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                         _logger.LogWarning("Failed to reorder images: {Error}", reorderResult.Error.Message);
                     }
                 }
-    
+
                 // Set new default image if specified
                 if (newDefaultImage != null)
                 {
@@ -339,8 +346,8 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                     }
                 }
             }
-            
-            
+
+
             // Set audit info if user context is available
             if (_currentUserContext.UserId.HasValue)
             {

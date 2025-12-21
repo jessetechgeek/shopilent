@@ -34,7 +34,8 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
         _logger = logger;
     }
 
-    public async Task<Result<UpdateVariantResponseV1>> Handle(UpdateVariantCommandV1 request, CancellationToken cancellationToken)
+    public async Task<Result<UpdateVariantResponseV1>> Handle(UpdateVariantCommandV1 request,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -51,7 +52,8 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
             // Check if SKU is unique if provided and different from current
             if (!string.IsNullOrEmpty(request.Sku) && request.Sku != variant.Sku)
             {
-                var skuExists = await _unitOfWork.ProductVariantWriter.SkuExistsAsync(request.Sku, request.Id, cancellationToken);
+                var skuExists =
+                    await _unitOfWork.ProductVariantWriter.SkuExistsAsync(request.Sku, request.Id, cancellationToken);
                 if (skuExists)
                 {
                     return Result.Failure<UpdateVariantResponseV1>(
@@ -73,6 +75,7 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
                     {
                         return Result.Failure<UpdateVariantResponseV1>(moneyResult.Error);
                     }
+
                     price = moneyResult.Value;
                 }
                 else if (variant.Price != null)
@@ -81,9 +84,9 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
                 }
 
                 var updateResult = variant.Update(
-                    !string.IsNullOrEmpty(request.Sku) ? request.Sku : variant.Sku, 
+                    !string.IsNullOrEmpty(request.Sku) ? request.Sku : variant.Sku,
                     price);
-                
+
                 if (updateResult.IsFailure)
                 {
                     return Result.Failure<UpdateVariantResponseV1>(updateResult.Error);
@@ -122,7 +125,7 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
                 {
                     statusResult = variant.Deactivate();
                 }
-                
+
                 if (statusResult.IsFailure)
                 {
                     return Result.Failure<UpdateVariantResponseV1>(statusResult.Error);
@@ -140,16 +143,17 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
                     {
                         _logger.LogWarning("Failed to remove variant image: {Error}", removeResult.Error.Message);
                     }
-                    
+
                     // Delete the image files from S3 storage
                     try
                     {
-                        await _s3StorageService.DeleteFileAsync("shopilent", image.ImageKey, cancellationToken);
-                        await _s3StorageService.DeleteFileAsync("shopilent", image.ThumbnailKey, cancellationToken);
+                        await _s3StorageService.DeleteFileAsync(image.ImageKey, cancellationToken);
+                        await _s3StorageService.DeleteFileAsync(image.ThumbnailKey, cancellationToken);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Failed to delete variant image from storage: {ImageKey}", image.ImageKey);
+                        _logger.LogWarning(ex, "Failed to delete variant image from storage: {ImageKey}",
+                            image.ImageKey);
                     }
                 }
             }
@@ -165,7 +169,7 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
                         var removeResult = variant.RemoveImage(image);
                         if (removeResult.IsFailure)
                         {
-                            _logger.LogWarning("Failed to remove selected variant image {ImageKey}: {Error}", 
+                            _logger.LogWarning("Failed to remove selected variant image {ImageKey}: {Error}",
                                 image.ImageKey, removeResult.Error.Message);
                         }
                         else
@@ -173,12 +177,14 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
                             // Delete image files from S3 storage
                             try
                             {
-                                await _s3StorageService.DeleteFileAsync("shopilent", image.ImageKey, cancellationToken);
-                                await _s3StorageService.DeleteFileAsync("shopilent", image.ThumbnailKey, cancellationToken);
+                                await _s3StorageService.DeleteFileAsync(image.ImageKey, cancellationToken);
+                                await _s3StorageService.DeleteFileAsync(image.ThumbnailKey,
+                                    cancellationToken);
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogWarning(ex, "Failed to delete variant image from storage: {ImageKey}", image.ImageKey);
+                                _logger.LogWarning(ex, "Failed to delete variant image from storage: {ImageKey}",
+                                    image.ImageKey);
                             }
                         }
                     }
@@ -195,10 +201,10 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
                     var imageId = Guid.NewGuid().ToString();
                     var imageKey = "variants/" + variant.Id + "/" + imageId + ".webp";
                     var thumbnailKey = "variants/" + variant.Id + "/thumbs/" + imageId + ".webp";
-                    
-                    var imageUpload = await _s3StorageService.UploadFileAsync("shopilent", imageKey,
+
+                    var imageUpload = await _s3StorageService.UploadFileAsync(imageKey,
                         image.MainImage, "image/webp", cancellationToken: cancellationToken);
-                    var thumbnailUpload = await _s3StorageService.UploadFileAsync("shopilent", thumbnailKey,
+                    var thumbnailUpload = await _s3StorageService.UploadFileAsync(thumbnailKey,
                         image.Thumbnail, "image/webp", cancellationToken: cancellationToken);
 
                     // Create ProductImage value object
@@ -243,7 +249,7 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
                     if (imageOrderMap.TryGetValue(existingImage.ImageKey, out var orderInfo))
                     {
                         imageReorderList.Add((existingImage, orderInfo.DisplayOrder));
-                
+
                         // Check if this image should be the new default
                         if (orderInfo.IsDefault == true)
                         {
@@ -273,7 +279,8 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
                     var setDefaultResult = variant.SetDefaultImage(newDefaultImage);
                     if (setDefaultResult.IsFailure)
                     {
-                        _logger.LogWarning("Failed to set default variant image: {Error}", setDefaultResult.Error.Message);
+                        _logger.LogWarning("Failed to set default variant image: {Error}",
+                            setDefaultResult.Error.Message);
                     }
                 }
             }
@@ -317,7 +324,8 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating product variant with ID {VariantId}: {ErrorMessage}", request.Id, ex.Message);
+            _logger.LogError(ex, "Error updating product variant with ID {VariantId}: {ErrorMessage}", request.Id,
+                ex.Message);
 
             return Result.Failure<UpdateVariantResponseV1>(
                 Error.Failure(

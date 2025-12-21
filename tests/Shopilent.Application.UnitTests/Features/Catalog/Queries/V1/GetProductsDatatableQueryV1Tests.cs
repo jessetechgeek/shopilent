@@ -23,11 +23,10 @@ public class GetProductsDatatableQueryV1Tests : TestBase
         Fixture.MockS3StorageService
             .Setup(s => s.GetPresignedUrlAsync(
                 It.IsAny<string>(),
-                It.IsAny<string>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string bucket, string key, TimeSpan expiry, CancellationToken ct) =>
-                Result.Success($"https://s3.example.com/{bucket}/{key}"));
+            .ReturnsAsync((string key, TimeSpan expiry, CancellationToken ct) =>
+                Result.Success($"https://s3.example.com/{key}"));
     }
 
     [Fact]
@@ -40,20 +39,14 @@ public class GetProductsDatatableQueryV1Tests : TestBase
             Start = 0,
             Length = 10,
             Search = new DataTableSearch { Value = "laptop" },
-            Order = new List<DataTableOrder>
-            {
-                new DataTableOrder { Column = 0, Dir = "asc" }
-            },
+            Order = new List<DataTableOrder> { new DataTableOrder { Column = 0, Dir = "asc" } },
             Columns = new List<DataTableColumn>
             {
                 new DataTableColumn { Data = "name", Name = "Name", Searchable = true, Orderable = true }
             }
         };
 
-        var query = new GetProductsDatatableQueryV1
-        {
-            Request = request
-        };
+        var query = new GetProductsDatatableQueryV1 { Request = request };
 
         var variants = new List<ProductVariantDto>
         {
@@ -140,17 +133,9 @@ public class GetProductsDatatableQueryV1Tests : TestBase
     public async Task Handle_WithProductsWithoutVariantsOrCategories_HandlesNullCollections()
     {
         // Arrange
-        var request = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var request = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetProductsDatatableQueryV1
-        {
-            Request = request
-        };
+        var query = new GetProductsDatatableQueryV1 { Request = request };
 
         var productDetails = new List<ProductDetailDto>
         {
@@ -185,7 +170,7 @@ public class GetProductsDatatableQueryV1Tests : TestBase
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        
+
         var product = result.Value.Data.First();
         product.VariantsCount.Should().Be(0);
         product.TotalStockQuantity.Should().Be(0);
@@ -196,17 +181,9 @@ public class GetProductsDatatableQueryV1Tests : TestBase
     public async Task Handle_WithEmptyResult_ReturnsEmptyDatatableResult()
     {
         // Arrange
-        var request = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var request = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetProductsDatatableQueryV1
-        {
-            Request = request
-        };
+        var query = new GetProductsDatatableQueryV1 { Request = request };
 
         var datatableResult = new DataTableResult<ProductDetailDto>(
             draw: 1,
@@ -233,17 +210,9 @@ public class GetProductsDatatableQueryV1Tests : TestBase
     public async Task Handle_WhenExceptionOccurs_ReturnsFailureResult()
     {
         // Arrange
-        var request = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var request = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetProductsDatatableQueryV1
-        {
-            Request = request
-        };
+        var query = new GetProductsDatatableQueryV1 { Request = request };
 
         Fixture.MockProductReadRepository
             .Setup(repo => repo.GetProductDetailDataTableAsync(request, CancellationToken))
@@ -262,17 +231,9 @@ public class GetProductsDatatableQueryV1Tests : TestBase
     public async Task Handle_VerifiesCorrectMappingFromProductDetailToDto()
     {
         // Arrange
-        var request = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var request = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetProductsDatatableQueryV1
-        {
-            Request = request
-        };
+        var query = new GetProductsDatatableQueryV1 { Request = request };
 
         var sourceProduct = new ProductDetailDto
         {
@@ -314,7 +275,7 @@ public class GetProductsDatatableQueryV1Tests : TestBase
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        
+
         var mappedProduct = result.Value.Data.First();
         mappedProduct.Id.Should().Be(sourceProduct.Id);
         mappedProduct.Name.Should().Be(sourceProduct.Name);

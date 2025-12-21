@@ -151,9 +151,9 @@ internal sealed class
                     var thumbnailKey = "products/" + request.ProductId + "/variants/" + variant.Id + "/thumbs/" +
                                        imageId + ".webp";
 
-                    var imageUpload = await _s3StorageService.UploadFileAsync("shopilent", imageKey,
+                    var imageUpload = await _s3StorageService.UploadFileAsync(imageKey,
                         image.MainImage, "image/webp", cancellationToken: cancellationToken);
-                    var thumbnailUpload = await _s3StorageService.UploadFileAsync("shopilent", thumbnailKey,
+                    var thumbnailUpload = await _s3StorageService.UploadFileAsync(thumbnailKey,
                         image.Thumbnail, "image/webp", cancellationToken: cancellationToken);
 
                     // Create ProductImage value object

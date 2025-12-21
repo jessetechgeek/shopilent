@@ -28,7 +28,8 @@ public class CreateProductCommandV1Tests : TestBase
         services.AddTransient(sp => Fixture.GetLogger<CreateProductCommandHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<CreateProductCommandV1>();
         });
 
@@ -55,22 +56,12 @@ public class CreateProductCommandV1Tests : TestBase
             Currency = "USD",
             Sku = "TEST-001",
             CategoryIds = new List<Guid> { categoryId },
-            Attributes = new List<ProductAttributeDto>
-            {
-                new ProductAttributeDto
+            Attributes =
+                new List<ProductAttributeDto>
                 {
-                    AttributeId = Guid.NewGuid(),
-                    Value = "Test Value"
-                }
-            },
-            Images = new List<ProductImageDto>
-            {
-                new ProductImageDto
-                {
-                    AltText = "Test image",
-                    DisplayOrder = 1
-                }
-            }
+                    new ProductAttributeDto { AttributeId = Guid.NewGuid(), Value = "Test Value" }
+                },
+            Images = new List<ProductImageDto> { new ProductImageDto { AltText = "Test image", DisplayOrder = 1 } }
         };
 
         var category = new CategoryBuilder().WithId(categoryId).Build();
@@ -90,14 +81,11 @@ public class CreateProductCommandV1Tests : TestBase
         // Mock image and storage services
         Fixture.MockImageService
             .Setup(service => service.ProcessProductImage(It.IsAny<Stream>()))
-            .ReturnsAsync(new ImageResult
-            {
-                MainImage = new MemoryStream(),
-                Thumbnail = new MemoryStream()
-            });
+            .ReturnsAsync(new ImageResult { MainImage = new MemoryStream(), Thumbnail = new MemoryStream() });
 
         Fixture.MockS3StorageService
-            .Setup(service => service.UploadFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            .Setup(service => service.UploadFileAsync(It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<string>(),
+                It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<string>.Success("products/test.jpg"));
 
         // Capture product being added
@@ -141,10 +129,7 @@ public class CreateProductCommandV1Tests : TestBase
 
         var command = new CreateProductCommandV1
         {
-            Name = "Test Product",
-            Slug = "existing-product-slug",
-            BasePrice = 99.99m,
-            Currency = "USD"
+            Name = "Test Product", Slug = "existing-product-slug", BasePrice = 99.99m, Currency = "USD"
         };
 
         // Setup authenticated user
@@ -238,16 +223,8 @@ public class CreateProductCommandV1Tests : TestBase
             Currency = "USD",
             Images = new List<ProductImageDto>
             {
-                new ProductImageDto
-                {
-                    AltText = "First image",
-                    DisplayOrder = 1
-                },
-                new ProductImageDto
-                {
-                    AltText = "Second image",
-                    DisplayOrder = 2
-                }
+                new ProductImageDto { AltText = "First image", DisplayOrder = 1 },
+                new ProductImageDto { AltText = "Second image", DisplayOrder = 2 }
             }
         };
 
@@ -262,15 +239,12 @@ public class CreateProductCommandV1Tests : TestBase
         // Mock image processing
         Fixture.MockImageService
             .Setup(service => service.ProcessProductImage(It.IsAny<Stream>()))
-            .ReturnsAsync(new ImageResult
-            {
-                MainImage = new MemoryStream(),
-                Thumbnail = new MemoryStream()
-            });
+            .ReturnsAsync(new ImageResult { MainImage = new MemoryStream(), Thumbnail = new MemoryStream() });
 
         // Mock S3 storage
         Fixture.MockS3StorageService
-            .Setup(service => service.UploadFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            .Setup(service => service.UploadFileAsync(It.IsAny<string>(), It.IsAny<Stream>(),
+                It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<string>.Success("products/test-key"));
 
         // Capture product being added
@@ -295,7 +269,8 @@ public class CreateProductCommandV1Tests : TestBase
 
         // Verify upload was called for each image (main + thumbnail for each)
         Fixture.MockS3StorageService.Verify(
-            service => service.UploadFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()),
+            service => service.UploadFileAsync(It.IsAny<string>(), It.IsAny<Stream>(),
+                It.IsAny<string>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()),
             Times.Exactly(4)); // 2 images x 2 uploads each
     }
 
@@ -315,16 +290,8 @@ public class CreateProductCommandV1Tests : TestBase
             Currency = "USD",
             Attributes = new List<ProductAttributeDto>
             {
-                new ProductAttributeDto
-                {
-                    AttributeId = attributeId1,
-                    Value = "Blue"
-                },
-                new ProductAttributeDto
-                {
-                    AttributeId = attributeId2,
-                    Value = "Large"
-                }
+                new ProductAttributeDto { AttributeId = attributeId1, Value = "Blue" },
+                new ProductAttributeDto { AttributeId = attributeId2, Value = "Large" }
             }
         };
 
