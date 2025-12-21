@@ -15,7 +15,6 @@ internal sealed class GetProductsDatatableQueryHandlerV1 :
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<GetProductsDatatableQueryHandlerV1> _logger;
     private readonly IS3StorageService _s3StorageService;
-    private const string DefaultBucket = "shopilent";
 
     public GetProductsDatatableQueryHandlerV1(
         IUnitOfWork unitOfWork,
@@ -64,7 +63,6 @@ internal sealed class GetProductsDatatableQueryHandlerV1 :
                         if (!string.IsNullOrEmpty(image.ImageKey))
                         {
                             var imageUrlResult = await _s3StorageService.GetPresignedUrlAsync(
-                                DefaultBucket,
                                 image.ImageKey,
                                 TimeSpan.FromHours(24),
                                 cancellationToken);
@@ -78,7 +76,6 @@ internal sealed class GetProductsDatatableQueryHandlerV1 :
                         if (!string.IsNullOrEmpty(image.ThumbnailKey))
                         {
                             var thumbnailUrlResult = await _s3StorageService.GetPresignedUrlAsync(
-                                DefaultBucket,
                                 image.ThumbnailKey,
                                 TimeSpan.FromHours(24),
                                 cancellationToken);

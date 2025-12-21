@@ -27,7 +27,6 @@ public class S3StorageService : IS3StorageService
     }
 
     public async Task<Result<string>> UploadFileAsync(
-        string bucketName,
         string key,
         Stream fileStream,
         string contentType,
@@ -39,7 +38,7 @@ public class S3StorageService : IS3StorageService
             using var transferUtility = new TransferUtility(_s3Client);
             var request = new TransferUtilityUploadRequest
             {
-                BucketName = bucketName,
+                BucketName = _settings.DefaultBucket,
                 Key = key,
                 InputStream = fileStream,
                 ContentType = contentType
@@ -59,7 +58,7 @@ public class S3StorageService : IS3StorageService
             switch (_settings.Provider?.ToUpperInvariant())
             {
                 case "DIGITALOCEAN":
-                    url = $"https://{bucketName}.{new Uri(_settings.ServiceUrl).Host}/{key}";
+                    url = $"https://{_settings.DefaultBucket}.{new Uri(_settings.ServiceUrl).Host}/{key}";
                     break;
 
                 case "BACKBLAZE":
@@ -76,23 +75,18 @@ public class S3StorageService : IS3StorageService
         }
         catch (AmazonS3Exception ex)
         {
-            _logger.LogError(ex, "Error uploading file to S3. Bucket: {Bucket}, Key: {Key}", bucketName, key);
+            _logger.LogError(ex, "Error uploading file to S3. Bucket: {Bucket}, Key: {Key}", _settings.DefaultBucket, key);
             return Result.Failure<string>(Error.Failure(message: $"Failed to upload file: {ex.Message}"));
         }
     }
 
     public async Task<Result<Stream>> DownloadFileAsync(
-        string bucketName,
         string key,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var request = new GetObjectRequest
-            {
-                BucketName = bucketName,
-                Key = key
-            };
+            var request = new GetObjectRequest { BucketName = _settings.DefaultBucket, Key = key };
 
             var response = await _s3Client.GetObjectAsync(request, cancellationToken);
             return Result.Success(response.ResponseStream);
@@ -103,46 +97,36 @@ public class S3StorageService : IS3StorageService
         }
         catch (AmazonS3Exception ex)
         {
-            _logger.LogError(ex, "Error downloading file from S3. Bucket: {Bucket}, Key: {Key}", bucketName, key);
+            _logger.LogError(ex, "Error downloading file from S3. Bucket: {Bucket}, Key: {Key}", _settings.DefaultBucket, key);
             return Result.Failure<Stream>(Error.Failure(message: $"Failed to download file: {ex.Message}"));
         }
     }
 
     public async Task<Result<bool>> DeleteFileAsync(
-        string bucketName,
         string key,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var request = new DeleteObjectRequest
-            {
-                BucketName = bucketName,
-                Key = key
-            };
+            var request = new DeleteObjectRequest { BucketName = _settings.DefaultBucket, Key = key };
 
             await _s3Client.DeleteObjectAsync(request, cancellationToken);
             return Result.Success(true);
         }
         catch (AmazonS3Exception ex)
         {
-            _logger.LogError(ex, "Error deleting file from S3. Bucket: {Bucket}, Key: {Key}", bucketName, key);
+            _logger.LogError(ex, "Error deleting file from S3. Bucket: {Bucket}, Key: {Key}", _settings.DefaultBucket, key);
             return Result.Failure<bool>(Error.Failure(message: $"Failed to delete file: {ex.Message}"));
         }
     }
 
     public async Task<Result<bool>> FileExistsAsync(
-        string bucketName,
         string key,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var request = new GetObjectMetadataRequest
-            {
-                BucketName = bucketName,
-                Key = key
-            };
+            var request = new GetObjectMetadataRequest { BucketName = _settings.DefaultBucket, Key = key };
 
             await _s3Client.GetObjectMetadataAsync(request, cancellationToken);
             return Result.Success(true);
@@ -153,13 +137,12 @@ public class S3StorageService : IS3StorageService
         }
         catch (AmazonS3Exception ex)
         {
-            _logger.LogError(ex, "Error checking file existence in S3. Bucket: {Bucket}, Key: {Key}", bucketName, key);
+            _logger.LogError(ex, "Error checking file existence in S3. Bucket: {Bucket}, Key: {Key}", _settings.DefaultBucket, key);
             return Result.Failure<bool>(Error.Failure(message: $"Failed to check file existence: {ex.Message}"));
         }
     }
 
     public async Task<Result<string>> GetPresignedUrlAsync(
-        string bucketName,
         string key,
         TimeSpan expiry,
         CancellationToken cancellationToken = default)
@@ -168,53 +151,59 @@ public class S3StorageService : IS3StorageService
         {
             var request = new GetPreSignedUrlRequest
             {
-                BucketName = bucketName,
-                Key = key,
-                Expires = DateTime.UtcNow.Add(expiry)
+                BucketName = _settings.DefaultBucket, Key = key, Expires = DateTime.UtcNow.Add(expiry)
             };
 
             var url = _s3Client.GetPreSignedURL(request);
+
             if (_settings.Provider == "MinIO")
             {
-                url = url.Replace(_settings.ServiceUrl.Replace("http", "https"), "http://localhost:9858");
+                url = RewriteMinioUrl(url);
             }
 
             return Result.Success(url);
         }
         catch (AmazonS3Exception ex)
         {
-            _logger.LogError(ex, "Error generating presigned URL. Bucket: {Bucket}, Key: {Key}", bucketName, key);
+            _logger.LogError(ex, "Error generating presigned URL. Bucket: {Bucket}, Key: {Key}", _settings.DefaultBucket, key);
             return Result.Failure<string>(Error.Failure(message: $"Failed to generate presigned URL: {ex.Message}"));
         }
     }
 
+    private string RewriteMinioUrl(string url)
+    {
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        var isProduction = environment == "Production";
+
+        var targetUrl = isProduction
+            ? "https://s3.shopilent.com"
+            : "http://localhost:9858";
+
+        // The MinIO client generates URLs with https by default
+        var serviceUrlHttps = _settings.ServiceUrl.Replace("http://", "https://");
+
+        return url.Replace(serviceUrlHttps, targetUrl);
+    }
+
     public async Task<Result<IEnumerable<S3ObjectInfo>>> ListFilesAsync(
-        string bucketName,
         string? prefix = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var request = new ListObjectsV2Request
-            {
-                BucketName = bucketName,
-                Prefix = prefix
-            };
+            var request = new ListObjectsV2Request { BucketName = _settings.DefaultBucket, Prefix = prefix };
 
             var response = await _s3Client.ListObjectsV2Async(request, cancellationToken);
             var objects = response.S3Objects.Select(obj => new S3ObjectInfo
             {
-                Key = obj.Key,
-                Size = obj.Size,
-                LastModified = obj.LastModified,
-                ETag = obj.ETag
+                Key = obj.Key, Size = obj.Size, LastModified = obj.LastModified, ETag = obj.ETag
             });
 
             return Result.Success(objects);
         }
         catch (AmazonS3Exception ex)
         {
-            _logger.LogError(ex, "Error listing files in S3. Bucket: {Bucket}, Prefix: {Prefix}", bucketName, prefix);
+            _logger.LogError(ex, "Error listing files in S3. Bucket: {Bucket}, Prefix: {Prefix}", _settings.DefaultBucket, prefix);
             return Result.Failure<IEnumerable<S3ObjectInfo>>(
                 Error.Failure(message: $"Failed to list files: {ex.Message}"));
         }
