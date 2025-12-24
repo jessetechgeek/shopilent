@@ -20,11 +20,15 @@
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - Seq__ServerUrl=http://seq:5341
+      - Authentication__Provider=AspNetIdentity
+      - Jwt__Secret=${JWT_SECRET:-YOUR_SECURE_JWT_SECRET_KEY_AT_LEAST_32_CHARACTERS}
       - ConnectionStrings__PostgreSql=Host=postgres;Database=shopilent;Username=postgres;Password=postgres;Port=5432
       - ConnectionStrings__PostgreSqlReadReplicas__0=Host=postgres-replica-1;Database=shopilent;Username=postgres;Password=postgres;Port=5432
       - ConnectionStrings__PostgreSqlReadReplicas__1=Host=postgres-replica-2;Database=shopilent;Username=postgres;Password=postgres;Port=5432
       - Redis__ConnectionString=redis:6379
       - Redis__InstanceName=shopilent_
+      - Meilisearch__Url=http://meilisearch:7700
+      - Meilisearch__ApiKey=${MEILISEARCH_MASTER_KEY:-shopilent_search_key}
       - S3__ServiceUrl=http://minio:9000
       - Email__SmtpServer=mailhog
       - Email__SmtpPort=1025
@@ -34,6 +38,8 @@
       - Cors__AllowedOrigins__1=http://localhost:9802
       - Cors__AllowedOrigins__2=http://localhost:3000
       - Cors__AllowedOrigins__3=http://localhost:5173
+      - Cors__AllowedOrigins__4=http://localhost:9799
+    restart: unless-stopped
 
   client:
     container_name: shopilent-client
