@@ -23,8 +23,8 @@
       - Authentication__Provider=AspNetIdentity
       - Jwt__Secret=${JWT_SECRET:-YOUR_SECURE_JWT_SECRET_KEY_AT_LEAST_32_CHARACTERS}
       - ConnectionStrings__PostgreSql=Host=postgres;Database=shopilent;Username=postgres;Password=postgres;Port=5432
-#      - ConnectionStrings__PostgreSqlReadReplicas__0=Host=postgres-replica-1;Database=shopilent;Username=postgres;Password=postgres;Port=5432
-#      - ConnectionStrings__PostgreSqlReadReplicas__1=Host=postgres-replica-2;Database=shopilent;Username=postgres;Password=postgres;Port=5432
+      - ConnectionStrings__PostgreSqlReadReplicas__0=Host=postgres-replica-1;Database=shopilent;Username=postgres;Password=postgres;Port=5432
+      - ConnectionStrings__PostgreSqlReadReplicas__1=Host=postgres-replica-2;Database=shopilent;Username=postgres;Password=postgres;Port=5432
       - Redis__ConnectionString=redis:6379
       - Redis__InstanceName=shopilent_
       - Meilisearch__Url=http://meilisearch:7700
