@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
@@ -15,6 +17,8 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
+    private IRefreshTokenWriteRepository _refreshTokenWriteRepository = null!;
+    private IRefreshTokenReadRepository _refreshTokenReadRepository = null!;
 
     public RefreshTokenWriteRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
     {
@@ -24,6 +28,8 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
     {
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
+        _refreshTokenWriteRepository = GetService<IRefreshTokenWriteRepository>();
+        _refreshTokenReadRepository = GetService<IRefreshTokenReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -45,7 +51,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.RefreshTokenReader.GetByIdAsync(refreshToken.Id);
+        var result = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
         result.Should().NotBeNull();
         result!.Id.Should().Be(refreshToken.Id);
         result.UserId.Should().Be(user.Id);
@@ -76,7 +82,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.RefreshTokenReader.GetByIdAsync(refreshToken.Id);
+        var result = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
         result.Should().NotBeNull();
         result!.Token.Should().Be(refreshToken.Token);
         result.IpAddress.Should().BeNullOrEmpty();
@@ -95,21 +101,21 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken);
+        await _refreshTokenWriteRepository.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(refreshToken).State = EntityState.Detached;
 
         // Act - Load fresh entity and revoke
-        var existingToken = await _unitOfWork.RefreshTokenWriter.GetByIdAsync(refreshToken.Id);
+        var existingToken = await _refreshTokenWriteRepository.GetByIdAsync(refreshToken.Id);
         existingToken!.Revoke("Test revocation");
 
-        await _unitOfWork.RefreshTokenWriter.UpdateAsync(existingToken);
+        await _refreshTokenWriteRepository.UpdateAsync(existingToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedToken = await _unitOfWork.RefreshTokenReader.GetByIdAsync(refreshToken.Id);
+        var updatedToken = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
         updatedToken.Should().NotBeNull();
         updatedToken!.IsRevoked.Should().BeTrue();
         updatedToken.RevokedReason.Should().Be("Test revocation");
@@ -127,15 +133,15 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken);
+        await _refreshTokenWriteRepository.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        await _unitOfWork.RefreshTokenWriter.DeleteAsync(refreshToken);
+        await _refreshTokenWriteRepository.DeleteAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.RefreshTokenReader.GetByIdAsync(refreshToken.Id);
+        var result = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
         result.Should().BeNull();
     }
 
@@ -151,11 +157,11 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken);
+        await _refreshTokenWriteRepository.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.RefreshTokenWriter.GetByIdAsync(refreshToken.Id);
+        var result = await _refreshTokenWriteRepository.GetByIdAsync(refreshToken.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -172,7 +178,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.RefreshTokenWriter.GetByIdAsync(nonExistentId);
+        var result = await _refreshTokenWriteRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -191,11 +197,11 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken);
+        await _refreshTokenWriteRepository.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.RefreshTokenWriter.GetByTokenAsync(tokenValue);
+        var result = await _refreshTokenWriteRepository.GetByTokenAsync(tokenValue);
 
         // Assert
         result.Should().NotBeNull();
@@ -211,7 +217,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         var nonExistentToken = "non_existent_token";
 
         // Act
-        var result = await _unitOfWork.RefreshTokenWriter.GetByTokenAsync(nonExistentToken);
+        var result = await _refreshTokenWriteRepository.GetByTokenAsync(nonExistentToken);
 
         // Assert
         result.Should().BeNull();
@@ -232,12 +238,12 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken1);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken2);
+        await _refreshTokenWriteRepository.AddAsync(refreshToken1);
+        await _refreshTokenWriteRepository.AddAsync(refreshToken2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.RefreshTokenWriter.GetByUserIdAsync(user.Id);
+        var result = await _refreshTokenWriteRepository.GetByUserIdAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -253,7 +259,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         var nonExistentUserId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.RefreshTokenWriter.GetByUserIdAsync(nonExistentUserId);
+        var result = await _refreshTokenWriteRepository.GetByUserIdAsync(nonExistentUserId);
 
         // Assert
         result.Should().NotBeNull();
@@ -279,18 +285,18 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(activeToken);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(expiredToken);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(revokedToken);
+        await _refreshTokenWriteRepository.AddAsync(activeToken);
+        await _refreshTokenWriteRepository.AddAsync(expiredToken);
+        await _refreshTokenWriteRepository.AddAsync(revokedToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Revoke one token
         revokedToken.Revoke("Test revocation");
-        await _unitOfWork.RefreshTokenWriter.UpdateAsync(revokedToken);
+        await _refreshTokenWriteRepository.UpdateAsync(revokedToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.RefreshTokenWriter.GetActiveTokensAsync(user.Id);
+        var result = await _refreshTokenWriteRepository.GetActiveTokensAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -308,11 +314,11 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         var expiredToken = RefreshTokenBuilder.CreateExpiredToken(user);
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(expiredToken);
+        await _refreshTokenWriteRepository.AddAsync(expiredToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.RefreshTokenWriter.GetActiveTokensAsync(user.Id);
+        var result = await _refreshTokenWriteRepository.GetActiveTokensAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -338,7 +344,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
                 .Build();
 
             // Manually set the user ID to match the mock (using reflection)
-            var idProperty = typeof(Domain.Common.Entity).GetProperty("Id");
+            var idProperty = typeof(Entity).GetProperty("Id");
             idProperty?.SetValue(testUser, mockUserId.Value);
 
             // Save the test user so it exists for the audit interceptor
@@ -362,19 +368,22 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         var unitOfWork1 = scope1.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var unitOfWork2 = scope2.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        var token1 = await unitOfWork1.RefreshTokenWriter.GetByIdAsync(refreshToken.Id);
-        var token2 = await unitOfWork2.RefreshTokenWriter.GetByIdAsync(refreshToken.Id);
+        var refreshTokenWriteRepository1 = scope1.ServiceProvider.GetRequiredService<IRefreshTokenWriteRepository>();
+        var refreshTokenWriteRepository2 = scope2.ServiceProvider.GetRequiredService<IRefreshTokenWriteRepository>();
+
+        var token1 = await refreshTokenWriteRepository1.GetByIdAsync(refreshToken.Id);
+        var token2 = await refreshTokenWriteRepository2.GetByIdAsync(refreshToken.Id);
 
         // Both try to revoke with different reasons
         token1!.Revoke("First revocation");
         token2!.Revoke("Second revocation");
 
         // First update should succeed
-        await unitOfWork1.RefreshTokenWriter.UpdateAsync(token1);
+        await refreshTokenWriteRepository1.UpdateAsync(token1);
         await unitOfWork1.SaveChangesAsync();
 
         // Second update should fail with concurrency exception
-        await unitOfWork2.RefreshTokenWriter.UpdateAsync(token2);
+        await refreshTokenWriteRepository2.UpdateAsync(token2);
         var action = () => unitOfWork2.SaveChangesAsync();
 
         await action.Should().ThrowAsync<ConcurrencyConflictException>();
@@ -402,18 +411,19 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var userTokens = await _unitOfWork.RefreshTokenWriter.GetByUserIdAsync(user.Id);
+        var userTokens = await _refreshTokenWriteRepository.GetByUserIdAsync(user.Id);
         userTokens.Should().HaveCount(5);
 
         // Cleanup - Delete all tokens
         foreach (var token in userTokens)
         {
-            await _unitOfWork.RefreshTokenWriter.DeleteAsync(token);
+            await _refreshTokenWriteRepository.DeleteAsync(token);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         // Verify deletion
-        var remainingTokens = await _unitOfWork.RefreshTokenWriter.GetByUserIdAsync(user.Id);
+        var remainingTokens = await _refreshTokenWriteRepository.GetByUserIdAsync(user.Id);
         remainingTokens.Should().BeEmpty();
     }
 
@@ -429,28 +439,28 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken);
+        await _refreshTokenWriteRepository.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach and reload
         DbContext.Entry(refreshToken).State = EntityState.Detached;
-        var existingToken = await _unitOfWork.RefreshTokenWriter.GetByIdAsync(refreshToken.Id);
+        var existingToken = await _refreshTokenWriteRepository.GetByIdAsync(refreshToken.Id);
 
         // Act
         var revokeResult = existingToken!.Revoke("User logout");
         revokeResult.IsSuccess.Should().BeTrue();
 
-        await _unitOfWork.RefreshTokenWriter.UpdateAsync(existingToken);
+        await _refreshTokenWriteRepository.UpdateAsync(existingToken);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedToken = await _unitOfWork.RefreshTokenReader.GetByIdAsync(refreshToken.Id);
+        var updatedToken = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
         updatedToken.Should().NotBeNull();
         updatedToken!.IsRevoked.Should().BeTrue();
         updatedToken.RevokedReason.Should().Be("User logout");
 
         // Token should not be active anymore
-        var activeTokens = await _unitOfWork.RefreshTokenWriter.GetActiveTokensAsync(user.Id);
+        var activeTokens = await _refreshTokenWriteRepository.GetActiveTokensAsync(user.Id);
         activeTokens.Should().NotContain(t => t.Id == refreshToken.Id);
     }
 
@@ -468,13 +478,13 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.RefreshTokenReader.GetByIdAsync(expiredToken.Id);
+        var result = await _refreshTokenReadRepository.GetByIdAsync(expiredToken.Id);
         result.Should().NotBeNull();
         result!.Token.Should().Be(expiredToken.Token);
         result.ExpiresAt.Should().BeBefore(DateTime.UtcNow);
 
         // Should not appear in active tokens
-        var activeTokens = await _unitOfWork.RefreshTokenWriter.GetActiveTokensAsync(user.Id);
+        var activeTokens = await _refreshTokenWriteRepository.GetActiveTokensAsync(user.Id);
         activeTokens.Should().NotContain(t => t.Id == expiredToken.Id);
     }
 }

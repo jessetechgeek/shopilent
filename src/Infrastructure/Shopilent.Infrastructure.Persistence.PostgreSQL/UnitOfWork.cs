@@ -4,8 +4,6 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
-using Shopilent.Domain.Identity.Repositories.Read;
-using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Repositories.Read;
 using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Domain.Sales.Repositories.Read;
@@ -29,9 +27,6 @@ public class UnitOfWork : IUnitOfWork
     public IProductVariantReadRepository ProductVariantReader { get; }
     public IProductVariantWriteRepository ProductVariantWriter { get; }
 
-    public IRefreshTokenReadRepository RefreshTokenReader { get; }
-    public IRefreshTokenWriteRepository RefreshTokenWriter { get; }
-
     public ICartReadRepository CartReader { get; }
     public ICartWriteRepository CartWriter { get; }
 
@@ -52,8 +47,6 @@ public class UnitOfWork : IUnitOfWork
         IAttributeWriteRepository attributeWriter,
         IProductVariantReadRepository productVariantRepository,
         IProductVariantWriteRepository productVariantWriter,
-        IRefreshTokenReadRepository refreshTokenRepository,
-        IRefreshTokenWriteRepository refreshTokenWriter,
         ICartReadRepository cartRepository,
         ICartWriteRepository cartWriter,
         IOrderReadRepository orderRepository,
@@ -70,8 +63,6 @@ public class UnitOfWork : IUnitOfWork
         AttributeWriter = attributeWriter;
         ProductVariantReader = productVariantRepository;
         ProductVariantWriter = productVariantWriter;
-        RefreshTokenReader = refreshTokenRepository;
-        RefreshTokenWriter = refreshTokenWriter;
         CartReader = cartRepository;
         CartWriter = cartWriter;
         OrderReader = orderRepository;

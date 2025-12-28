@@ -1,7 +1,5 @@
 using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
-using Shopilent.Domain.Identity.Repositories.Read;
-using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Repositories.Read;
 using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Domain.Sales.Repositories.Read;
@@ -19,9 +17,6 @@ public interface IUnitOfWork : IDisposable
 
     IProductVariantReadRepository ProductVariantReader { get; }
     IProductVariantWriteRepository ProductVariantWriter { get; }
-
-    IRefreshTokenReadRepository RefreshTokenReader { get; }
-    IRefreshTokenWriteRepository RefreshTokenWriter { get; }
 
     ICartReadRepository CartReader { get; }
     ICartWriteRepository CartWriter { get; }

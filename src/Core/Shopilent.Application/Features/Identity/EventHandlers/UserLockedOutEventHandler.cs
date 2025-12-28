@@ -7,13 +7,16 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Events;
 using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
 
 namespace Shopilent.Application.Features.Identity.EventHandlers;
 
-internal sealed  class UserLockedOutEventHandler : INotificationHandler<DomainEventNotification<UserLockedOutEvent>>
+internal sealed class UserLockedOutEventHandler : INotificationHandler<DomainEventNotification<UserLockedOutEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserReadRepository _userReadRepository;
+    private readonly IRefreshTokenWriteRepository _refreshTokenWriteRepository;
+    private readonly IRefreshTokenReadRepository _refreshTokenReadRepository;
     private readonly ILogger<UserLockedOutEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -22,6 +25,8 @@ internal sealed  class UserLockedOutEventHandler : INotificationHandler<DomainEv
     public UserLockedOutEventHandler(
         IUnitOfWork unitOfWork,
         IUserReadRepository userReadRepository,
+        IRefreshTokenWriteRepository refreshTokenWriteRepository,
+        IRefreshTokenReadRepository refreshTokenReadRepository,
         ILogger<UserLockedOutEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
@@ -29,6 +34,8 @@ internal sealed  class UserLockedOutEventHandler : INotificationHandler<DomainEv
     {
         _unitOfWork = unitOfWork;
         _userReadRepository = userReadRepository;
+        _refreshTokenWriteRepository = refreshTokenWriteRepository;
+        _refreshTokenReadRepository = refreshTokenReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -55,18 +62,18 @@ internal sealed  class UserLockedOutEventHandler : INotificationHandler<DomainEv
             {
                 // Revoke all active refresh tokens for this user
                 var refreshTokens =
-                    await _unitOfWork.RefreshTokenReader.GetActiveTokensAsync(domainEvent.UserId, cancellationToken);
+                    await _refreshTokenReadRepository.GetActiveTokensAsync(domainEvent.UserId, cancellationToken);
                 if (refreshTokens != null && refreshTokens.Count > 0)
                 {
                     foreach (var token in refreshTokens)
                     {
                         // Get the token from the write repository to revoke it
                         var refreshToken =
-                            await _unitOfWork.RefreshTokenWriter.GetByIdAsync(token.Id, cancellationToken);
+                            await _refreshTokenWriteRepository.GetByIdAsync(token.Id, cancellationToken);
                         if (refreshToken != null)
                         {
                             refreshToken.Revoke("Account locked out");
-                            await _unitOfWork.RefreshTokenWriter.UpdateAsync(refreshToken, cancellationToken);
+                            await _refreshTokenWriteRepository.UpdateAsync(refreshToken, cancellationToken);
                         }
                     }
 

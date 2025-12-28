@@ -10,6 +10,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Identity.Repositories.Write;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Infrastructure.Identity.Abstractions;
 using Shopilent.Infrastructure.Identity.Configuration;
 using Shopilent.Infrastructure.Identity.Configuration.Extensions;
@@ -28,7 +29,7 @@ public static class IdentityServiceExtensions
         // Configure auth provider settings
         services.Configure<AuthProviderSettings>(configuration.GetSection("Authentication"));
         var authProviderSettings = configuration.GetSection("Authentication").Get<AuthProviderSettings>()
-            ?? new AuthProviderSettings();
+                                   ?? new AuthProviderSettings();
 
         // Validate provider configuration
         if (!authProviderSettings.IsValid(out var errorMessage))
@@ -60,30 +61,30 @@ public static class IdentityServiceExtensions
         {
             // ASP.NET Core Identity configuration
             services.AddIdentity<User, IdentityRole>(options =>
-            {
-                // Password settings (stronger security)
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequireNonAlphanumeric = true;
-                options.Password.RequiredLength = 8;
-                options.Password.RequiredUniqueChars = 1;
+                {
+                    // Password settings (stronger security)
+                    options.Password.RequireDigit = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequireNonAlphanumeric = true;
+                    options.Password.RequiredLength = 8;
+                    options.Password.RequiredUniqueChars = 1;
 
-                // Lockout settings (with time-based reset)
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
-                options.Lockout.MaxFailedAccessAttempts = 5;
-                options.Lockout.AllowedForNewUsers = true;
+                    // Lockout settings (with time-based reset)
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.Lockout.AllowedForNewUsers = true;
 
-                // User settings
-                options.User.RequireUniqueEmail = true;
+                    // User settings
+                    options.User.RequireUniqueEmail = true;
 
-                // SignIn settings
-                options.SignIn.RequireConfirmedEmail = false; // Can be enabled based on requirements
-                options.SignIn.RequireConfirmedPhoneNumber = false;
-            })
-            .AddUserStore<CustomUserStore>()
-            .AddRoleStore<CustomRoleStore>()
-            .AddDefaultTokenProviders();
+                    // SignIn settings
+                    options.SignIn.RequireConfirmedEmail = false; // Can be enabled based on requirements
+                    options.SignIn.RequireConfirmedPhoneNumber = false;
+                })
+                .AddUserStore<CustomUserStore>()
+                .AddRoleStore<CustomRoleStore>()
+                .AddDefaultTokenProviders();
             // Note: Uses ASP.NET Identity's default PasswordHasher<User> (PBKDF2 with 100k+ iterations)
 
             // Register AspNetIdentityAuthenticationService
@@ -99,6 +100,7 @@ public static class IdentityServiceExtensions
                     provider.GetRequiredService<IUnitOfWork>(),
                     provider.GetRequiredService<IUserWriteRepository>(),
                     provider.GetRequiredService<IUserReadRepository>(),
+                    provider.GetRequiredService<IRefreshTokenWriteRepository>(),
                     provider.GetRequiredService<IEmailService>(),
                     provider.GetRequiredService<ILogger<AuthenticationService>>(),
                     provider.GetRequiredService<IOptions<JwtSettings>>(),

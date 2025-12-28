@@ -26,6 +26,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
     private readonly SignInManager<User> _signInManager;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IRefreshTokenWriteRepository _refreshTokenWriteRepository;
     private readonly IJwtService _jwtService;
     private readonly IEmailService _emailService;
     private readonly ILogger<AspNetIdentityAuthenticationService> _logger;
@@ -35,6 +36,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
         SignInManager<User> signInManager,
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
+        IRefreshTokenWriteRepository refreshTokenWriteRepository,
         IJwtService jwtService,
         IEmailService emailService,
         ILogger<AspNetIdentityAuthenticationService> logger)
@@ -43,6 +45,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
         _signInManager = signInManager;
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
+        _refreshTokenWriteRepository = refreshTokenWriteRepository;
         _jwtService = jwtService;
         _emailService = emailService;
         _logger = logger;
@@ -244,7 +247,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
                 return Result.Failure<AuthTokenResponse>(RefreshTokenErrors.EmptyToken);
 
             // Find the refresh token
-            var token = await _unitOfWork.RefreshTokenWriter.GetByTokenAsync(refreshToken, cancellationToken);
+            var token = await _refreshTokenWriteRepository.GetByTokenAsync(refreshToken, cancellationToken);
             if (token == null)
                 return Result.Failure<AuthTokenResponse>(RefreshTokenErrors.NotFound(refreshToken));
 
@@ -307,7 +310,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
                 return Result.Failure(RefreshTokenErrors.EmptyToken);
 
             // Find the refresh token
-            var token = await _unitOfWork.RefreshTokenWriter.GetByTokenAsync(refreshToken, cancellationToken);
+            var token = await _refreshTokenWriteRepository.GetByTokenAsync(refreshToken, cancellationToken);
             if (token == null)
                 return Result.Failure(RefreshTokenErrors.NotFound(refreshToken));
 

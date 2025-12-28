@@ -19,6 +19,7 @@ public class AuthenticationService : IAuthenticationService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
     private readonly IUserReadRepository _userReadRepository;
+    private readonly IRefreshTokenWriteRepository _refreshTokenWriteRepository;
     private readonly IJwtService _jwtService;
     private readonly IPasswordService _passwordService;
     private readonly IEmailService _emailService;
@@ -28,6 +29,7 @@ public class AuthenticationService : IAuthenticationService
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
         IUserReadRepository userReadRepository,
+        IRefreshTokenWriteRepository refreshTokenWriteRepository,
         IJwtService jwtService,
         IPasswordService passwordService,
         IEmailService emailService,
@@ -36,6 +38,7 @@ public class AuthenticationService : IAuthenticationService
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
         _userReadRepository = userReadRepository;
+        _refreshTokenWriteRepository = refreshTokenWriteRepository;
         _jwtService = jwtService;
         _passwordService = passwordService;
         _emailService = emailService;
@@ -116,9 +119,7 @@ public class AuthenticationService : IAuthenticationService
 
                 return Result.Success(new AuthTokenResponse()
                 {
-                    User = user,
-                    AccessToken = accessToken,
-                    RefreshToken = refreshToken,
+                    User = user, AccessToken = accessToken, RefreshToken = refreshToken,
                 });
             }
             catch (Exception ex)
@@ -233,9 +234,7 @@ public class AuthenticationService : IAuthenticationService
 
                 return Result.Success(new AuthTokenResponse()
                 {
-                    User = user,
-                    AccessToken = accessToken,
-                    RefreshToken = refreshToken,
+                    User = user, AccessToken = accessToken, RefreshToken = refreshToken,
                 });
             }
             catch (Exception ex)
@@ -273,7 +272,7 @@ public class AuthenticationService : IAuthenticationService
             try
             {
                 // Find the refresh token
-                var token = await _unitOfWork.RefreshTokenWriter.GetByTokenAsync(refreshToken, cancellationToken);
+                var token = await _refreshTokenWriteRepository.GetByTokenAsync(refreshToken, cancellationToken);
                 if (token == null)
                     return Result.Failure<AuthTokenResponse>(RefreshTokenErrors.NotFound(refreshToken));
 
@@ -318,9 +317,7 @@ public class AuthenticationService : IAuthenticationService
                 // return Result.Success((user, accessToken, newRefreshToken));
                 return Result.Success(new AuthTokenResponse()
                 {
-                    User = user,
-                    AccessToken = accessToken,
-                    RefreshToken = newRefreshToken,
+                    User = user, AccessToken = accessToken, RefreshToken = newRefreshToken,
                 });
             }
             catch (Exception ex)
@@ -357,7 +354,7 @@ public class AuthenticationService : IAuthenticationService
             try
             {
                 // Find the refresh token
-                var token = await _unitOfWork.RefreshTokenWriter.GetByTokenAsync(refreshToken, cancellationToken);
+                var token = await _refreshTokenWriteRepository.GetByTokenAsync(refreshToken, cancellationToken);
                 if (token == null)
                     return Result.Failure(RefreshTokenErrors.NotFound(refreshToken));
 
