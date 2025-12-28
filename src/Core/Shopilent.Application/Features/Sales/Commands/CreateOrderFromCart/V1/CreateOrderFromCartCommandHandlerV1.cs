@@ -26,6 +26,7 @@ internal sealed class
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
     private readonly IAddressWriteRepository _addressWriteRepository;
+    private readonly IProductWriteRepository _productWriteRepository;
     private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly IOrderWriteRepository _orderWriteRepository;
     private readonly ICartWriteRepository _cartWriteRepository;
@@ -36,6 +37,7 @@ internal sealed class
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
         IAddressWriteRepository addressWriteRepository,
+        IProductWriteRepository productWriteRepository,
         IProductVariantWriteRepository productVariantWriteRepository,
         IOrderWriteRepository orderWriteRepository,
         ICartWriteRepository cartWriteRepository,
@@ -45,6 +47,7 @@ internal sealed class
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
         _addressWriteRepository = addressWriteRepository;
+        _productWriteRepository = productWriteRepository;
         _productVariantWriteRepository = productVariantWriteRepository;
         _orderWriteRepository = orderWriteRepository;
         _cartWriteRepository = cartWriteRepository;
@@ -149,7 +152,7 @@ internal sealed class
             foreach (var cartItem in cart.Items)
             {
                 // Get the actual product for current pricing and details
-                var product = await _unitOfWork.ProductWriter.GetByIdAsync(cartItem.ProductId, cancellationToken);
+                var product = await _productWriteRepository.GetByIdAsync(cartItem.ProductId, cancellationToken);
                 if (product == null)
                     return Result.Failure<CreateOrderFromCartResponseV1>(ProductErrors.NotFound(cartItem.ProductId));
 

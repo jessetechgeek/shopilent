@@ -33,6 +33,8 @@ public class DeleteAttributeCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockProductWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockProductReadRepository.Object);
         services.AddTransient(sp => Fixture.MockAttributeWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<DeleteAttributeCommandHandlerV1>());

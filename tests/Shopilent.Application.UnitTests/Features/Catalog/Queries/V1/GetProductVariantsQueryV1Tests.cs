@@ -13,7 +13,7 @@ public class GetProductVariantsQueryV1Tests : TestBase
     public GetProductVariantsQueryV1Tests()
     {
         _handler = new GetProductVariantsQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockProductReadRepository.Object,
             Fixture.MockProductVariantReadRepository.Object,
             Fixture.GetLogger<GetProductVariantsQueryHandlerV1>());
     }

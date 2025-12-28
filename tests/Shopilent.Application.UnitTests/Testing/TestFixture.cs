@@ -126,9 +126,6 @@ public class TestFixture
         MockAddressReadRepository = new Mock<IAddressReadRepository>();
         MockAddressWriteRepository = new Mock<IAddressWriteRepository>();
 
-        // Set up Unit of Work to return the repository mocks
-        SetupUnitOfWorkRepositories();
-
         // Setup default save changes to return success
         MockUnitOfWork.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
@@ -136,12 +133,6 @@ public class TestFixture
         // Set up basic CurrentUserContext behaviors
         MockCurrentUserContext.Setup(ctx => ctx.UserId).Returns((Guid?)null);
         MockCurrentUserContext.Setup(ctx => ctx.IsAuthenticated).Returns(false);
-    }
-
-    private void SetupUnitOfWorkRepositories()
-    {
-        MockUnitOfWork.Setup(uow => uow.ProductReader).Returns(MockProductReadRepository.Object);
-        MockUnitOfWork.Setup(uow => uow.ProductWriter).Returns(MockProductWriteRepository.Object);
     }
 
     /// <summary>

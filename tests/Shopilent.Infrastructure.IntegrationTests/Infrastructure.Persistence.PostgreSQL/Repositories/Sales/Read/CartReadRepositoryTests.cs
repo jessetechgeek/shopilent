@@ -13,6 +13,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
+    private IProductWriteRepository _productWriteRepository = null!;
     private ICategoryWriteRepository _categoryWriteRepository = null!;
     private ICartWriteRepository _cartWriteRepository = null!;
     private ICartReadRepository _cartReadRepository = null!;
@@ -25,6 +26,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
     {
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
+        _productWriteRepository = GetService<IProductWriteRepository>();
         _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         _cartWriteRepository = GetService<ICartWriteRepository>();
         _cartReadRepository = GetService<ICartReadRepository>();
@@ -197,8 +199,8 @@ public class CartReadRepositoryTests : IntegrationTestBase
 
         var product1 = new ProductBuilder().WithCategory(category).Build();
         var product2 = new ProductBuilder().WithCategory(category).Build();
-        await _unitOfWork.ProductWriter.AddAsync(product1);
-        await _unitOfWork.ProductWriter.AddAsync(product2);
+        await _productWriteRepository.AddAsync(product1);
+        await _productWriteRepository.AddAsync(product2);
         await _unitOfWork.SaveChangesAsync();
 
         // Create carts with items that will be considered "old"
@@ -277,8 +279,8 @@ public class CartReadRepositoryTests : IntegrationTestBase
 
         var product1 = new ProductBuilder().WithCategory(category).Build();
         var product2 = new ProductBuilder().WithCategory(category).Build();
-        await _unitOfWork.ProductWriter.AddAsync(product1);
-        await _unitOfWork.ProductWriter.AddAsync(product2);
+        await _productWriteRepository.AddAsync(product1);
+        await _productWriteRepository.AddAsync(product2);
         await _unitOfWork.SaveChangesAsync();
 
         var cart = new CartBuilder()

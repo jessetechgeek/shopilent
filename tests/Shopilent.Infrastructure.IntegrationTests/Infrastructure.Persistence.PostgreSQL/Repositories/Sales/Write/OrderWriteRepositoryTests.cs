@@ -20,6 +20,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
     private IAddressWriteRepository _addressWriteRepository = null!;
+    private IProductWriteRepository _productWriteRepository = null!;
     private ICategoryWriteRepository _categoryWriteRepository = null!;
     private IOrderWriteRepository _orderWriteRepository = null!;
     private IOrderReadRepository _orderReadRepository = null!;
@@ -34,6 +35,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
         _addressWriteRepository = GetService<IAddressWriteRepository>();
+        _productWriteRepository = GetService<IProductWriteRepository>();
         _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         _orderWriteRepository = GetService<IOrderWriteRepository>();
         _orderReadRepository = GetService<IOrderReadRepository>();
@@ -123,8 +125,8 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var product1 = new ProductBuilder().WithCategory(category).Build();
         var product2 = new ProductBuilder().WithCategory(category).Build();
-        await _unitOfWork.ProductWriter.AddAsync(product1);
-        await _unitOfWork.ProductWriter.AddAsync(product2);
+        await _productWriteRepository.AddAsync(product1);
+        await _productWriteRepository.AddAsync(product2);
         await _unitOfWork.SaveChangesAsync();
 
         var order = new OrderBuilder()
@@ -593,7 +595,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         await _categoryWriteRepository.AddAsync(category);
 
         var product = new ProductBuilder().WithCategory(category).Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var order = new OrderBuilder()

@@ -1,4 +1,5 @@
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Infrastructure.IntegrationTests.Common;
@@ -10,6 +11,8 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class ProductReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IProductWriteRepository _productWriteRepository = null!;
+    private IProductReadRepository _productReadRepository = null!;
     private ICategoryWriteRepository _categoryWriteRepository = null!;
 
     public ProductReadRepositoryTests(IntegrationTestFixture integrationTestFixture) : base(integrationTestFixture)
@@ -19,6 +22,8 @@ public class ProductReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _productWriteRepository = GetService<IProductWriteRepository>();
+        _productReadRepository = GetService<IProductReadRepository>();
         _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         return Task.CompletedTask;
     }
@@ -29,11 +34,11 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetByIdAsync(product.Id);
+        var result = await _productReadRepository.GetByIdAsync(product.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -54,7 +59,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetByIdAsync(nonExistentId);
+        var result = await _productReadRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -66,11 +71,11 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetDetailByIdAsync(product.Id);
+        var result = await _productReadRepository.GetDetailByIdAsync(product.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -93,7 +98,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetDetailByIdAsync(nonExistentId);
+        var result = await _productReadRepository.GetDetailByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -107,11 +112,11 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random()
             .WithSlug($"test-product-{DateTime.Now.Ticks}")
             .Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetBySlugAsync(product.Slug.Value);
+        var result = await _productReadRepository.GetBySlugAsync(product.Slug.Value);
 
         // Assert
         result.Should().NotBeNull();
@@ -128,7 +133,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var nonExistentSlug = "non-existent-product";
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetBySlugAsync(nonExistentSlug);
+        var result = await _productReadRepository.GetBySlugAsync(nonExistentSlug);
 
         // Assert
         result.Should().BeNull();
@@ -142,11 +147,11 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random()
             .WithSlug($"existing-product-{DateTime.Now.Ticks}")
             .Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.SlugExistsAsync(product.Slug.Value);
+        var result = await _productReadRepository.SlugExistsAsync(product.Slug.Value);
 
         // Assert
         result.Should().BeTrue();
@@ -160,7 +165,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var nonExistentSlug = $"non-existent-{DateTime.Now.Ticks}";
 
         // Act
-        var result = await _unitOfWork.ProductReader.SlugExistsAsync(nonExistentSlug);
+        var result = await _productReadRepository.SlugExistsAsync(nonExistentSlug);
 
         // Assert
         result.Should().BeFalse();
@@ -174,11 +179,11 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random()
             .WithSlug($"exclude-test-{DateTime.Now.Ticks}")
             .Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Exclude the current product ID
-        var result = await _unitOfWork.ProductReader.SlugExistsAsync(product.Slug.Value, product.Id);
+        var result = await _productReadRepository.SlugExistsAsync(product.Slug.Value, product.Id);
 
         // Assert
         result.Should().BeFalse();
@@ -193,11 +198,11 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random().Build();
         // Update with SKU - need to access internal method or create via domain method
         product.Update(product.Name, product.Slug, product.BasePrice, product.Description, sku);
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.SkuExistsAsync(sku);
+        var result = await _productReadRepository.SkuExistsAsync(sku);
 
         // Assert
         result.Should().BeTrue();
@@ -211,7 +216,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var nonExistentSku = $"NON-EXISTENT-{DateTime.Now.Ticks}";
 
         // Act
-        var result = await _unitOfWork.ProductReader.SkuExistsAsync(nonExistentSku);
+        var result = await _productReadRepository.SkuExistsAsync(nonExistentSku);
 
         // Assert
         result.Should().BeFalse();
@@ -225,14 +230,15 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var products = ProductBuilder.CreateMany(3);
         foreach (var product in products)
         {
-            await _unitOfWork.ProductWriter.AddAsync(product);
+            await _productWriteRepository.AddAsync(product);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         var productIds = products.Select(p => p.Id).ToList();
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetByIdsAsync(productIds);
+        var result = await _productReadRepository.GetByIdsAsync(productIds);
 
         // Assert
         result.Should().NotBeNull();
@@ -246,13 +252,13 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var ids = new List<Guid> { product.Id, Guid.NewGuid(), Guid.NewGuid() };
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetByIdsAsync(ids);
+        var result = await _productReadRepository.GetByIdsAsync(ids);
 
         // Assert
         result.Should().NotBeNull();
@@ -276,12 +282,13 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         foreach (var product in products)
         {
             product.AddCategory(category);
-            await _unitOfWork.ProductWriter.AddAsync(product);
+            await _productWriteRepository.AddAsync(product);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetByCategoryAsync(category.Id);
+        var result = await _productReadRepository.GetByCategoryAsync(category.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -300,7 +307,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetByCategoryAsync(category.Id);
+        var result = await _productReadRepository.GetByCategoryAsync(category.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -323,13 +330,13 @@ public class ProductReadRepositoryTests : IntegrationTestBase
             .WithName("Different Product")
             .Build();
 
-        await _unitOfWork.ProductWriter.AddAsync(product1);
-        await _unitOfWork.ProductWriter.AddAsync(product2);
-        await _unitOfWork.ProductWriter.AddAsync(product3);
+        await _productWriteRepository.AddAsync(product1);
+        await _productWriteRepository.AddAsync(product2);
+        await _productWriteRepository.AddAsync(product3);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.SearchAsync(searchTerm);
+        var result = await _productReadRepository.SearchAsync(searchTerm);
 
         // Assert
         result.Should().NotBeNull();
@@ -345,11 +352,11 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.SearchAsync("NonExistentSearchTerm");
+        var result = await _productReadRepository.SearchAsync("NonExistentSearchTerm");
 
         // Assert
         result.Should().NotBeNull();
@@ -364,12 +371,13 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var products = ProductBuilder.CreateMany(5);
         foreach (var product in products)
         {
-            await _unitOfWork.ProductWriter.AddAsync(product);
+            await _productWriteRepository.AddAsync(product);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.ListAllAsync();
+        var result = await _productReadRepository.ListAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -384,12 +392,12 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var activeProduct = ProductBuilder.Random().AsActive().Build();
         var inactiveProduct = ProductBuilder.Random().AsInactive().Build();
 
-        await _unitOfWork.ProductWriter.AddAsync(activeProduct);
-        await _unitOfWork.ProductWriter.AddAsync(inactiveProduct);
+        await _productWriteRepository.AddAsync(activeProduct);
+        await _productWriteRepository.AddAsync(inactiveProduct);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductReader.ListAllAsync();
+        var result = await _productReadRepository.ListAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -406,8 +414,9 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var products = ProductBuilder.CreateMany(10);
         foreach (var product in products)
         {
-            await _unitOfWork.ProductWriter.AddAsync(product);
+            await _productWriteRepository.AddAsync(product);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         var request = new DataTableRequest
@@ -415,10 +424,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
             Start = 0,
             Length = 5,
             Search = new DataTableSearch { Value = "" },
-            Order = new List<DataTableOrder>
-            {
-                new DataTableOrder { Column = 0, Dir = "asc" }
-            },
+            Order = new List<DataTableOrder> { new DataTableOrder { Column = 0, Dir = "asc" } },
             Columns = new List<DataTableColumn>
             {
                 new DataTableColumn { Data = "name", Name = "name", Searchable = true, Orderable = true }
@@ -426,7 +432,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         };
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetProductDetailDataTableAsync(request);
+        var result = await _productReadRepository.GetProductDetailDataTableAsync(request);
 
         // Assert
         result.Should().NotBeNull();
@@ -447,8 +453,8 @@ public class ProductReadRepositoryTests : IntegrationTestBase
             .WithName("Regular Product")
             .Build();
 
-        await _unitOfWork.ProductWriter.AddAsync(searchableProduct);
-        await _unitOfWork.ProductWriter.AddAsync(regularProduct);
+        await _productWriteRepository.AddAsync(searchableProduct);
+        await _productWriteRepository.AddAsync(regularProduct);
         await _unitOfWork.SaveChangesAsync();
 
         var request = new DataTableRequest
@@ -456,10 +462,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
             Start = 0,
             Length = 10,
             Search = new DataTableSearch { Value = "Searchable" },
-            Order = new List<DataTableOrder>
-            {
-                new DataTableOrder { Column = 0, Dir = "asc" }
-            },
+            Order = new List<DataTableOrder> { new DataTableOrder { Column = 0, Dir = "asc" } },
             Columns = new List<DataTableColumn>
             {
                 new DataTableColumn { Data = "name", Name = "name", Searchable = true, Orderable = true }
@@ -467,7 +470,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         };
 
         // Act
-        var result = await _unitOfWork.ProductReader.GetProductDetailDataTableAsync(request);
+        var result = await _productReadRepository.GetProductDetailDataTableAsync(request);
 
         // Assert
         result.Should().NotBeNull();

@@ -17,6 +17,7 @@ namespace Shopilent.Application.Features.Catalog.Commands.UpdateProduct.V1;
 internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProductCommandV1, UpdateProductResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductWriteRepository _productWriteRepository;
     private readonly ICategoryWriteRepository _categoryWriteRepository;
     private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
@@ -26,6 +27,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
 
     public UpdateProductCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductWriteRepository productWriteRepository,
         ICategoryWriteRepository categoryWriteRepository,
         IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
@@ -34,6 +36,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
         ILogger<UpdateProductCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productWriteRepository = productWriteRepository;
         _categoryWriteRepository = categoryWriteRepository;
         _attributeWriteRepository = attributeWriteRepository;
         _currentUserContext = currentUserContext;
@@ -48,7 +51,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
         try
         {
             // Get product by ID
-            var product = await _unitOfWork.ProductWriter.GetByIdAsync(request.Id, cancellationToken);
+            var product = await _productWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (product == null)
             {
                 return Result.Failure<UpdateProductResponseV1>(ProductErrors.NotFound(request.Id));
@@ -58,7 +61,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
             if (product.Slug.Value != request.Slug)
             {
                 var slugExists =
-                    await _unitOfWork.ProductWriter.SlugExistsAsync(request.Slug, request.Id, cancellationToken);
+                    await _productWriteRepository.SlugExistsAsync(request.Slug, request.Id, cancellationToken);
                 if (slugExists)
                 {
                     return Result.Failure<UpdateProductResponseV1>(ProductErrors.DuplicateSlug(request.Slug));
@@ -69,7 +72,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
             if (!string.IsNullOrWhiteSpace(request.Sku) && request.Sku != product.Sku)
             {
                 var skuExists =
-                    await _unitOfWork.ProductWriter.SkuExistsAsync(request.Sku, request.Id, cancellationToken);
+                    await _productWriteRepository.SkuExistsAsync(request.Sku, request.Id, cancellationToken);
                 if (skuExists)
                 {
                     return Result.Failure<UpdateProductResponseV1>(ProductErrors.DuplicateSku(request.Sku));

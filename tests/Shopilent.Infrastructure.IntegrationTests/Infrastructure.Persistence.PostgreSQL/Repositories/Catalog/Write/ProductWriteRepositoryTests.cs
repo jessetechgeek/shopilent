@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Exceptions;
@@ -14,6 +15,8 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class ProductWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IProductWriteRepository _productWriteRepository = null!;
+    private IProductReadRepository _productReadRepository = null!;
     private ICategoryWriteRepository _categoryWriteRepository = null!;
 
     public ProductWriteRepositoryTests(IntegrationTestFixture integrationTestFixture) : base(integrationTestFixture)
@@ -23,6 +26,8 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _productWriteRepository = GetService<IProductWriteRepository>();
+        _productReadRepository = GetService<IProductReadRepository>();
         _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         return Task.CompletedTask;
     }
@@ -35,11 +40,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random().Build();
 
         // Act
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.ProductReader.GetByIdAsync(product.Id);
+        var result = await _productReadRepository.GetByIdAsync(product.Id);
         result.Should().NotBeNull();
         result!.Id.Should().Be(product.Id);
         result.Name.Should().Be(product.Name);
@@ -62,11 +67,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.ProductWriter.GetBySlugAsync(uniqueSlug);
+        var result = await _productWriteRepository.GetBySlugAsync(uniqueSlug);
         result.Should().NotBeNull();
         result!.Slug.Value.Should().Be(uniqueSlug);
         result.Name.Should().Be("Unique Product");
@@ -89,11 +94,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
             .WithName("Second Product")
             .Build();
 
-        await _unitOfWork.ProductWriter.AddAsync(product1);
+        await _productWriteRepository.AddAsync(product1);
         await _unitOfWork.SaveChangesAsync();
 
         // Act & Assert
-        await _unitOfWork.ProductWriter.AddAsync(product2);
+        await _productWriteRepository.AddAsync(product2);
         var action = () => _unitOfWork.SaveChangesAsync();
         await action.Should().ThrowAsync<Exception>();
     }
@@ -104,25 +109,25 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var originalProduct = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(originalProduct);
+        await _productWriteRepository.AddAsync(originalProduct);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach original entity to simulate real-world scenario
         DbContext.Entry(originalProduct).State = EntityState.Detached;
 
         // Act - Load fresh entity and update
-        var existingProduct = await _unitOfWork.ProductWriter.GetByIdAsync(originalProduct.Id);
+        var existingProduct = await _productWriteRepository.GetByIdAsync(originalProduct.Id);
         var newName = "Updated Product Name";
         var newDescription = "Updated product description";
         var newPrice = Money.Create(199.99m, "USD").Value;
         var newSlug = Slug.Create($"updated-product-{DateTime.Now.Ticks}").Value;
 
         existingProduct!.Update(newName, newSlug, newPrice, newDescription);
-        await _unitOfWork.ProductWriter.UpdateAsync(existingProduct);
+        await _productWriteRepository.UpdateAsync(existingProduct);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedProduct = await _unitOfWork.ProductReader.GetByIdAsync(originalProduct.Id);
+        var updatedProduct = await _productReadRepository.GetByIdAsync(originalProduct.Id);
         updatedProduct.Should().NotBeNull();
         updatedProduct!.Name.Should().Be(newName);
         updatedProduct.Description.Should().Be(newDescription);
@@ -136,20 +141,20 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().AsActive().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach entity
         DbContext.Entry(product).State = EntityState.Detached;
 
         // Act - Load fresh entity and deactivate
-        var existingProduct = await _unitOfWork.ProductWriter.GetByIdAsync(product.Id);
+        var existingProduct = await _productWriteRepository.GetByIdAsync(product.Id);
         existingProduct!.Deactivate();
-        await _unitOfWork.ProductWriter.UpdateAsync(existingProduct);
+        await _productWriteRepository.UpdateAsync(existingProduct);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.ProductReader.GetByIdAsync(product.Id);
+        var result = await _productReadRepository.GetByIdAsync(product.Id);
         result.Should().NotBeNull();
         result!.IsActive.Should().BeFalse();
     }
@@ -160,15 +165,15 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        await _unitOfWork.ProductWriter.DeleteAsync(product);
+        await _productWriteRepository.DeleteAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.ProductReader.GetByIdAsync(product.Id);
+        var result = await _productReadRepository.GetByIdAsync(product.Id);
         result.Should().BeNull();
     }
 
@@ -178,11 +183,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductWriter.GetByIdAsync(product.Id);
+        var result = await _productWriteRepository.GetByIdAsync(product.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -199,7 +204,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.ProductWriter.GetByIdAsync(nonExistentId);
+        var result = await _productWriteRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -214,11 +219,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random()
             .WithSlug(uniqueSlug)
             .Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductWriter.GetBySlugAsync(uniqueSlug);
+        var result = await _productWriteRepository.GetBySlugAsync(uniqueSlug);
 
         // Assert
         result.Should().NotBeNull();
@@ -234,7 +239,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var nonExistentSlug = "non-existent-slug";
 
         // Act
-        var result = await _unitOfWork.ProductWriter.GetBySlugAsync(nonExistentSlug);
+        var result = await _productWriteRepository.GetBySlugAsync(nonExistentSlug);
 
         // Assert
         result.Should().BeNull();
@@ -247,11 +252,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var slug = $"slug-exists-test-{DateTime.Now.Ticks}";
         var product = ProductBuilder.Random().WithSlug(slug).Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductWriter.SlugExistsAsync(slug);
+        var result = await _productWriteRepository.SlugExistsAsync(slug);
 
         // Assert
         result.Should().BeTrue();
@@ -265,7 +270,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var nonExistentSlug = $"non-existent-{DateTime.Now.Ticks}";
 
         // Act
-        var result = await _unitOfWork.ProductWriter.SlugExistsAsync(nonExistentSlug);
+        var result = await _productWriteRepository.SlugExistsAsync(nonExistentSlug);
 
         // Assert
         result.Should().BeFalse();
@@ -278,11 +283,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var slug = $"exclude-test-{DateTime.Now.Ticks}";
         var product = ProductBuilder.Random().WithSlug(slug).Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Exclude the current product ID
-        var result = await _unitOfWork.ProductWriter.SlugExistsAsync(slug, product.Id);
+        var result = await _productWriteRepository.SlugExistsAsync(slug, product.Id);
 
         // Assert
         result.Should().BeFalse();
@@ -296,11 +301,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var sku = $"SKU-{DateTime.Now.Ticks}";
         var product = ProductBuilder.Random().Build();
         product.Update(product.Name, product.Slug, product.BasePrice, product.Description, sku);
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.ProductWriter.SkuExistsAsync(sku);
+        var result = await _productWriteRepository.SkuExistsAsync(sku);
 
         // Assert
         result.Should().BeTrue();
@@ -314,7 +319,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var nonExistentSku = $"NON-EXISTENT-{DateTime.Now.Ticks}";
 
         // Act
-        var result = await _unitOfWork.ProductWriter.SkuExistsAsync(nonExistentSku);
+        var result = await _productWriteRepository.SkuExistsAsync(nonExistentSku);
 
         // Assert
         result.Should().BeFalse();
@@ -328,11 +333,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var sku = $"EXCLUDE-SKU-{DateTime.Now.Ticks}";
         var product = ProductBuilder.Random().Build();
         product.Update(product.Name, product.Slug, product.BasePrice, product.Description, sku);
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Exclude the current product ID
-        var result = await _unitOfWork.ProductWriter.SkuExistsAsync(sku, product.Id);
+        var result = await _productWriteRepository.SkuExistsAsync(sku, product.Id);
 
         // Assert
         result.Should().BeFalse();
@@ -345,7 +350,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
         var productId = product.Id;
 
@@ -356,9 +361,12 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var unitOfWork1 = scope1.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var unitOfWork2 = scope2.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
+        var productWriteRepository1 = scope1.ServiceProvider.GetRequiredService<IProductWriteRepository>();
+        var productWriteRepository2 = scope2.ServiceProvider.GetRequiredService<IProductWriteRepository>();
+
         // Get two instances of the same product from separate contexts
-        var product1 = await unitOfWork1.ProductWriter.GetByIdAsync(productId);
-        var product2 = await unitOfWork2.ProductWriter.GetByIdAsync(productId);
+        var product1 = await productWriteRepository1.GetByIdAsync(productId);
+        var product2 = await productWriteRepository2.GetByIdAsync(productId);
 
         product1.Should().NotBeNull();
         product2.Should().NotBeNull();
@@ -375,11 +383,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
 
         // Act & Assert
         // First update should succeed
-        await unitOfWork1.ProductWriter.UpdateAsync(product1);
+        await productWriteRepository1.UpdateAsync(product1);
         await unitOfWork1.SaveChangesAsync();
 
         // Second update should fail due to concurrency conflict
-        await unitOfWork2.ProductWriter.UpdateAsync(product2);
+        await productWriteRepository2.UpdateAsync(product2);
 
         var action = () => unitOfWork2.SaveChangesAsync();
         await action.Should().ThrowAsync<ConcurrencyConflictException>();
@@ -400,15 +408,15 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random().Build();
         product.AddCategory(category);
 
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.ProductReader.GetByIdAsync(product.Id);
+        var result = await _productReadRepository.GetByIdAsync(product.Id);
         result.Should().NotBeNull();
 
         // Verify category association through product lookup
-        var productsInCategory = await _unitOfWork.ProductReader.GetByCategoryAsync(category.Id);
+        var productsInCategory = await _productReadRepository.GetByCategoryAsync(category.Id);
         productsInCategory.Should().Contain(p => p.Id == product.Id);
     }
 
@@ -418,22 +426,22 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach entity
         DbContext.Entry(product).State = EntityState.Detached;
 
         // Act - Load fresh entity and update metadata
-        var existingProduct = await _unitOfWork.ProductWriter.GetByIdAsync(product.Id);
+        var existingProduct = await _productWriteRepository.GetByIdAsync(product.Id);
         existingProduct!.UpdateMetadata("brand", "TestBrand");
         existingProduct.UpdateMetadata("color", "Blue");
 
-        await _unitOfWork.ProductWriter.UpdateAsync(existingProduct);
+        await _productWriteRepository.UpdateAsync(existingProduct);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.ProductWriter.GetByIdAsync(product.Id);
+        var result = await _productWriteRepository.GetByIdAsync(product.Id);
         result.Should().NotBeNull();
         result!.Metadata.Should().ContainKey("brand");
         result.Metadata["brand"].Should().Be("TestBrand");

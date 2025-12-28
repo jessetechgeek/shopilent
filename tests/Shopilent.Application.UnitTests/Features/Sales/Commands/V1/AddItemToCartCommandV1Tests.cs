@@ -1,4 +1,6 @@
+using System.Reflection;
 using FluentAssertions;
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -23,6 +25,7 @@ public class AddItemToCartCommandV1Tests : TestBase
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
         services.AddTransient(sp => Fixture.MockUserWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockProductWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockProductVariantWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCartWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
@@ -35,7 +38,7 @@ public class AddItemToCartCommandV1Tests : TestBase
         });
 
         // Register validator
-        services.AddTransient<FluentValidation.IValidator<AddItemToCartCommandV1>, AddItemToCartCommandValidatorV1>();
+        services.AddTransient<IValidator<AddItemToCartCommandV1>, AddItemToCartCommandValidatorV1>();
 
         var provider = services.BuildServiceProvider();
         _mediator = provider.GetRequiredService<IMediator>();
@@ -310,8 +313,8 @@ public class AddItemToCartCommandV1Tests : TestBase
     private static void SetPrivatePropertyValue(object obj, string propertyName, object value)
     {
         var propertyInfo = obj.GetType().GetProperty(propertyName,
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
-            System.Reflection.BindingFlags.Instance);
+            BindingFlags.Public | BindingFlags.NonPublic |
+            BindingFlags.Instance);
         propertyInfo?.SetValue(obj, value);
     }
 }

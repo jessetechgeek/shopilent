@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Shopilent.Application.Abstractions.Persistence;
-using Shopilent.Domain.Catalog.Repositories.Read;
-using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Context;
 
@@ -14,17 +12,9 @@ public class UnitOfWork : IUnitOfWork
     private IDbContextTransaction _transaction;
     private bool _disposed;
 
-    public IProductReadRepository ProductReader { get; }
-    public IProductWriteRepository ProductWriter { get; }
-
-    public UnitOfWork(
-        ApplicationDbContext dbContext,
-        IProductReadRepository productRepository,
-        IProductWriteRepository productWriter)
+    public UnitOfWork(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
-        ProductReader = productRepository;
-        ProductWriter = productWriter;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -13,6 +13,7 @@ namespace Shopilent.Application.Features.Catalog.Commands.DeleteCategory.V1;
 internal sealed class DeleteCategoryCommandHandlerV1 : ICommandHandler<DeleteCategoryCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductReadRepository _productReadRepository;
     private readonly ICategoryWriteRepository _categoryWriteRepository;
     private readonly ICategoryReadRepository _categoryReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
@@ -20,12 +21,14 @@ internal sealed class DeleteCategoryCommandHandlerV1 : ICommandHandler<DeleteCat
 
     public DeleteCategoryCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductReadRepository productReadRepository,
         ICategoryWriteRepository categoryWriteRepository,
         ICategoryReadRepository categoryReadRepository,
         ICurrentUserContext currentUserContext,
         ILogger<DeleteCategoryCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productReadRepository = productReadRepository;
         _categoryWriteRepository = categoryWriteRepository;
         _categoryReadRepository = categoryReadRepository;
         _currentUserContext = currentUserContext;
@@ -52,7 +55,7 @@ internal sealed class DeleteCategoryCommandHandlerV1 : ICommandHandler<DeleteCat
             }
 
             // Check if category has associated products
-            var products = await _unitOfWork.ProductReader.GetByCategoryAsync(request.Id, cancellationToken);
+            var products = await _productReadRepository.GetByCategoryAsync(request.Id, cancellationToken);
             if (products != null && products.Count > 0)
             {
                 return Result.Failure(CategoryErrors.CannotDeleteWithProducts);

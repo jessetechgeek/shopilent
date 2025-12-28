@@ -1,39 +1,41 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.Search;
-
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Catalog.Events;
+using Shopilent.Domain.Catalog.Repositories.Read;
 
 namespace Shopilent.Application.Features.Catalog.EventHandlers;
 
-internal sealed class ProductVariantUpdatedSearchEventHandler : INotificationHandler<DomainEventNotification<ProductVariantUpdatedEvent>>
+internal sealed class
+    ProductVariantUpdatedSearchEventHandler : INotificationHandler<DomainEventNotification<ProductVariantUpdatedEvent>>
 {
+    private readonly IProductReadRepository _productReader;
     private readonly ISearchService _searchService;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ProductVariantUpdatedSearchEventHandler> _logger;
 
     public ProductVariantUpdatedSearchEventHandler(
+        IProductReadRepository productReader,
         ISearchService searchService,
-        IUnitOfWork unitOfWork,
         ILogger<ProductVariantUpdatedSearchEventHandler> logger)
     {
+        _productReader = productReader;
         _searchService = searchService;
-        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
-    public async Task Handle(DomainEventNotification<ProductVariantUpdatedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<ProductVariantUpdatedEvent> notification,
+        CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
         try
         {
-            var productDto = await _unitOfWork.ProductReader.GetDetailByIdAsync(domainEvent.ProductId, cancellationToken);
+            var productDto = await _productReader.GetDetailByIdAsync(domainEvent.ProductId, cancellationToken);
             if (productDto is null)
             {
-                _logger.LogWarning("Product {ProductId} not found for search re-indexing after variant update", domainEvent.ProductId);
+                _logger.LogWarning("Product {ProductId} not found for search re-indexing after variant update",
+                    domainEvent.ProductId);
                 return;
             }
 
@@ -42,18 +44,20 @@ internal sealed class ProductVariantUpdatedSearchEventHandler : INotificationHan
 
             if (result.IsFailure)
             {
-                _logger.LogError("Failed to re-index product {ProductId} in search after variant update: {Error}", 
+                _logger.LogError("Failed to re-index product {ProductId} in search after variant update: {Error}",
                     domainEvent.ProductId, result.Error.Message);
             }
             else
             {
-                _logger.LogDebug("Successfully re-indexed product {ProductId} in search after variant {VariantId} update", 
+                _logger.LogDebug(
+                    "Successfully re-indexed product {ProductId} in search after variant {VariantId} update",
                     domainEvent.ProductId, domainEvent.VariantId);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error re-indexing product {ProductId} in search after variant update", domainEvent.ProductId);
+            _logger.LogError(ex, "Error re-indexing product {ProductId} in search after variant update",
+                domainEvent.ProductId);
         }
     }
 }

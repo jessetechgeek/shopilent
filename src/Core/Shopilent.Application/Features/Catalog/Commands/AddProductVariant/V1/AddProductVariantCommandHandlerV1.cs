@@ -19,6 +19,7 @@ internal sealed class
     AddProductVariantCommandHandlerV1 : ICommandHandler<AddProductVariantCommandV1, AddProductVariantResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductWriteRepository _productWriteRepository;
     private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly IAttributeReadRepository _attributeReadRepository;
@@ -29,6 +30,7 @@ internal sealed class
 
     public AddProductVariantCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductWriteRepository productWriteRepository,
         IProductVariantWriteRepository productVariantWriteRepository,
         IAttributeReadRepository attributeReadRepository,
         IAttributeWriteRepository attributeWriteRepository,
@@ -38,6 +40,7 @@ internal sealed class
         ILogger<AddProductVariantCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productWriteRepository = productWriteRepository;
         _productVariantWriteRepository = productVariantWriteRepository;
         _attributeWriteRepository = attributeWriteRepository;
         _attributeReadRepository = attributeReadRepository;
@@ -53,7 +56,7 @@ internal sealed class
         try
         {
             // Get product
-            var product = await _unitOfWork.ProductWriter.GetByIdAsync(request.ProductId, cancellationToken);
+            var product = await _productWriteRepository.GetByIdAsync(request.ProductId, cancellationToken);
             if (product == null)
             {
                 return Result.Failure<AddProductVariantResponseV1>(ProductErrors.NotFound(request.ProductId));

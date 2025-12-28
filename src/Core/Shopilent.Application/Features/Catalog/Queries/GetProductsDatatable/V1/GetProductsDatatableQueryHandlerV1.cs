@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.S3Storage;
 using Shopilent.Domain.Catalog.DTOs;
+using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Domain.Common.Results;
@@ -12,16 +12,16 @@ namespace Shopilent.Application.Features.Catalog.Queries.GetProductsDatatable.V1
 internal sealed class GetProductsDatatableQueryHandlerV1 :
     IQueryHandler<GetProductsDatatableQueryV1, DataTableResult<ProductDatatableDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductReadRepository _productReadRepository;
     private readonly ILogger<GetProductsDatatableQueryHandlerV1> _logger;
     private readonly IS3StorageService _s3StorageService;
 
     public GetProductsDatatableQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        IProductReadRepository productReadRepository,
         ILogger<GetProductsDatatableQueryHandlerV1> logger,
         IS3StorageService s3StorageService)
     {
-        _unitOfWork = unitOfWork;
+        _productReadRepository = productReadRepository;
         _logger = logger;
         _s3StorageService = s3StorageService;
     }
@@ -33,7 +33,7 @@ internal sealed class GetProductsDatatableQueryHandlerV1 :
         try
         {
             // Get detailed datatable results from repository
-            var result = await _unitOfWork.ProductReader.GetProductDetailDataTableAsync(
+            var result = await _productReadRepository.GetProductDetailDataTableAsync(
                 request.Request,
                 cancellationToken);
 

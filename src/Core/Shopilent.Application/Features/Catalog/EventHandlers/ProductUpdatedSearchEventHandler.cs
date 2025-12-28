@@ -1,35 +1,37 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.Search;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Catalog.Events;
+using Shopilent.Domain.Catalog.Repositories.Read;
 
 namespace Shopilent.Application.Features.Catalog.EventHandlers;
 
-internal sealed class ProductUpdatedSearchEventHandler : INotificationHandler<DomainEventNotification<ProductUpdatedEvent>>
+internal sealed class
+    ProductUpdatedSearchEventHandler : INotificationHandler<DomainEventNotification<ProductUpdatedEvent>>
 {
+    private readonly IProductReadRepository _productReader;
     private readonly ISearchService _searchService;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ProductUpdatedSearchEventHandler> _logger;
 
     public ProductUpdatedSearchEventHandler(
+        IProductReadRepository productReader,
         ISearchService searchService,
-        IUnitOfWork unitOfWork,
         ILogger<ProductUpdatedSearchEventHandler> logger)
     {
+        _productReader = productReader;
         _searchService = searchService;
-        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
-    public async Task Handle(DomainEventNotification<ProductUpdatedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<ProductUpdatedEvent> notification,
+        CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
         try
         {
-            var productDto = await _unitOfWork.ProductReader.GetDetailByIdAsync(domainEvent.ProductId, cancellationToken);
+            var productDto = await _productReader.GetDetailByIdAsync(domainEvent.ProductId, cancellationToken);
             if (productDto is null)
             {
                 _logger.LogWarning("Product {ProductId} not found for search re-indexing", domainEvent.ProductId);
@@ -41,7 +43,7 @@ internal sealed class ProductUpdatedSearchEventHandler : INotificationHandler<Do
 
             if (result.IsFailure)
             {
-                _logger.LogError("Failed to re-index product {ProductId} in search: {Error}", 
+                _logger.LogError("Failed to re-index product {ProductId} in search: {Error}",
                     domainEvent.ProductId, result.Error.Message);
             }
             else

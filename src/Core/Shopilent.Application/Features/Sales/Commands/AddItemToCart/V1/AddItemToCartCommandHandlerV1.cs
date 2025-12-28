@@ -19,6 +19,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IProductWriteRepository _productWriteRepository;
     private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly ICartWriteRepository _cartWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
@@ -27,6 +28,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
     public AddItemToCartCommandHandlerV1(
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
+        IProductWriteRepository productWriteRepository,
         IProductVariantWriteRepository productVariantWriteRepository,
         ICartWriteRepository cartWriteRepository,
         ICurrentUserContext currentUserContext,
@@ -34,6 +36,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
     {
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
+        _productWriteRepository = productWriteRepository;
         _productVariantWriteRepository = productVariantWriteRepository;
         _cartWriteRepository = cartWriteRepository;
         _currentUserContext = currentUserContext;
@@ -126,7 +129,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
             }
 
             // Get product
-            var product = await _unitOfWork.ProductWriter.GetByIdAsync(request.ProductId, cancellationToken);
+            var product = await _productWriteRepository.GetByIdAsync(request.ProductId, cancellationToken);
             if (product == null)
             {
                 _logger.LogWarning("Product not found. ProductId: {ProductId}", request.ProductId);

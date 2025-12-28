@@ -17,6 +17,7 @@ namespace Shopilent.Application.Features.Catalog.Commands.CreateProduct.V1;
 internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProductCommandV1, CreateProductResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductWriteRepository _productWriteRepository;
     private readonly ICategoryWriteRepository _categoryWriteRepository;
     private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
@@ -26,6 +27,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
 
     public CreateProductCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductWriteRepository productWriteRepository,
         ICategoryWriteRepository categoryWriteRepository,
         IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
@@ -34,6 +36,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
         ILogger<CreateProductCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productWriteRepository = productWriteRepository;
         _categoryWriteRepository = categoryWriteRepository;
         _attributeWriteRepository = attributeWriteRepository;
         _currentUserContext = currentUserContext;
@@ -48,7 +51,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
         try
         {
             // Check if slug already exists
-            var slugExists = await _unitOfWork.ProductWriter.SlugExistsAsync(request.Slug, null, cancellationToken);
+            var slugExists = await _productWriteRepository.SlugExistsAsync(request.Slug, null, cancellationToken);
             if (slugExists)
             {
                 return Result.Failure<CreateProductResponseV1>(ProductErrors.DuplicateSlug(request.Slug));
@@ -57,7 +60,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
             // Check if SKU exists
             if (!string.IsNullOrWhiteSpace(request.Sku))
             {
-                var skuExists = await _unitOfWork.ProductWriter.SkuExistsAsync(request.Sku, null, cancellationToken);
+                var skuExists = await _productWriteRepository.SkuExistsAsync(request.Sku, null, cancellationToken);
                 if (skuExists)
                 {
                     return Result.Failure<CreateProductResponseV1>(ProductErrors.DuplicateSku(request.Sku));
@@ -199,7 +202,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
             }
 
             // Add to repository
-            await _unitOfWork.ProductWriter.AddAsync(product, cancellationToken);
+            await _productWriteRepository.AddAsync(product, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

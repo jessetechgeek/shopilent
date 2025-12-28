@@ -10,6 +10,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class ProductVariantReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IProductWriteRepository _productWriteRepository = null!;
     private IProductVariantWriteRepository _productVariantWriteRepository = null!;
     private IProductVariantReadRepository _productVariantReadRepository = null!;
 
@@ -22,6 +23,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _productWriteRepository = GetService<IProductWriteRepository>();
         _productVariantWriteRepository = GetService<IProductVariantWriteRepository>();
         _productVariantReadRepository = GetService<IProductVariantReadRepository>();
         return Task.CompletedTask;
@@ -35,7 +37,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
 
         // Create product first
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Create variant
@@ -81,7 +83,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var uniqueSku = $"TEST-SKU-{DateTime.Now.Ticks}";
@@ -122,7 +124,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var existingSku = $"EXISTING-SKU-{DateTime.Now.Ticks}";
@@ -160,7 +162,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var sku = $"EXCLUDE-TEST-{DateTime.Now.Ticks}";
@@ -184,7 +186,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var variants = ProductVariantBuilder.CreateManyForProduct(product, 3);
@@ -212,7 +214,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -245,7 +247,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var inStockVariant1 = ProductVariantBuilder.InStock(10).BuildForProduct(product);
@@ -275,7 +277,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var outOfStockVariant1 = ProductVariantBuilder.OutOfStockVariant().BuildForProduct(product);
@@ -302,8 +304,8 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
 
         var product1 = ProductBuilder.Random().Build();
         var product2 = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product1);
-        await _unitOfWork.ProductWriter.AddAsync(product2);
+        await _productWriteRepository.AddAsync(product1);
+        await _productWriteRepository.AddAsync(product2);
         await _unitOfWork.SaveChangesAsync();
 
         var variants1 = ProductVariantBuilder.CreateManyForProduct(product1, 2);
@@ -333,7 +335,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var activeVariant = ProductVariantBuilder.Random().AsActive().BuildForProduct(product);
@@ -359,7 +361,7 @@ public class ProductVariantReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var product = ProductBuilder.Random().Build();
-        await _unitOfWork.ProductWriter.AddAsync(product);
+        await _productWriteRepository.AddAsync(product);
         await _unitOfWork.SaveChangesAsync();
 
         var highStockVariant = ProductVariantBuilder.InStock(100).BuildForProduct(product);
