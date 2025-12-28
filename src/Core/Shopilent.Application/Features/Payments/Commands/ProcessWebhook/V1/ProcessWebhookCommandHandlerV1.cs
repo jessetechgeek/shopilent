@@ -14,17 +14,19 @@ namespace Shopilent.Application.Features.Payments.Commands.ProcessWebhook.V1;
 internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWebhookCommandV1, WebhookResult>
 {
     private readonly IPaymentService _paymentService;
-
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentWriteRepository _paymentWriteRepository;
     private readonly ILogger<ProcessWebhookCommandHandlerV1> _logger;
 
     public ProcessWebhookCommandHandlerV1(
         IPaymentService paymentService,
         IUnitOfWork unitOfWork,
+        IPaymentWriteRepository paymentWriteRepository,
         ILogger<ProcessWebhookCommandHandlerV1> logger)
     {
         _paymentService = paymentService;
         _unitOfWork = unitOfWork;
+        _paymentWriteRepository = paymentWriteRepository;
         _logger = logger;
     }
 
@@ -149,7 +151,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
     {
         // Find payment by transaction ID
         var payment =
-            await _unitOfWork.PaymentWriter.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
+            await _paymentWriteRepository.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
         if (payment == null)
         {
             _logger.LogWarning("Payment not found for transaction ID {TransactionId}", webhookResult.TransactionId);
@@ -181,7 +183,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
     {
         // Find payment by transaction ID
         var payment =
-            await _unitOfWork.PaymentWriter.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
+            await _paymentWriteRepository.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
         if (payment == null)
         {
             _logger.LogWarning("Payment not found for transaction ID {TransactionId}", webhookResult.TransactionId);
@@ -224,7 +226,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
 
         // For disputes, the transaction ID might be the charge ID, try to find payment
         var payment =
-            await _unitOfWork.PaymentWriter.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
+            await _paymentWriteRepository.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
         if (payment == null)
         {
             _logger.LogWarning("Payment not found for disputed transaction ID {TransactionId}", transactionId);
@@ -243,7 +245,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
     {
         // Find payment by transaction ID
         var payment =
-            await _unitOfWork.PaymentWriter.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
+            await _paymentWriteRepository.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
         if (payment == null)
         {
             _logger.LogWarning("Payment not found for refunded transaction ID {TransactionId}",

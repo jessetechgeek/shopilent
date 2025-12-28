@@ -4,8 +4,6 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
-using Shopilent.Domain.Payments.Repositories.Read;
-using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Domain.Sales.Repositories.Read;
 using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Context;
@@ -30,9 +28,6 @@ public class UnitOfWork : IUnitOfWork
     public IOrderReadRepository OrderReader { get; }
     public IOrderWriteRepository OrderWriter { get; }
 
-    public IPaymentReadRepository PaymentReader { get; }
-    public IPaymentWriteRepository PaymentWriter { get; }
-
     public UnitOfWork(
         ApplicationDbContext dbContext,
         IProductReadRepository productRepository,
@@ -42,9 +37,7 @@ public class UnitOfWork : IUnitOfWork
         ICartReadRepository cartRepository,
         ICartWriteRepository cartWriter,
         IOrderReadRepository orderRepository,
-        IOrderWriteRepository orderWriter,
-        IPaymentReadRepository paymentRepository,
-        IPaymentWriteRepository paymentWriter)
+        IOrderWriteRepository orderWriter)
     {
         _dbContext = dbContext;
         ProductReader = productRepository;
@@ -55,8 +48,6 @@ public class UnitOfWork : IUnitOfWork
         CartWriter = cartWriter;
         OrderReader = orderRepository;
         OrderWriter = orderWriter;
-        PaymentReader = paymentRepository;
-        PaymentWriter = paymentWriter;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -8,13 +8,15 @@ using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Events;
+using Shopilent.Domain.Payments.Repositories.Read;
 
 namespace Shopilent.Application.Features.Payments.EventHandlers;
 
-internal sealed  class PaymentFailedEventHandler : INotificationHandler<DomainEventNotification<PaymentFailedEvent>>
+internal sealed class PaymentFailedEventHandler : INotificationHandler<DomainEventNotification<PaymentFailedEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserReadRepository _userReadRepository;
+    private readonly IPaymentReadRepository _paymentReadRepository;
     private readonly ILogger<PaymentFailedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -23,6 +25,7 @@ internal sealed  class PaymentFailedEventHandler : INotificationHandler<DomainEv
     public PaymentFailedEventHandler(
         IUnitOfWork unitOfWork,
         IUserReadRepository userReadRepository,
+        IPaymentReadRepository paymentReadRepository,
         ILogger<PaymentFailedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
@@ -30,6 +33,7 @@ internal sealed  class PaymentFailedEventHandler : INotificationHandler<DomainEv
     {
         _unitOfWork = unitOfWork;
         _userReadRepository = userReadRepository;
+        _paymentReadRepository = paymentReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -49,7 +53,7 @@ internal sealed  class PaymentFailedEventHandler : INotificationHandler<DomainEv
         try
         {
             // Get payment details
-            var payment = await _unitOfWork.PaymentReader.GetByIdAsync(domainEvent.PaymentId, cancellationToken);
+            var payment = await _paymentReadRepository.GetByIdAsync(domainEvent.PaymentId, cancellationToken);
 
             if (payment != null)
             {

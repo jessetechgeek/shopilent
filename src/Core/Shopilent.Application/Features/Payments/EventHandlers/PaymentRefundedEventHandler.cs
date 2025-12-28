@@ -6,23 +6,27 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Events;
+using Shopilent.Domain.Payments.Repositories.Read;
 
 namespace Shopilent.Application.Features.Payments.EventHandlers;
 
 internal sealed  class PaymentRefundedEventHandler : INotificationHandler<DomainEventNotification<PaymentRefundedEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentReadRepository _paymentReadRepository;
     private readonly ILogger<PaymentRefundedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
 
     public PaymentRefundedEventHandler(
         IUnitOfWork unitOfWork,
+        IPaymentReadRepository paymentReadRepository,
         ILogger<PaymentRefundedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService)
     {
         _unitOfWork = unitOfWork;
+        _paymentReadRepository = paymentReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -40,7 +44,7 @@ internal sealed  class PaymentRefundedEventHandler : INotificationHandler<Domain
         try
         {
             // Get payment details
-            var payment = await _unitOfWork.PaymentReader.GetByIdAsync(domainEvent.PaymentId, cancellationToken);
+            var payment = await _paymentReadRepository.GetByIdAsync(domainEvent.PaymentId, cancellationToken);
 
             if (payment != null)
             {

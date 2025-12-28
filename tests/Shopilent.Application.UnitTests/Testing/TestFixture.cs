@@ -150,10 +150,6 @@ public class TestFixture
         MockUnitOfWork.Setup(uow => uow.CartWriter).Returns(MockCartWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.OrderReader).Returns(MockOrderReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.OrderWriter).Returns(MockOrderWriteRepository.Object);
-
-        // Payment repositories
-        MockUnitOfWork.Setup(uow => uow.PaymentReader).Returns(MockPaymentReadRepository.Object);
-        MockUnitOfWork.Setup(uow => uow.PaymentWriter).Returns(MockPaymentWriteRepository.Object);
     }
 
     /// <summary>

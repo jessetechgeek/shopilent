@@ -24,6 +24,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IPaymentWriteRepository _paymentWriteRepository;
     private readonly IPaymentMethodReadRepository _paymentMethodReadRepository;
     private readonly IPaymentService _paymentService;
     private readonly ICurrentUserContext _currentUserContext;
@@ -32,6 +33,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
     public ProcessOrderPaymentCommandHandlerV1(
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
+        IPaymentWriteRepository paymentWriteRepository,
         IPaymentMethodReadRepository paymentMethodReadRepository,
         IPaymentService paymentService,
         ICurrentUserContext currentUserContext,
@@ -39,6 +41,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
     {
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
+        _paymentWriteRepository = paymentWriteRepository;
         _paymentMethodReadRepository = paymentMethodReadRepository;
         _paymentService = paymentService;
         _currentUserContext = currentUserContext;
@@ -183,7 +186,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
                         var markFailedResult = failedPayment.Value.MarkAsFailed(paymentResult.Error.Message);
                         if (markFailedResult.IsSuccess)
                         {
-                            await _unitOfWork.PaymentWriter.AddAsync(failedPayment.Value, cancellationToken);
+                            await _paymentWriteRepository.AddAsync(failedPayment.Value, cancellationToken);
                             await _unitOfWork.SaveChangesAsync(cancellationToken);
                         }
                     }
@@ -274,7 +277,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
             }
 
             // Save changes
-            await _unitOfWork.PaymentWriter.AddAsync(payment.Value, cancellationToken);
+            await _paymentWriteRepository.AddAsync(payment.Value, cancellationToken);
             if (paymentProcessingResult.Status == PaymentStatus.Succeeded)
             {
                 await _unitOfWork.OrderWriter.UpdateAsync(order, cancellationToken);

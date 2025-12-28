@@ -25,6 +25,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockPaymentWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockPaymentService.Object);
         services.AddTransient(sp => Fixture.GetLogger<ProcessWebhookCommandHandlerV1>());
 
@@ -87,7 +88,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe,
             transactionId);
-        
+
         paymentResult.IsSuccess.Should().BeTrue();
         var payment = paymentResult.Value;
 
@@ -273,7 +274,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe,
             transactionId);
-        
+
         paymentResult.IsSuccess.Should().BeTrue();
         var payment = paymentResult.Value;
 

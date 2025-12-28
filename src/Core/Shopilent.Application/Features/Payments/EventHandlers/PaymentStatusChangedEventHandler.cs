@@ -2,32 +2,34 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Outbox;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Payments.Events;
+using Shopilent.Domain.Payments.Repositories.Read;
 
 namespace Shopilent.Application.Features.Payments.EventHandlers;
 
-internal sealed  class PaymentStatusChangedEventHandler : INotificationHandler<DomainEventNotification<PaymentStatusChangedEvent>>
+internal sealed class
+    PaymentStatusChangedEventHandler : INotificationHandler<DomainEventNotification<PaymentStatusChangedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentReadRepository _paymentReadRepository;
     private readonly ILogger<PaymentStatusChangedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
 
     public PaymentStatusChangedEventHandler(
-        IUnitOfWork unitOfWork,
+        IPaymentReadRepository paymentReadRepository,
         ILogger<PaymentStatusChangedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService)
     {
-        _unitOfWork = unitOfWork;
+        _paymentReadRepository = paymentReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
     }
 
-    public async Task Handle(DomainEventNotification<PaymentStatusChangedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<PaymentStatusChangedEvent> notification,
+        CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
@@ -40,7 +42,7 @@ internal sealed  class PaymentStatusChangedEventHandler : INotificationHandler<D
         try
         {
             // Get payment details
-            var payment = await _unitOfWork.PaymentReader.GetByIdAsync(domainEvent.PaymentId, cancellationToken);
+            var payment = await _paymentReadRepository.GetByIdAsync(domainEvent.PaymentId, cancellationToken);
 
             if (payment != null)
             {
@@ -61,7 +63,8 @@ internal sealed  class PaymentStatusChangedEventHandler : INotificationHandler<D
                 // If user is associated, clear user-related payment caches
                 if (payment.UserId.HasValue)
                 {
-                    await _cacheService.RemoveByPatternAsync($"user-{payment.UserId.Value}-payments", cancellationToken);
+                    await _cacheService.RemoveByPatternAsync($"user-{payment.UserId.Value}-payments",
+                        cancellationToken);
                 }
             }
         }

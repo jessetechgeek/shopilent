@@ -5,6 +5,8 @@ using Shopilent.Application.Features.Payments.Commands.ProcessWebhook.V1;
 using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;
+using Shopilent.Domain.Payments.Repositories.Read;
+using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -16,6 +18,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
     private IMediator _mediator = null!;
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
+    private IPaymentWriteRepository _paymentWriteRepository = null!;
+    private IPaymentReadRepository _paymentReadRepository = null!;
 
     public WebhookWorkflowTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -27,6 +31,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
         _mediator = GetService<IMediator>();
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
+        _paymentWriteRepository = GetService<IPaymentWriteRepository>();
+        _paymentReadRepository = GetService<IPaymentReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -48,7 +54,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
-        await _unitOfWork.PaymentWriter.AddAsync(payment);
+        await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         // Simulate minimal valid Stripe webhook payload for payment success
@@ -100,7 +106,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         result.Value.PaymentStatus.Should().Be(PaymentStatus.Succeeded);
 
         // Verify payment was updated in database
-        var updatedPayment = await _unitOfWork.PaymentReader.GetByExternalReferenceAsync(payment.ExternalReference);
+        var updatedPayment = await _paymentReadRepository.GetByExternalReferenceAsync(payment.ExternalReference);
         updatedPayment.Should().NotBeNull();
         updatedPayment!.Status.Should().Be(PaymentStatus.Succeeded);
     }
@@ -123,7 +129,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
-        await _unitOfWork.PaymentWriter.AddAsync(payment);
+        await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         // Simulate minimal Stripe webhook payload for payment failure
@@ -180,7 +186,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         result.Value.ProcessingMessage.Should().Be("Payment failed: Your card was declined.");
 
         // Verify payment was updated in database
-        var updatedPayment = await _unitOfWork.PaymentReader.GetByExternalReferenceAsync(payment.ExternalReference);
+        var updatedPayment = await _paymentReadRepository.GetByExternalReferenceAsync(payment.ExternalReference);
         updatedPayment.Should().NotBeNull();
         updatedPayment!.Status.Should().Be(PaymentStatus.Failed);
         updatedPayment.ErrorMessage.Should().Be("Payment failed");
@@ -207,7 +213,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
-        await _unitOfWork.PaymentWriter.AddAsync(payment);
+        await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         // Simulate Stripe webhook payload for refund
@@ -256,7 +262,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         result.Value.PaymentStatus.Should().Be(PaymentStatus.Refunded);
 
         // Verify payment was updated in database
-        var updatedPayment = await _unitOfWork.PaymentReader.GetByExternalReferenceAsync(payment.ExternalReference);
+        var updatedPayment = await _paymentReadRepository.GetByExternalReferenceAsync(payment.ExternalReference);
         updatedPayment.Should().NotBeNull();
         updatedPayment!.Status.Should().Be(PaymentStatus.Refunded);
     }
@@ -311,7 +317,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         result.Value.TransactionId.Should().Be("pi_unknown_payment_12345");
 
         // Verify no payment exists with this reference
-        var payment = await _unitOfWork.PaymentReader.GetByExternalReferenceAsync("pi_unknown_payment_12345");
+        var payment = await _paymentReadRepository.GetByExternalReferenceAsync("pi_unknown_payment_12345");
         payment.Should().BeNull();
     }
 
@@ -470,8 +476,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order1);
         await _unitOfWork.OrderWriter.AddAsync(order2);
-        await _unitOfWork.PaymentWriter.AddAsync(payment1);
-        await _unitOfWork.PaymentWriter.AddAsync(payment2);
+        await _paymentWriteRepository.AddAsync(payment1);
+        await _paymentWriteRepository.AddAsync(payment2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Process webhooks concurrently
@@ -577,8 +583,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
         results.Should().OnlyContain(r => r.IsSuccess);
 
         // Verify database updates
-        var updatedPayment1 = await _unitOfWork.PaymentReader.GetByExternalReferenceAsync("pi_concurrent_1");
-        var updatedPayment2 = await _unitOfWork.PaymentReader.GetByExternalReferenceAsync("pi_concurrent_2");
+        var updatedPayment1 = await _paymentReadRepository.GetByExternalReferenceAsync("pi_concurrent_1");
+        var updatedPayment2 = await _paymentReadRepository.GetByExternalReferenceAsync("pi_concurrent_2");
 
         updatedPayment1.Should().NotBeNull();
         updatedPayment1!.Status.Should().Be(PaymentStatus.Succeeded);
@@ -606,7 +612,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
-        await _unitOfWork.PaymentWriter.AddAsync(payment);
+        await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         var webhookPayload = $$"""
@@ -657,7 +663,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         secondResult.IsSuccess.Should().BeTrue();
 
         // Verify payment is still in the correct state (idempotent)
-        var finalPayment = await _unitOfWork.PaymentReader.GetByExternalReferenceAsync(payment.ExternalReference);
+        var finalPayment = await _paymentReadRepository.GetByExternalReferenceAsync(payment.ExternalReference);
         finalPayment.Should().NotBeNull();
         finalPayment!.Status.Should().Be(PaymentStatus.Succeeded);
     }

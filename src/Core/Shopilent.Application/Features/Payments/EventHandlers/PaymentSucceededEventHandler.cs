@@ -5,23 +5,28 @@ using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Payments.Events;
+using Shopilent.Domain.Payments.Repositories.Read;
 
 namespace Shopilent.Application.Features.Payments.EventHandlers;
 
-internal sealed  class PaymentSucceededEventHandler : INotificationHandler<DomainEventNotification<PaymentSucceededEvent>>
+internal sealed class
+    PaymentSucceededEventHandler : INotificationHandler<DomainEventNotification<PaymentSucceededEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentReadRepository _paymentReadRepository;
     private readonly ILogger<PaymentSucceededEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
 
     public PaymentSucceededEventHandler(
         IUnitOfWork unitOfWork,
+        IPaymentReadRepository paymentReadRepository,
         ILogger<PaymentSucceededEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService)
     {
         _unitOfWork = unitOfWork;
+        _paymentReadRepository = paymentReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -39,7 +44,7 @@ internal sealed  class PaymentSucceededEventHandler : INotificationHandler<Domai
         try
         {
             // Get payment details
-            var payment = await _unitOfWork.PaymentReader.GetByIdAsync(domainEvent.PaymentId, cancellationToken);
+            var payment = await _paymentReadRepository.GetByIdAsync(domainEvent.PaymentId, cancellationToken);
 
             if (payment != null)
             {
