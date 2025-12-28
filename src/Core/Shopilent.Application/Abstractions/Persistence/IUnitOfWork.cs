@@ -12,9 +12,6 @@ public interface IUnitOfWork : IDisposable
     IProductReadRepository ProductReader { get; }
     IProductWriteRepository ProductWriter { get; }
 
-    IAttributeReadRepository AttributeReader { get; }
-    IAttributeWriteRepository AttributeWriter { get; }
-
     IProductVariantReadRepository ProductVariantReader { get; }
     IProductVariantWriteRepository ProductVariantWriter { get; }
 

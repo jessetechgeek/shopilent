@@ -1,34 +1,35 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Domain.Common.Results;
 
 namespace Shopilent.Application.Features.Catalog.Queries.GetAttributesDatatable.V1;
 
-internal sealed class GetAttributesDatatableQueryHandlerV1 : 
+internal sealed class GetAttributesDatatableQueryHandlerV1 :
     IQueryHandler<GetAttributesDatatableQueryV1, DataTableResult<AttributeDatatableDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAttributeReadRepository _attributeReadRepository;
     private readonly ILogger<GetAttributesDatatableQueryHandlerV1> _logger;
 
     public GetAttributesDatatableQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        IAttributeReadRepository attributeReadRepository,
         ILogger<GetAttributesDatatableQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _attributeReadRepository = attributeReadRepository;
         _logger = logger;
     }
 
     public async Task<Result<DataTableResult<AttributeDatatableDto>>> Handle(
-        GetAttributesDatatableQueryV1 request, 
+        GetAttributesDatatableQueryV1 request,
         CancellationToken cancellationToken)
     {
         try
         {
-            var result = await _unitOfWork.AttributeReader.GetDataTableAsync(
-                request.Request, 
+            var result = await _attributeReadRepository.GetDataTableAsync(
+                request.Request,
                 cancellationToken);
 
             // Map to AttributeDatatableDto
@@ -59,7 +60,7 @@ internal sealed class GetAttributesDatatableQueryHandlerV1 :
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving attributes for datatable");
-            
+
             return Result.Failure<DataTableResult<AttributeDatatableDto>>(
                 Error.Failure(
                     code: "Attributes.GetDataTableFailed",

@@ -11,7 +11,8 @@ using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Sales.ValueObjects;
 using DomainAttribute = Shopilent.Domain.Catalog.Attribute;
-using CommandProductAttributeDto = Shopilent.Application.Features.Catalog.Commands.AddProductVariant.V1.ProductAttributeDto;
+using CommandProductAttributeDto =
+    Shopilent.Application.Features.Catalog.Commands.AddProductVariant.V1.ProductAttributeDto;
 
 namespace Shopilent.Application.UnitTests.Features.Catalog.Commands.V1;
 
@@ -35,7 +36,8 @@ public class AddProductVariantCommandV1Tests : TestBase
     /// <summary>
     /// Helper method to create an attribute with a specific ID for testing
     /// </summary>
-    private static DomainAttribute CreateAttributeWithId(Guid id, string name, string displayName, AttributeType type, bool isVariant = true)
+    private static DomainAttribute CreateAttributeWithId(Guid id, string name, string displayName, AttributeType type,
+        bool isVariant = true)
     {
         var attribute = DomainAttribute.Create(name, displayName, type).Value;
         var idProperty = typeof(DomainAttribute).GetProperty("Id");
@@ -44,6 +46,7 @@ public class AddProductVariantCommandV1Tests : TestBase
         {
             attribute.SetIsVariant(true);
         }
+
         return attribute;
     }
 
@@ -54,18 +57,23 @@ public class AddProductVariantCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockAttributeWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockAttributeReadRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.MockS3StorageService.Object);
         services.AddTransient(sp => Fixture.MockImageService.Object);
         services.AddTransient(sp => Fixture.GetLogger<AddProductVariantCommandHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<AddProductVariantCommandV1>();
         });
 
         // Register validator
-        services.AddTransient<FluentValidation.IValidator<AddProductVariantCommandV1>, AddProductVariantCommandValidatorV1>();
+        services
+            .AddTransient<FluentValidation.IValidator<AddProductVariantCommandV1>,
+                AddProductVariantCommandValidatorV1>();
 
         // Get the mediator
         var provider = services.BuildServiceProvider();
@@ -166,9 +174,7 @@ public class AddProductVariantCommandV1Tests : TestBase
         var nonExistentProductId = Guid.NewGuid();
         var command = new AddProductVariantCommandV1
         {
-            ProductId = nonExistentProductId,
-            Sku = "VARIANT-002",
-            StockQuantity = 50
+            ProductId = nonExistentProductId, Sku = "VARIANT-002", StockQuantity = 50
         };
 
         // Mock that product doesn't exist
@@ -196,9 +202,7 @@ public class AddProductVariantCommandV1Tests : TestBase
         var productId = Guid.NewGuid();
         var command = new AddProductVariantCommandV1
         {
-            ProductId = productId,
-            Sku = "EXISTING-SKU",
-            StockQuantity = 50
+            ProductId = productId, Sku = "EXISTING-SKU", StockQuantity = 50
         };
 
         // Create existing product
@@ -381,10 +385,7 @@ public class AddProductVariantCommandV1Tests : TestBase
         var productId = Guid.NewGuid();
         var command = new AddProductVariantCommandV1
         {
-            ProductId = productId,
-            Sku = "VARIANT-006",
-            StockQuantity = 10,
-            IsActive = false // Inactive variant
+            ProductId = productId, Sku = "VARIANT-006", StockQuantity = 10, IsActive = false // Inactive variant
         };
 
         // Create existing product
@@ -427,12 +428,7 @@ public class AddProductVariantCommandV1Tests : TestBase
     {
         // Arrange
         var productId = Guid.NewGuid();
-        var command = new AddProductVariantCommandV1
-        {
-            ProductId = productId,
-            Sku = "VARIANT-007",
-            StockQuantity = 30
-        };
+        var command = new AddProductVariantCommandV1 { ProductId = productId, Sku = "VARIANT-007", StockQuantity = 30 };
 
         // Create existing product
         var existingProduct = CreateProductWithId(productId, "Test Product", "test-product", 29.99m);

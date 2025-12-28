@@ -4,14 +4,13 @@ using Shopilent.Application.Abstractions.Imaging;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.S3Storage;
-using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
-using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Sales.ValueObjects;
+using Attribute = Shopilent.Domain.Catalog.Attribute;
 
 namespace Shopilent.Application.Features.Catalog.Commands.UpdateProduct.V1;
 
@@ -19,6 +18,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICategoryWriteRepository _categoryWriteRepository;
+    private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IS3StorageService _s3StorageService;
     private readonly IImageService _imageService;
@@ -27,6 +27,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
     public UpdateProductCommandHandlerV1(
         IUnitOfWork unitOfWork,
         ICategoryWriteRepository categoryWriteRepository,
+        IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
         IS3StorageService s3StorageService,
         IImageService imageService,
@@ -34,6 +35,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
     {
         _unitOfWork = unitOfWork;
         _categoryWriteRepository = categoryWriteRepository;
+        _attributeWriteRepository = attributeWriteRepository;
         _currentUserContext = currentUserContext;
         _s3StorageService = s3StorageService;
         _imageService = imageService;
@@ -158,13 +160,13 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                 // Clear existing attributes and add all the new/updated ones
                 // This is simpler than trying to update individual attributes
                 // First, load all needed attribute entities
-                var attributeEntities = new Dictionary<Guid, Domain.Catalog.Attribute>();
+                var attributeEntities = new Dictionary<Guid, Attribute>();
                 foreach (var attributeDto in request.Attributes)
                 {
                     if (!attributeEntities.ContainsKey(attributeDto.AttributeId))
                     {
                         var attribute =
-                            await _unitOfWork.AttributeWriter.GetByIdAsync(attributeDto.AttributeId, cancellationToken);
+                            await _attributeWriteRepository.GetByIdAsync(attributeDto.AttributeId, cancellationToken);
                         if (attribute != null)
                         {
                             attributeEntities[attributeDto.AttributeId] = attribute;

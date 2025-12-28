@@ -18,6 +18,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICategoryWriteRepository _categoryWriteRepository;
+    private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IS3StorageService _s3StorageService;
     private readonly IImageService _imageService;
@@ -26,6 +27,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
     public CreateProductCommandHandlerV1(
         IUnitOfWork unitOfWork,
         ICategoryWriteRepository categoryWriteRepository,
+        IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
         IS3StorageService s3StorageService,
         IImageService imageService,
@@ -33,6 +35,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
     {
         _unitOfWork = unitOfWork;
         _categoryWriteRepository = categoryWriteRepository;
+        _attributeWriteRepository = attributeWriteRepository;
         _currentUserContext = currentUserContext;
         _s3StorageService = s3StorageService;
         _imageService = imageService;
@@ -129,7 +132,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
                 foreach (var attributeDto in request.Attributes)
                 {
                     var attribute =
-                        await _unitOfWork.AttributeWriter.GetByIdAsync(attributeDto.AttributeId, cancellationToken);
+                        await _attributeWriteRepository.GetByIdAsync(attributeDto.AttributeId, cancellationToken);
                     if (attribute != null)
                     {
                         // Add the attribute to the product

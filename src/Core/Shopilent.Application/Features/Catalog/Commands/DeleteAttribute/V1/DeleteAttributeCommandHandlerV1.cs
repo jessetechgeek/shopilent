@@ -3,6 +3,7 @@ using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -11,15 +12,18 @@ namespace Shopilent.Application.Features.Catalog.Commands.DeleteAttribute.V1;
 internal sealed class DeleteAttributeCommandHandlerV1 : ICommandHandler<DeleteAttributeCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<DeleteAttributeCommandHandlerV1> _logger;
 
     public DeleteAttributeCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<DeleteAttributeCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _attributeWriteRepository = attributeWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -29,7 +33,7 @@ internal sealed class DeleteAttributeCommandHandlerV1 : ICommandHandler<DeleteAt
         try
         {
             // Get attribute by ID
-            var attribute = await _unitOfWork.AttributeWriter.GetByIdAsync(request.Id, cancellationToken);
+            var attribute = await _attributeWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (attribute == null)
             {
                 return Result.Failure(AttributeErrors.NotFound(request.Id));
@@ -53,7 +57,7 @@ internal sealed class DeleteAttributeCommandHandlerV1 : ICommandHandler<DeleteAt
             }
 
             // Delete attribute from repository
-            await _unitOfWork.AttributeWriter.DeleteAsync(attribute, cancellationToken);
+            await _attributeWriteRepository.DeleteAsync(attribute, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -21,9 +21,6 @@ public class UnitOfWork : IUnitOfWork
     public IProductReadRepository ProductReader { get; }
     public IProductWriteRepository ProductWriter { get; }
 
-    public IAttributeReadRepository AttributeReader { get; }
-    public IAttributeWriteRepository AttributeWriter { get; }
-
     public IProductVariantReadRepository ProductVariantReader { get; }
     public IProductVariantWriteRepository ProductVariantWriter { get; }
 
@@ -40,8 +37,6 @@ public class UnitOfWork : IUnitOfWork
         ApplicationDbContext dbContext,
         IProductReadRepository productRepository,
         IProductWriteRepository productWriter,
-        IAttributeReadRepository attributeRepository,
-        IAttributeWriteRepository attributeWriter,
         IProductVariantReadRepository productVariantRepository,
         IProductVariantWriteRepository productVariantWriter,
         ICartReadRepository cartRepository,
@@ -49,15 +44,11 @@ public class UnitOfWork : IUnitOfWork
         IOrderReadRepository orderRepository,
         IOrderWriteRepository orderWriter,
         IPaymentReadRepository paymentRepository,
-        IPaymentWriteRepository paymentWriter,
-        IPaymentMethodReadRepository paymentMethodRepository,
-        IPaymentMethodWriteRepository paymentMethodWriter)
+        IPaymentWriteRepository paymentWriter)
     {
         _dbContext = dbContext;
         ProductReader = productRepository;
         ProductWriter = productWriter;
-        AttributeReader = attributeRepository;
-        AttributeWriter = attributeWriter;
         ProductVariantReader = productVariantRepository;
         ProductVariantWriter = productVariantWriter;
         CartReader = cartRepository;

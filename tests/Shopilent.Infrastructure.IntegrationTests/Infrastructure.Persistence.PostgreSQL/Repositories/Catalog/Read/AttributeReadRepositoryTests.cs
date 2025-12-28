@@ -1,5 +1,7 @@
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Enums;
+using Shopilent.Domain.Catalog.Repositories.Read;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -9,6 +11,8 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class AttributeReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IAttributeWriteRepository _attributeWriteRepository = null!;
+    private IAttributeReadRepository _attributeReadRepository = null!;
 
     public AttributeReadRepositoryTests(IntegrationTestFixture integrationTestFixture) : base(integrationTestFixture)
     {
@@ -17,6 +21,8 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _attributeWriteRepository = GetService<IAttributeWriteRepository>();
+        _attributeReadRepository = GetService<IAttributeReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -26,11 +32,11 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var attribute = AttributeBuilder.Random().Build();
-        await _unitOfWork.AttributeWriter.AddAsync(attribute);
+        await _attributeWriteRepository.AddAsync(attribute);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AttributeReader.GetByIdAsync(attribute.Id);
+        var result = await _attributeReadRepository.GetByIdAsync(attribute.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -51,7 +57,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.AttributeReader.GetByIdAsync(nonExistentId);
+        var result = await _attributeReadRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -67,11 +73,11 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
             .WithName(uniqueName)
             .WithDisplayName("Test Attribute")
             .Build();
-        await _unitOfWork.AttributeWriter.AddAsync(attribute);
+        await _attributeWriteRepository.AddAsync(attribute);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AttributeReader.GetByNameAsync(uniqueName);
+        var result = await _attributeReadRepository.GetByNameAsync(uniqueName);
 
         // Assert
         result.Should().NotBeNull();
@@ -88,7 +94,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         var nonExistentName = "non_existent_attribute";
 
         // Act
-        var result = await _unitOfWork.AttributeReader.GetByNameAsync(nonExistentName);
+        var result = await _attributeReadRepository.GetByNameAsync(nonExistentName);
 
         // Assert
         result.Should().BeNull();
@@ -103,11 +109,11 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         var attribute = AttributeBuilder.Random()
             .WithName(attributeName)
             .Build();
-        await _unitOfWork.AttributeWriter.AddAsync(attribute);
+        await _attributeWriteRepository.AddAsync(attribute);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AttributeReader.NameExistsAsync(attributeName);
+        var result = await _attributeReadRepository.NameExistsAsync(attributeName);
 
         // Assert
         result.Should().BeTrue();
@@ -121,7 +127,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         var nonExistentName = $"non_existent_{DateTime.Now.Ticks}";
 
         // Act
-        var result = await _unitOfWork.AttributeReader.NameExistsAsync(nonExistentName);
+        var result = await _attributeReadRepository.NameExistsAsync(nonExistentName);
 
         // Assert
         result.Should().BeFalse();
@@ -136,11 +142,11 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         var attribute = AttributeBuilder.Random()
             .WithName(attributeName)
             .Build();
-        await _unitOfWork.AttributeWriter.AddAsync(attribute);
+        await _attributeWriteRepository.AddAsync(attribute);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Exclude the current attribute ID
-        var result = await _unitOfWork.AttributeReader.NameExistsAsync(attributeName, attribute.Id);
+        var result = await _attributeReadRepository.NameExistsAsync(attributeName, attribute.Id);
 
         // Assert
         result.Should().BeFalse();
@@ -156,13 +162,13 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         var variantAttribute2 = AttributeBuilder.VariantAttribute("color", AttributeType.Text).Build();
         var regularAttribute = AttributeBuilder.Random().Build(); // Not a variant attribute
 
-        await _unitOfWork.AttributeWriter.AddAsync(variantAttribute1);
-        await _unitOfWork.AttributeWriter.AddAsync(variantAttribute2);
-        await _unitOfWork.AttributeWriter.AddAsync(regularAttribute);
+        await _attributeWriteRepository.AddAsync(variantAttribute1);
+        await _attributeWriteRepository.AddAsync(variantAttribute2);
+        await _attributeWriteRepository.AddAsync(regularAttribute);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AttributeReader.GetVariantAttributesAsync();
+        var result = await _attributeReadRepository.GetVariantAttributesAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -181,12 +187,12 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         var regularAttribute1 = AttributeBuilder.Random().Build();
         var regularAttribute2 = AttributeBuilder.Random().Build();
 
-        await _unitOfWork.AttributeWriter.AddAsync(regularAttribute1);
-        await _unitOfWork.AttributeWriter.AddAsync(regularAttribute2);
+        await _attributeWriteRepository.AddAsync(regularAttribute1);
+        await _attributeWriteRepository.AddAsync(regularAttribute2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AttributeReader.GetVariantAttributesAsync();
+        var result = await _attributeReadRepository.GetVariantAttributesAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -201,12 +207,13 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         var attributes = AttributeBuilder.CreateMany(5);
         foreach (var attribute in attributes)
         {
-            await _unitOfWork.AttributeWriter.AddAsync(attribute);
+            await _attributeWriteRepository.AddAsync(attribute);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AttributeReader.ListAllAsync();
+        var result = await _attributeReadRepository.ListAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -224,13 +231,13 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         var numberAttribute = AttributeBuilder.Random().WithType(AttributeType.Number).Build();
         var booleanAttribute = AttributeBuilder.Random().WithType(AttributeType.Boolean).Build();
 
-        await _unitOfWork.AttributeWriter.AddAsync(textAttribute);
-        await _unitOfWork.AttributeWriter.AddAsync(numberAttribute);
-        await _unitOfWork.AttributeWriter.AddAsync(booleanAttribute);
+        await _attributeWriteRepository.AddAsync(textAttribute);
+        await _attributeWriteRepository.AddAsync(numberAttribute);
+        await _attributeWriteRepository.AddAsync(booleanAttribute);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AttributeReader.ListAllAsync();
+        var result = await _attributeReadRepository.ListAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -255,13 +262,13 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
             .AsSearchable()
             .Build();
 
-        await _unitOfWork.AttributeWriter.AddAsync(filterableAttribute);
-        await _unitOfWork.AttributeWriter.AddAsync(searchableAttribute);
-        await _unitOfWork.AttributeWriter.AddAsync(bothAttribute);
+        await _attributeWriteRepository.AddAsync(filterableAttribute);
+        await _attributeWriteRepository.AddAsync(searchableAttribute);
+        await _attributeWriteRepository.AddAsync(bothAttribute);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var all = await _unitOfWork.AttributeReader.ListAllAsync();
+        var all = await _attributeReadRepository.ListAllAsync();
 
         // Assert
         all.Should().HaveCount(3);

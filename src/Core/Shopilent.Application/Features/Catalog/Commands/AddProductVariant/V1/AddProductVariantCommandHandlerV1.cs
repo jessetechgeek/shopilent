@@ -6,6 +6,8 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.S3Storage;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Read;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
@@ -17,6 +19,8 @@ internal sealed class
     AddProductVariantCommandHandlerV1 : ICommandHandler<AddProductVariantCommandV1, AddProductVariantResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAttributeWriteRepository _attributeWriteRepository;
+    private readonly IAttributeReadRepository _attributeReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IS3StorageService _s3StorageService;
     private readonly IImageService _imageService;
@@ -24,12 +28,16 @@ internal sealed class
 
     public AddProductVariantCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IAttributeReadRepository attributeReadRepository,
+        IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
         IS3StorageService s3StorageService,
         IImageService imageService,
         ILogger<AddProductVariantCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _attributeWriteRepository = attributeWriteRepository;
+        _attributeReadRepository = attributeReadRepository;
         _currentUserContext = currentUserContext;
         _s3StorageService = s3StorageService;
         _imageService = imageService;
@@ -62,7 +70,7 @@ internal sealed class
             foreach (var attributeEntry in request.Attributes)
             {
                 var attribute =
-                    await _unitOfWork.AttributeReader.GetByIdAsync(attributeEntry.AttributeId, cancellationToken);
+                    await _attributeReadRepository.GetByIdAsync(attributeEntry.AttributeId, cancellationToken);
                 if (attribute == null)
                 {
                     return Result.Failure<AddProductVariantResponseV1>(
@@ -129,7 +137,7 @@ internal sealed class
             // Add attribute values
             foreach (var attributeEntry in attributeValues)
             {
-                var attribute = await _unitOfWork.AttributeWriter.GetByIdAsync(attributeEntry.Key, cancellationToken);
+                var attribute = await _attributeWriteRepository.GetByIdAsync(attributeEntry.Key, cancellationToken);
                 var attributeValueResult = variant.AddAttribute(attribute, attributeEntry.Value);
                 if (attributeValueResult.IsFailure)
                 {
