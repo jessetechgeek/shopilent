@@ -17,21 +17,14 @@ public class UnitOfWork : IUnitOfWork
     public IProductReadRepository ProductReader { get; }
     public IProductWriteRepository ProductWriter { get; }
 
-    public IProductVariantReadRepository ProductVariantReader { get; }
-    public IProductVariantWriteRepository ProductVariantWriter { get; }
-
     public UnitOfWork(
         ApplicationDbContext dbContext,
         IProductReadRepository productRepository,
-        IProductWriteRepository productWriter,
-        IProductVariantReadRepository productVariantRepository,
-        IProductVariantWriteRepository productVariantWriter)
+        IProductWriteRepository productWriter)
     {
         _dbContext = dbContext;
         ProductReader = productRepository;
         ProductWriter = productWriter;
-        ProductVariantReader = productVariantRepository;
-        ProductVariantWriter = productVariantWriter;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

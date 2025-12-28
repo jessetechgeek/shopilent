@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.S3Storage;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
@@ -15,6 +16,7 @@ namespace Shopilent.Application.Features.Catalog.Commands.UpdateVariant.V1;
 internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVariantCommandV1, UpdateVariantResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IS3StorageService _s3StorageService;
     private readonly IImageService _imageService;
@@ -22,12 +24,14 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
 
     public UpdateVariantCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductVariantWriteRepository productVariantWriteRepository,
         ICurrentUserContext currentUserContext,
         IS3StorageService s3StorageService,
         IImageService imageService,
         ILogger<UpdateVariantCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productVariantWriteRepository = productVariantWriteRepository;
         _currentUserContext = currentUserContext;
         _s3StorageService = s3StorageService;
         _imageService = imageService;
@@ -40,7 +44,7 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
         try
         {
             // Get variant by ID
-            var variant = await _unitOfWork.ProductVariantWriter.GetByIdAsync(request.Id, cancellationToken);
+            var variant = await _productVariantWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (variant == null)
             {
                 return Result.Failure<UpdateVariantResponseV1>(
@@ -53,7 +57,7 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
             if (!string.IsNullOrEmpty(request.Sku) && request.Sku != variant.Sku)
             {
                 var skuExists =
-                    await _unitOfWork.ProductVariantWriter.SkuExistsAsync(request.Sku, request.Id, cancellationToken);
+                    await _productVariantWriteRepository.SkuExistsAsync(request.Sku, request.Id, cancellationToken);
                 if (skuExists)
                 {
                     return Result.Failure<UpdateVariantResponseV1>(

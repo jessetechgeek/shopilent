@@ -19,6 +19,7 @@ internal sealed class
     AddProductVariantCommandHandlerV1 : ICommandHandler<AddProductVariantCommandV1, AddProductVariantResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly IAttributeReadRepository _attributeReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
@@ -28,6 +29,7 @@ internal sealed class
 
     public AddProductVariantCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductVariantWriteRepository productVariantWriteRepository,
         IAttributeReadRepository attributeReadRepository,
         IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
@@ -36,6 +38,7 @@ internal sealed class
         ILogger<AddProductVariantCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productVariantWriteRepository = productVariantWriteRepository;
         _attributeWriteRepository = attributeWriteRepository;
         _attributeReadRepository = attributeReadRepository;
         _currentUserContext = currentUserContext;
@@ -58,7 +61,7 @@ internal sealed class
 
             // Check if SKU already exists
             if (!string.IsNullOrEmpty(request.Sku) &&
-                await _unitOfWork.ProductVariantWriter.SkuExistsAsync(request.Sku, null, cancellationToken))
+                await _productVariantWriteRepository.SkuExistsAsync(request.Sku, null, cancellationToken))
             {
                 return Result.Failure<AddProductVariantResponseV1>(ProductVariantErrors.DuplicateSku(request.Sku));
             }
@@ -203,7 +206,7 @@ internal sealed class
             }
 
             // Add to repository
-            await _unitOfWork.ProductVariantWriter.AddAsync(variant, cancellationToken);
+            await _productVariantWriteRepository.AddAsync(variant, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -248,7 +251,7 @@ internal sealed class
             return Result.Failure<AddProductVariantResponseV1>(
                 Error.Failure(
                     "ProductVariant.CreateFailed",
-                    Domain.Common.Errors.ErrorType.Failure.ToString()
+                    ErrorType.Failure.ToString()
                 ));
         }
     }

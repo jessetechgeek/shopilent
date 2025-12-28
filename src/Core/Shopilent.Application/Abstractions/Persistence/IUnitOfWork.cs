@@ -8,9 +8,6 @@ public interface IUnitOfWork : IDisposable
     IProductReadRepository ProductReader { get; }
     IProductWriteRepository ProductWriter { get; }
 
-    IProductVariantReadRepository ProductVariantReader { get; }
-    IProductVariantWriteRepository ProductVariantWriter { get; }
-
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);

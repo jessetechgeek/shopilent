@@ -4,6 +4,7 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
@@ -25,6 +26,7 @@ internal sealed class
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
     private readonly IAddressWriteRepository _addressWriteRepository;
+    private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly IOrderWriteRepository _orderWriteRepository;
     private readonly ICartWriteRepository _cartWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
@@ -34,6 +36,7 @@ internal sealed class
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
         IAddressWriteRepository addressWriteRepository,
+        IProductVariantWriteRepository productVariantWriteRepository,
         IOrderWriteRepository orderWriteRepository,
         ICartWriteRepository cartWriteRepository,
         ICurrentUserContext currentUserContext,
@@ -42,6 +45,7 @@ internal sealed class
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
         _addressWriteRepository = addressWriteRepository;
+        _productVariantWriteRepository = productVariantWriteRepository;
         _orderWriteRepository = orderWriteRepository;
         _cartWriteRepository = cartWriteRepository;
         _currentUserContext = currentUserContext;
@@ -153,7 +157,7 @@ internal sealed class
                 ProductVariant variant = null;
                 if (cartItem.VariantId.HasValue)
                 {
-                    variant = await _unitOfWork.ProductVariantWriter.GetByIdAsync(cartItem.VariantId.Value,
+                    variant = await _productVariantWriteRepository.GetByIdAsync(cartItem.VariantId.Value,
                         cancellationToken);
                     if (variant == null)
                         return Result.Failure<CreateOrderFromCartResponseV1>(

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -10,15 +11,18 @@ namespace Shopilent.Application.Features.Catalog.Commands.DeleteProductVariant.V
 internal sealed class DeleteProductVariantCommandHandlerV1 : ICommandHandler<DeleteProductVariantCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<DeleteProductVariantCommandHandlerV1> _logger;
 
     public DeleteProductVariantCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductVariantWriteRepository productVariantWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<DeleteProductVariantCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productVariantWriteRepository = productVariantWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -28,7 +32,7 @@ internal sealed class DeleteProductVariantCommandHandlerV1 : ICommandHandler<Del
         try
         {
             // Get product variant by ID
-            var variant = await _unitOfWork.ProductVariantWriter.GetByIdAsync(request.Id, cancellationToken);
+            var variant = await _productVariantWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (variant == null)
             {
                 return Result.Failure(Error.NotFound(
@@ -39,7 +43,7 @@ internal sealed class DeleteProductVariantCommandHandlerV1 : ICommandHandler<Del
 
             //TODO: Enable Soft Delete
             // Delete the variant
-            await _unitOfWork.ProductVariantWriter.DeleteAsync(variant, cancellationToken);
+            await _productVariantWriteRepository.DeleteAsync(variant, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

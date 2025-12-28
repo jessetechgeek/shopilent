@@ -14,6 +14,7 @@ public class GetProductVariantsQueryV1Tests : TestBase
     {
         _handler = new GetProductVariantsQueryHandlerV1(
             Fixture.MockUnitOfWork.Object,
+            Fixture.MockProductVariantReadRepository.Object,
             Fixture.GetLogger<GetProductVariantsQueryHandlerV1>());
     }
 
@@ -24,12 +25,7 @@ public class GetProductVariantsQueryV1Tests : TestBase
         var productId = Guid.NewGuid();
         var query = new GetProductVariantsQueryV1 { ProductId = productId };
 
-        var productDto = new ProductDto
-        {
-            Id = productId,
-            Name = "Test Product",
-            IsActive = true
-        };
+        var productDto = new ProductDto { Id = productId, Name = "Test Product", IsActive = true };
 
         var variants = new List<ProductVariantDto>
         {
@@ -79,7 +75,7 @@ public class GetProductVariantsQueryV1Tests : TestBase
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Count.Should().Be(3);
-        
+
         var smallVariant = result.Value.First(v => v.Sku == "TP-001-S");
         smallVariant.Sku.Should().Be("TP-001-S");
         smallVariant.Price.Should().Be(99.99m);
@@ -99,12 +95,7 @@ public class GetProductVariantsQueryV1Tests : TestBase
         var productId = Guid.NewGuid();
         var query = new GetProductVariantsQueryV1 { ProductId = productId };
 
-        var productDto = new ProductDto
-        {
-            Id = productId,
-            Name = "Test Product",
-            IsActive = true
-        };
+        var productDto = new ProductDto { Id = productId, Name = "Test Product", IsActive = true };
 
         Fixture.MockProductReadRepository
             .Setup(repo => repo.GetByIdAsync(productId, CancellationToken))
@@ -140,7 +131,7 @@ public class GetProductVariantsQueryV1Tests : TestBase
         result.IsSuccess.Should().BeFalse();
         result.Error.Type.ToString().Should().Be("NotFound");
         result.Error.Message.Should().Contain($"Product with ID {productId} not found");
-        
+
         // Verify that variant repository was not called
         Fixture.MockProductVariantReadRepository.Verify(
             repo => repo.GetByProductIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
@@ -174,12 +165,7 @@ public class GetProductVariantsQueryV1Tests : TestBase
         var productId = Guid.NewGuid();
         var query = new GetProductVariantsQueryV1 { ProductId = productId };
 
-        var productDto = new ProductDto
-        {
-            Id = productId,
-            Name = "Test Product",
-            IsActive = true
-        };
+        var productDto = new ProductDto { Id = productId, Name = "Test Product", IsActive = true };
 
         Fixture.MockProductReadRepository
             .Setup(repo => repo.GetByIdAsync(productId, CancellationToken))

@@ -4,6 +4,7 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity;
@@ -18,6 +19,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly ICartWriteRepository _cartWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<AddItemToCartCommandHandlerV1> _logger;
@@ -25,12 +27,14 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
     public AddItemToCartCommandHandlerV1(
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
+        IProductVariantWriteRepository productVariantWriteRepository,
         ICartWriteRepository cartWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<AddItemToCartCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
+        _productVariantWriteRepository = productVariantWriteRepository;
         _cartWriteRepository = cartWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
@@ -133,7 +137,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
             ProductVariant? variant = null;
             if (request.VariantId.HasValue)
             {
-                variant = await _unitOfWork.ProductVariantWriter.GetByIdAsync(request.VariantId.Value,
+                variant = await _productVariantWriteRepository.GetByIdAsync(request.VariantId.Value,
                     cancellationToken);
                 if (variant == null)
                 {
