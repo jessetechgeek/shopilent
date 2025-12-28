@@ -4,6 +4,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;
+using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
@@ -15,6 +16,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
+    private IPaymentMethodWriteRepository _paymentMethodWriteRepository = null!;
 
     public PaymentWriteRepositoryTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -25,6 +27,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
     {
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
+        _paymentMethodWriteRepository = GetService<IPaymentMethodWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -86,7 +89,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod);
         await _unitOfWork.OrderWriter.AddAsync(order);
 
         // Act

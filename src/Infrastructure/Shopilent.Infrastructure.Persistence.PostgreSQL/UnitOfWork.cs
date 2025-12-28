@@ -36,9 +36,6 @@ public class UnitOfWork : IUnitOfWork
     public IPaymentReadRepository PaymentReader { get; }
     public IPaymentWriteRepository PaymentWriter { get; }
 
-    public IPaymentMethodReadRepository PaymentMethodReader { get; }
-    public IPaymentMethodWriteRepository PaymentMethodWriter { get; }
-
     public UnitOfWork(
         ApplicationDbContext dbContext,
         IProductReadRepository productRepository,
@@ -69,8 +66,6 @@ public class UnitOfWork : IUnitOfWork
         OrderWriter = orderWriter;
         PaymentReader = paymentRepository;
         PaymentWriter = paymentWriter;
-        PaymentMethodReader = paymentMethodRepository;
-        PaymentMethodWriter = paymentMethodWriter;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

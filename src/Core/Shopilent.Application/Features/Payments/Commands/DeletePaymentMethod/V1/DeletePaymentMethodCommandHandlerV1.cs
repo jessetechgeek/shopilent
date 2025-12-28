@@ -4,22 +4,31 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Errors;
+using Shopilent.Domain.Payments.Repositories.Read;
+using Shopilent.Domain.Payments.Repositories.Write;
 
 namespace Shopilent.Application.Features.Payments.Commands.DeletePaymentMethod.V1;
 
 internal sealed class DeletePaymentMethodCommandHandlerV1 : ICommandHandler<DeletePaymentMethodCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentMethodWriteRepository _paymentMethodWriteRepository;
+    private readonly IPaymentMethodReadRepository _paymentMethodReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<DeletePaymentMethodCommandHandlerV1> _logger;
 
     public DeletePaymentMethodCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IPaymentMethodWriteRepository paymentMethodWriteRepository,
+        IPaymentMethodReadRepository paymentMethodReadRepository,
         ICurrentUserContext currentUserContext,
         ILogger<DeletePaymentMethodCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _paymentMethodWriteRepository = paymentMethodWriteRepository;
+        _paymentMethodReadRepository = paymentMethodReadRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -38,7 +47,7 @@ internal sealed class DeletePaymentMethodCommandHandlerV1 : ICommandHandler<Dele
             }
 
             // Get payment method by ID
-            var paymentMethod = await _unitOfWork.PaymentMethodWriter.GetByIdAsync(request.Id, cancellationToken);
+            var paymentMethod = await _paymentMethodWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (paymentMethod == null)
             {
                 return Result.Failure(PaymentMethodErrors.NotFound(request.Id));
@@ -56,8 +65,8 @@ internal sealed class DeletePaymentMethodCommandHandlerV1 : ICommandHandler<Dele
             var activePayments =
                 await _unitOfWork.PaymentReader.GetByPaymentMethodIdAsync(request.Id, cancellationToken);
             if (activePayments != null && activePayments.Any(p =>
-                    p.Status == Domain.Payments.Enums.PaymentStatus.Pending ||
-                    p.Status == Domain.Payments.Enums.PaymentStatus.Processing))
+                    p.Status == PaymentStatus.Pending ||
+                    p.Status == PaymentStatus.Processing))
             {
                 return Result.Failure(Error.Conflict(
                     code: "PaymentMethod.InUse",
@@ -68,7 +77,7 @@ internal sealed class DeletePaymentMethodCommandHandlerV1 : ICommandHandler<Dele
             if (paymentMethod.IsDefault)
             {
                 var userPaymentMethods =
-                    await _unitOfWork.PaymentMethodReader.GetByUserIdAsync(currentUserId.Value, cancellationToken);
+                    await _paymentMethodReadRepository.GetByUserIdAsync(currentUserId.Value, cancellationToken);
                 if (userPaymentMethods.Count > 1)
                 {
                     // User has other payment methods, we should handle setting a new default
@@ -88,7 +97,7 @@ internal sealed class DeletePaymentMethodCommandHandlerV1 : ICommandHandler<Dele
             }
 
             // Delete from repository
-            await _unitOfWork.PaymentMethodWriter.DeleteAsync(paymentMethod, cancellationToken);
+            await _paymentMethodWriteRepository.DeleteAsync(paymentMethod, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

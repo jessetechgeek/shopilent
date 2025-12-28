@@ -18,11 +18,12 @@ public class GetUserPaymentMethodsQueryV1Tests : TestBase
         var services = new ServiceCollection();
 
         // Register handler dependencies
-        services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockPaymentMethodReadRepository.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetUserPaymentMethodsQueryHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<GetUserPaymentMethodsQueryV1>();
         });
 

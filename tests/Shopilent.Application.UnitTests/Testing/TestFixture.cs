@@ -156,8 +156,6 @@ public class TestFixture
         // Payment repositories
         MockUnitOfWork.Setup(uow => uow.PaymentReader).Returns(MockPaymentReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.PaymentWriter).Returns(MockPaymentWriteRepository.Object);
-        MockUnitOfWork.Setup(uow => uow.PaymentMethodReader).Returns(MockPaymentMethodReadRepository.Object);
-        MockUnitOfWork.Setup(uow => uow.PaymentMethodWriter).Returns(MockPaymentMethodWriteRepository.Object);
     }
 
     /// <summary>

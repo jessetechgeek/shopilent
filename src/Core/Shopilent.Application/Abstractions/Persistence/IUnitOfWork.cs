@@ -27,9 +27,6 @@ public interface IUnitOfWork : IDisposable
     IPaymentReadRepository PaymentReader { get; }
     IPaymentWriteRepository PaymentWriter { get; }
 
-    IPaymentMethodReadRepository PaymentMethodReader { get; }
-    IPaymentMethodWriteRepository PaymentMethodWriter { get; }
-
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);

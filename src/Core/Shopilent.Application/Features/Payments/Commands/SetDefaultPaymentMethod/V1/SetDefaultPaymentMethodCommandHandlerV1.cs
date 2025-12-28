@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Payments.Errors;
+using Shopilent.Domain.Payments.Repositories.Write;
 
 namespace Shopilent.Application.Features.Payments.Commands.SetDefaultPaymentMethod.V1;
 
@@ -12,15 +13,18 @@ internal sealed class SetDefaultPaymentMethodCommandHandlerV1 :
     ICommandHandler<SetDefaultPaymentMethodCommandV1, SetDefaultPaymentMethodResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentMethodWriteRepository _paymentMethodWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<SetDefaultPaymentMethodCommandHandlerV1> _logger;
 
     public SetDefaultPaymentMethodCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IPaymentMethodWriteRepository paymentMethodWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<SetDefaultPaymentMethodCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _paymentMethodWriteRepository = paymentMethodWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -33,7 +37,7 @@ internal sealed class SetDefaultPaymentMethodCommandHandlerV1 :
         {
             // Get the payment method
             var paymentMethod =
-                await _unitOfWork.PaymentMethodWriter.GetByIdAsync(request.PaymentMethodId, cancellationToken);
+                await _paymentMethodWriteRepository.GetByIdAsync(request.PaymentMethodId, cancellationToken);
             if (paymentMethod == null)
             {
                 _logger.LogWarning("Payment method not found. ID: {PaymentMethodId}", request.PaymentMethodId);
@@ -77,7 +81,7 @@ internal sealed class SetDefaultPaymentMethodCommandHandlerV1 :
 
             // Get all user's payment methods to unset current default
             var userPaymentMethods =
-                await _unitOfWork.PaymentMethodWriter.GetByUserIdAsync(request.UserId, cancellationToken);
+                await _paymentMethodWriteRepository.GetByUserIdAsync(request.UserId, cancellationToken);
 
             // Unset current default payment method
             var currentDefault = userPaymentMethods.FirstOrDefault(pm => pm.IsDefault);
@@ -92,7 +96,7 @@ internal sealed class SetDefaultPaymentMethodCommandHandlerV1 :
                     return Result.Failure<SetDefaultPaymentMethodResponseV1>(unsetResult.Error);
                 }
 
-                await _unitOfWork.PaymentMethodWriter.UpdateAsync(currentDefault, cancellationToken);
+                await _paymentMethodWriteRepository.UpdateAsync(currentDefault, cancellationToken);
             }
 
             // Set the new default
@@ -105,7 +109,7 @@ internal sealed class SetDefaultPaymentMethodCommandHandlerV1 :
             }
 
             // Update the payment method
-            await _unitOfWork.PaymentMethodWriter.UpdateAsync(paymentMethod, cancellationToken);
+            await _paymentMethodWriteRepository.UpdateAsync(paymentMethod, cancellationToken);
 
             // Save changes using Unit of Work
             await _unitOfWork.SaveChangesAsync(cancellationToken);

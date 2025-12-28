@@ -21,6 +21,7 @@ public class SetDefaultPaymentMethodCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockPaymentMethodWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<SetDefaultPaymentMethodCommandHandlerV1>());
 

@@ -11,6 +11,8 @@ using Shopilent.Domain.Payments;
 using Shopilent.Domain.Payments.DTOs;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Errors;
+using Shopilent.Domain.Payments.Repositories.Read;
+using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Errors;
 using Shopilent.Domain.Sales.ValueObjects;
@@ -22,6 +24,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IPaymentMethodReadRepository _paymentMethodReadRepository;
     private readonly IPaymentService _paymentService;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<ProcessOrderPaymentCommandHandlerV1> _logger;
@@ -29,12 +32,14 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
     public ProcessOrderPaymentCommandHandlerV1(
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
+        IPaymentMethodReadRepository paymentMethodReadRepository,
         IPaymentService paymentService,
         ICurrentUserContext currentUserContext,
         ILogger<ProcessOrderPaymentCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
+        _paymentMethodReadRepository = paymentMethodReadRepository;
         _paymentService = paymentService;
         _currentUserContext = currentUserContext;
         _logger = logger;
@@ -92,7 +97,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
             PaymentMethodDto paymentMethod = null;
             if (request.PaymentMethodId.HasValue)
             {
-                paymentMethod = await _unitOfWork.PaymentMethodReader.GetByIdAsync(
+                paymentMethod = await _paymentMethodReadRepository.GetByIdAsync(
                     request.PaymentMethodId.Value, cancellationToken);
 
                 if (paymentMethod == null)

@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Payments;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.Errors;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments;
@@ -20,6 +21,7 @@ internal sealed class
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IPaymentMethodWriteRepository _paymentMethodWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IPaymentService _paymentService;
     private readonly ILogger<AddPaymentMethodCommandHandlerV1> _logger;
@@ -28,12 +30,14 @@ internal sealed class
     public AddPaymentMethodCommandHandlerV1(
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
+        IPaymentMethodWriteRepository paymentMethodWriteRepository,
         ICurrentUserContext currentUserContext,
         IPaymentService paymentService,
         ILogger<AddPaymentMethodCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
+        _paymentMethodWriteRepository = paymentMethodWriteRepository;
         _currentUserContext = currentUserContext;
         _paymentService = paymentService;
         _logger = logger;
@@ -81,7 +85,7 @@ internal sealed class
 
             // Check if token already exists for this user
             var existingPaymentMethod =
-                await _unitOfWork.PaymentMethodWriter.GetByTokenAsync(request.PaymentMethodToken, cancellationToken);
+                await _paymentMethodWriteRepository.GetByTokenAsync(request.PaymentMethodToken, cancellationToken);
             if (existingPaymentMethod != null && existingPaymentMethod.UserId == userId)
             {
                 _logger.LogWarning("Payment method with token already exists for user: {UserId}", userId);
@@ -126,7 +130,7 @@ internal sealed class
             }
 
             // Add to repository and save using Unit of Work
-            await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod, cancellationToken);
+            await _paymentMethodWriteRepository.AddAsync(paymentMethod, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("Payment method created successfully: {PaymentMethodId} for user: {UserId}",
@@ -161,7 +165,7 @@ internal sealed class
     }
 
     private async Task<Result> HandleCustomerManagementAsync(
-        Domain.Identity.User user,
+        User user,
         PaymentMethod paymentMethod,
         PaymentProvider provider,
         bool skipAttachment = false,
@@ -253,7 +257,7 @@ internal sealed class
     }
 
     private static Result<PaymentMethod> CreateCreditCardPaymentMethod(
-        Domain.Identity.User user,
+        User user,
         AddPaymentMethodCommandV1 request,
         PaymentProvider provider)
     {
@@ -278,7 +282,7 @@ internal sealed class
     }
 
     private static Result<PaymentMethod> CreatePayPalPaymentMethod(
-        Domain.Identity.User user,
+        User user,
         AddPaymentMethodCommandV1 request,
         PaymentProvider provider)
     {
@@ -291,7 +295,7 @@ internal sealed class
 
     private async Task<Result<AddPaymentMethodResponseV1>> HandleSetupIntentCreationAsync(
         AddPaymentMethodCommandV1 request,
-        Domain.Identity.User user,
+        User user,
         PaymentProvider provider,
         CancellationToken cancellationToken)
     {
@@ -383,7 +387,7 @@ internal sealed class
 
     private async Task<Result<AddPaymentMethodResponseV1>> HandleSetupIntentConfirmationAsync(
         AddPaymentMethodCommandV1 request,
-        Domain.Identity.User user,
+        User user,
         PaymentProvider provider,
         CancellationToken cancellationToken)
     {
@@ -446,7 +450,7 @@ internal sealed class
     private async Task<Result<AddPaymentMethodResponseV1>> ProcessSuccessfulSetupIntent(
         SetupIntentResult setupIntentResult,
         AddPaymentMethodCommandV1 request,
-        Domain.Identity.User user,
+        User user,
         PaymentProvider provider,
         CancellationToken cancellationToken)
     {
@@ -523,7 +527,7 @@ internal sealed class
 
     private async Task<Result<AddPaymentMethodResponseV1>> CreatePaymentMethodFromConfirmedSetupIntentAsync(
         AddPaymentMethodCommandV1 request,
-        Domain.Identity.User user,
+        User user,
         PaymentProvider provider,
         CancellationToken cancellationToken)
     {
@@ -531,7 +535,7 @@ internal sealed class
         {
             // Check if token already exists for this user
             var existingPaymentMethod =
-                await _unitOfWork.PaymentMethodWriter.GetByTokenAsync(request.PaymentMethodToken, cancellationToken);
+                await _paymentMethodWriteRepository.GetByTokenAsync(request.PaymentMethodToken, cancellationToken);
             if (existingPaymentMethod != null && existingPaymentMethod.UserId == user.Id)
             {
                 _logger.LogWarning("Payment method with token already exists for user: {UserId}", user.Id);
@@ -577,7 +581,7 @@ internal sealed class
             }
 
             // Add to repository and save using Unit of Work
-            await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod, cancellationToken);
+            await _paymentMethodWriteRepository.AddAsync(paymentMethod, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
@@ -630,6 +634,4 @@ internal sealed class
 
         return merged;
     }
-
-
 }

@@ -22,16 +22,21 @@ public class DeletePaymentMethodCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockPaymentMethodWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockPaymentMethodReadRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<DeletePaymentMethodCommandHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<DeletePaymentMethodCommandV1>();
         });
 
         // Register validator
-        services.AddTransient<FluentValidation.IValidator<DeletePaymentMethodCommandV1>, DeletePaymentMethodCommandValidatorV1>();
+        services
+            .AddTransient<FluentValidation.IValidator<DeletePaymentMethodCommandV1>,
+                DeletePaymentMethodCommandValidatorV1>();
 
         var provider = services.BuildServiceProvider();
         _mediator = provider.GetRequiredService<IMediator>();

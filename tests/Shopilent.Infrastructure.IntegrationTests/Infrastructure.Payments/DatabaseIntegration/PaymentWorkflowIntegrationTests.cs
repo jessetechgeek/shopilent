@@ -3,6 +3,8 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;
+using Shopilent.Domain.Payments.Repositories.Read;
+using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -14,6 +16,8 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
     private IUserReadRepository _userReadRepository = null!;
+    private IPaymentMethodWriteRepository _paymentMethodWriteRepository = null!;
+    private IPaymentMethodReadRepository _paymentMethodReadRepository = null!;
 
     public PaymentWorkflowIntegrationTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -25,6 +29,8 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
         _userReadRepository = GetService<IUserReadRepository>();
+        _paymentMethodWriteRepository = GetService<IPaymentMethodWriteRepository>();
+        _paymentMethodReadRepository = GetService<IPaymentMethodReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -55,7 +61,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 
         // Act - Persist all entities in correct order
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -63,7 +69,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         // Assert - Verify all entities are persisted
         var persistedUser = await _userReadRepository.GetByIdAsync(user.Id);
         var persistedOrder = await _unitOfWork.OrderReader.GetByIdAsync(order.Id);
-        var persistedPaymentMethod = await _unitOfWork.PaymentMethodReader.GetByIdAsync(paymentMethod.Id);
+        var persistedPaymentMethod = await _paymentMethodReadRepository.GetByIdAsync(paymentMethod.Id);
         var persistedPayment = await _unitOfWork.PaymentReader.GetByIdAsync(payment.Id);
 
         persistedUser.Should().NotBeNull();
@@ -226,7 +232,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
