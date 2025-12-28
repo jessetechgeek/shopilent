@@ -15,6 +15,7 @@ using Shopilent.Domain.Payments.Repositories.Read;
 using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Errors;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Application.Features.Payments.Commands.ProcessOrderPayment.V1;
@@ -24,6 +25,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IOrderWriteRepository _orderWriteRepository;
     private readonly IPaymentWriteRepository _paymentWriteRepository;
     private readonly IPaymentMethodReadRepository _paymentMethodReadRepository;
     private readonly IPaymentService _paymentService;
@@ -33,6 +35,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
     public ProcessOrderPaymentCommandHandlerV1(
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
+        IOrderWriteRepository orderWriteRepository,
         IPaymentWriteRepository paymentWriteRepository,
         IPaymentMethodReadRepository paymentMethodReadRepository,
         IPaymentService paymentService,
@@ -41,6 +44,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
     {
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
+        _orderWriteRepository = orderWriteRepository;
         _paymentWriteRepository = paymentWriteRepository;
         _paymentMethodReadRepository = paymentMethodReadRepository;
         _paymentService = paymentService;
@@ -55,7 +59,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
         try
         {
             // Get the order
-            var order = await _unitOfWork.OrderWriter.GetByIdAsync(request.OrderId, cancellationToken);
+            var order = await _orderWriteRepository.GetByIdAsync(request.OrderId, cancellationToken);
             if (order == null)
             {
                 _logger.LogWarning("Order not found. OrderId: {OrderId}", request.OrderId);
@@ -280,7 +284,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
             await _paymentWriteRepository.AddAsync(payment.Value, cancellationToken);
             if (paymentProcessingResult.Status == PaymentStatus.Succeeded)
             {
-                await _unitOfWork.OrderWriter.UpdateAsync(order, cancellationToken);
+                await _orderWriteRepository.UpdateAsync(order, cancellationToken);
             }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);

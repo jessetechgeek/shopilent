@@ -2,32 +2,34 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Outbox;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Sales.Events;
+using Shopilent.Domain.Sales.Repositories.Read;
 
 namespace Shopilent.Application.Features.Sales.EventHandlers;
 
-internal sealed  class OrderItemUpdatedEventHandler : INotificationHandler<DomainEventNotification<OrderItemUpdatedEvent>>
+internal sealed class
+    OrderItemUpdatedEventHandler : INotificationHandler<DomainEventNotification<OrderItemUpdatedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IOrderReadRepository _orderReadRepository;
     private readonly ILogger<OrderItemUpdatedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
 
     public OrderItemUpdatedEventHandler(
-        IUnitOfWork unitOfWork,
+        IOrderReadRepository orderReadRepository,
         ILogger<OrderItemUpdatedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService)
     {
-        _unitOfWork = unitOfWork;
+        _orderReadRepository = orderReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
     }
 
-    public async Task Handle(DomainEventNotification<OrderItemUpdatedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<OrderItemUpdatedEvent> notification,
+        CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
@@ -47,7 +49,7 @@ internal sealed  class OrderItemUpdatedEventHandler : INotificationHandler<Domai
             await _cacheService.RemoveByPatternAsync($"order-items-{domainEvent.OrderId}", cancellationToken);
 
             // Get order details
-            var order = await _unitOfWork.OrderReader.GetDetailByIdAsync(domainEvent.OrderId, cancellationToken);
+            var order = await _orderReadRepository.GetDetailByIdAsync(domainEvent.OrderId, cancellationToken);
 
             if (order != null && order.UserId.HasValue)
             {
@@ -57,7 +59,8 @@ internal sealed  class OrderItemUpdatedEventHandler : INotificationHandler<Domai
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing OrderItemUpdatedEvent for OrderId: {OrderId}, OrderItemId: {OrderItemId}",
+            _logger.LogError(ex,
+                "Error processing OrderItemUpdatedEvent for OrderId: {OrderId}, OrderItemId: {OrderItemId}",
                 domainEvent.OrderId, domainEvent.OrderItemId);
         }
     }

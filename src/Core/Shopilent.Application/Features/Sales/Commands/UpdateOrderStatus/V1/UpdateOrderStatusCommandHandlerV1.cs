@@ -6,31 +6,37 @@ using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Errors;
+using Shopilent.Domain.Sales.Repositories.Write;
 
 namespace Shopilent.Application.Features.Sales.Commands.UpdateOrderStatus.V1;
 
-internal sealed class UpdateOrderStatusCommandHandlerV1 : ICommandHandler<UpdateOrderStatusCommandV1, UpdateOrderStatusResponseV1>
+internal sealed class
+    UpdateOrderStatusCommandHandlerV1 : ICommandHandler<UpdateOrderStatusCommandV1, UpdateOrderStatusResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IOrderWriteRepository _orderWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<UpdateOrderStatusCommandHandlerV1> _logger;
 
     public UpdateOrderStatusCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IOrderWriteRepository orderWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<UpdateOrderStatusCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _orderWriteRepository = orderWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
 
-    public async Task<Result<UpdateOrderStatusResponseV1>> Handle(UpdateOrderStatusCommandV1 request, CancellationToken cancellationToken)
+    public async Task<Result<UpdateOrderStatusResponseV1>> Handle(UpdateOrderStatusCommandV1 request,
+        CancellationToken cancellationToken)
     {
         try
         {
             // Get order by ID
-            var order = await _unitOfWork.OrderWriter.GetByIdAsync(request.Id, cancellationToken);
+            var order = await _orderWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (order == null)
             {
                 return Result.Failure<UpdateOrderStatusResponseV1>(OrderErrors.NotFound(request.Id));
@@ -57,7 +63,8 @@ internal sealed class UpdateOrderStatusCommandHandlerV1 : ICommandHandler<Update
                 var metadataResult = order.UpdateMetadata(metadataKey, request.Reason);
                 if (metadataResult.IsFailure)
                 {
-                    _logger.LogWarning("Failed to update order metadata with reason. Order ID: {OrderId}, Error: {Error}",
+                    _logger.LogWarning(
+                        "Failed to update order metadata with reason. Order ID: {OrderId}, Error: {Error}",
                         request.Id, metadataResult.Error.Message);
                 }
             }
@@ -68,7 +75,7 @@ internal sealed class UpdateOrderStatusCommandHandlerV1 : ICommandHandler<Update
                 order.SetAuditInfo(_currentUserContext.UserId);
             }
 
-            await _unitOfWork.OrderWriter.UpdateAsync(order, cancellationToken);
+            await _orderWriteRepository.UpdateAsync(order, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

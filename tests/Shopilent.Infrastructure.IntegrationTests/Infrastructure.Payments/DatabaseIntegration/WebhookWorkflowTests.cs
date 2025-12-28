@@ -7,6 +7,7 @@ using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Repositories.Read;
 using Shopilent.Domain.Payments.Repositories.Write;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -18,6 +19,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
     private IMediator _mediator = null!;
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
+    private IOrderWriteRepository _orderWriteRepository = null!;
     private IPaymentWriteRepository _paymentWriteRepository = null!;
     private IPaymentReadRepository _paymentReadRepository = null!;
 
@@ -31,6 +33,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         _mediator = GetService<IMediator>();
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
+        _orderWriteRepository = GetService<IOrderWriteRepository>();
         _paymentWriteRepository = GetService<IPaymentWriteRepository>();
         _paymentReadRepository = GetService<IPaymentReadRepository>();
         return Task.CompletedTask;
@@ -53,7 +56,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
@@ -128,7 +131,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
@@ -212,7 +215,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         payment.MarkAsSucceeded("pi_test_webhook_refund");
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
@@ -474,8 +477,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order1);
-        await _unitOfWork.OrderWriter.AddAsync(order2);
+        await _orderWriteRepository.AddAsync(order1);
+        await _orderWriteRepository.AddAsync(order2);
         await _paymentWriteRepository.AddAsync(payment1);
         await _paymentWriteRepository.AddAsync(payment2);
         await _unitOfWork.SaveChangesAsync();
@@ -611,7 +614,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 

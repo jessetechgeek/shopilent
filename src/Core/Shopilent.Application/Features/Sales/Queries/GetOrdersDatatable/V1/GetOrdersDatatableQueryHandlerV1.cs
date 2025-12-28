@@ -1,27 +1,27 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Sales.Repositories.Read;
 
 namespace Shopilent.Application.Features.Sales.Queries.GetOrdersDatatable.V1;
 
 internal sealed class GetOrdersDatatableQueryHandlerV1 :
     IQueryHandler<GetOrdersDatatableQueryV1, DataTableResult<OrderDatatableDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserReadRepository _userReadRepository;
+    private readonly IOrderReadRepository _orderReadRepository;
     private readonly ILogger<GetOrdersDatatableQueryHandlerV1> _logger;
 
     public GetOrdersDatatableQueryHandlerV1(
-        IUnitOfWork unitOfWork,
         IUserReadRepository userReadRepository,
+        IOrderReadRepository orderReadRepository,
         ILogger<GetOrdersDatatableQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
         _userReadRepository = userReadRepository;
+        _orderReadRepository = orderReadRepository;
         _logger = logger;
     }
 
@@ -32,7 +32,7 @@ internal sealed class GetOrdersDatatableQueryHandlerV1 :
         try
         {
             // Get datatable results from repository
-            var result = await _unitOfWork.OrderReader.GetOrderDetailDataTableAsync(
+            var result = await _orderReadRepository.GetOrderDetailDataTableAsync(
                 request.Request,
                 cancellationToken);
 
@@ -54,7 +54,7 @@ internal sealed class GetOrdersDatatableQueryHandlerV1 :
                 }
 
                 // Get items count for this order
-                var orderDetail = await _unitOfWork.OrderReader.GetDetailByIdAsync(
+                var orderDetail = await _orderReadRepository.GetDetailByIdAsync(
                     order.Id,
                     cancellationToken);
 

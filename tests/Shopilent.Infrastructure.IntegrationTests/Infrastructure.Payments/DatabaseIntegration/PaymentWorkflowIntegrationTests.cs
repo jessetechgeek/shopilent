@@ -5,6 +5,8 @@ using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Repositories.Read;
 using Shopilent.Domain.Payments.Repositories.Write;
+using Shopilent.Domain.Sales.Repositories.Read;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -16,6 +18,8 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
     private IUserReadRepository _userReadRepository = null!;
+    private IOrderWriteRepository _orderWriteRepository = null!;
+    private IOrderReadRepository _orderReadRepository = null!;
     private IPaymentWriteRepository _paymentWriteRepository = null!;
     private IPaymentReadRepository _paymentReadRepository = null!;
     private IPaymentMethodWriteRepository _paymentMethodWriteRepository = null!;
@@ -31,6 +35,8 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
         _userReadRepository = GetService<IUserReadRepository>();
+        _orderWriteRepository = GetService<IOrderWriteRepository>();
+        _orderReadRepository = GetService<IOrderReadRepository>();
         _paymentWriteRepository = GetService<IPaymentWriteRepository>();
         _paymentReadRepository = GetService<IPaymentReadRepository>();
         _paymentMethodWriteRepository = GetService<IPaymentMethodWriteRepository>();
@@ -66,13 +72,13 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         // Act - Persist all entities in correct order
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert - Verify all entities are persisted
         var persistedUser = await _userReadRepository.GetByIdAsync(user.Id);
-        var persistedOrder = await _unitOfWork.OrderReader.GetByIdAsync(order.Id);
+        var persistedOrder = await _orderReadRepository.GetByIdAsync(order.Id);
         var persistedPaymentMethod = await _paymentMethodReadRepository.GetByIdAsync(paymentMethod.Id);
         var persistedPayment = await _paymentReadRepository.GetByIdAsync(payment.Id);
 
@@ -106,7 +112,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
@@ -145,7 +151,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
@@ -193,7 +199,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment1);
         await _paymentWriteRepository.AddAsync(payment2);
         await _unitOfWork.SaveChangesAsync();
@@ -237,7 +243,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         // Act
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
@@ -271,9 +277,9 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         failedPayment.MarkAsFailed("Insufficient funds");
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order1);
-        await _unitOfWork.OrderWriter.AddAsync(order2);
-        await _unitOfWork.OrderWriter.AddAsync(order3);
+        await _orderWriteRepository.AddAsync(order1);
+        await _orderWriteRepository.AddAsync(order2);
+        await _orderWriteRepository.AddAsync(order3);
         await _paymentWriteRepository.AddAsync(pendingPayment);
         await _paymentWriteRepository.AddAsync(succeededPayment);
         await _paymentWriteRepository.AddAsync(failedPayment);
@@ -313,7 +319,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
@@ -349,7 +355,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
                 .Build();
 
             payments.Add(payment);
-            await _unitOfWork.OrderWriter.AddAsync(order);
+            await _orderWriteRepository.AddAsync(order);
             await _paymentWriteRepository.AddAsync(payment);
             await _unitOfWork.SaveChangesAsync();
 
@@ -384,7 +390,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         var order = OrderBuilder.Random().WithUser(user).Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Create multiple payments concurrently

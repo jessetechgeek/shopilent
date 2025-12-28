@@ -22,6 +22,7 @@ public class ProcessOrderPartialRefundCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockOrderWriteRepository.Object);
         services.AddTransient(sp => Fixture.GetLogger<ProcessOrderPartialRefundCommandHandlerV1>());
 
         // Set up MediatR

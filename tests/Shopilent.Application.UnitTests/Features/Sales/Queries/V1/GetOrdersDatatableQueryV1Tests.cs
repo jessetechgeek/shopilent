@@ -21,8 +21,8 @@ public class GetOrdersDatatableQueryV1Tests : TestBase
         var services = new ServiceCollection();
 
         // Register handler dependencies
-        services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
         services.AddTransient(sp => Fixture.MockUserReadRepository.Object);
+        services.AddTransient(sp => Fixture.MockOrderReadRepository.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetOrdersDatatableQueryHandlerV1>());
 
         // Set up MediatR

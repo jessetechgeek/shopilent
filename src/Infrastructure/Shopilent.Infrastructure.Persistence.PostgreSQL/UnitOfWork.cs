@@ -4,8 +4,6 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
-using Shopilent.Domain.Sales.Repositories.Read;
-using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Context;
 
 namespace Shopilent.Infrastructure.Persistence.PostgreSQL;
@@ -22,25 +20,18 @@ public class UnitOfWork : IUnitOfWork
     public IProductVariantReadRepository ProductVariantReader { get; }
     public IProductVariantWriteRepository ProductVariantWriter { get; }
 
-    public IOrderReadRepository OrderReader { get; }
-    public IOrderWriteRepository OrderWriter { get; }
-
     public UnitOfWork(
         ApplicationDbContext dbContext,
         IProductReadRepository productRepository,
         IProductWriteRepository productWriter,
         IProductVariantReadRepository productVariantRepository,
-        IProductVariantWriteRepository productVariantWriter,
-        IOrderReadRepository orderRepository,
-        IOrderWriteRepository orderWriter)
+        IProductVariantWriteRepository productVariantWriter)
     {
         _dbContext = dbContext;
         ProductReader = productRepository;
         ProductWriter = productWriter;
         ProductVariantReader = productVariantRepository;
         ProductVariantWriter = productVariantWriter;
-        OrderReader = orderRepository;
-        OrderWriter = orderWriter;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

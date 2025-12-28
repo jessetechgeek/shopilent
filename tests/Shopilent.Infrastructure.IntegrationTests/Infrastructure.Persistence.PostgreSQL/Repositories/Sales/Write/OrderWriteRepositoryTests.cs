@@ -5,6 +5,8 @@ using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales.Enums;
+using Shopilent.Domain.Sales.Repositories.Read;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
@@ -17,8 +19,11 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
-    private ICategoryWriteRepository _categoryWriteRepository = null!;
     private IAddressWriteRepository _addressWriteRepository = null!;
+    private ICategoryWriteRepository _categoryWriteRepository = null!;
+    private IOrderWriteRepository _orderWriteRepository = null!;
+    private IOrderReadRepository _orderReadRepository = null!;
+
 
     public OrderWriteRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
     {
@@ -28,8 +33,10 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
     {
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
-        _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         _addressWriteRepository = GetService<IAddressWriteRepository>();
+        _categoryWriteRepository = GetService<ICategoryWriteRepository>();
+        _orderWriteRepository = GetService<IOrderWriteRepository>();
+        _orderReadRepository = GetService<IOrderReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -55,11 +62,11 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.OrderReader.GetByIdAsync(order.Id);
+        var result = await _orderReadRepository.GetByIdAsync(order.Id);
         result.Should().NotBeNull();
         result!.Id.Should().Be(order.Id);
         result.UserId.Should().Be(user.Id);
@@ -90,11 +97,11 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.OrderReader.GetByIdAsync(order.Id);
+        var result = await _orderReadRepository.GetByIdAsync(order.Id);
         result.Should().NotBeNull();
         result!.Status.Should().Be(OrderStatus.Processing);
         result.PaymentStatus.Should().Be(order.PaymentStatus);
@@ -132,11 +139,11 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         order.AddItem(product2, 1, unitPrice2);
 
         // Act
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.OrderReader.GetDetailByIdAsync(order.Id);
+        var result = await _orderReadRepository.GetDetailByIdAsync(order.Id);
         result.Should().NotBeNull();
         result!.Items.Should().HaveCount(2);
         result.Items.Should().OnlyContain(item => item.Quantity > 0);
@@ -160,22 +167,22 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .WithShippingAddress(shippingAddress)
             .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
 
         // Act - Load fresh entity and update
-        var existingOrder = await _unitOfWork.OrderWriter.GetByIdAsync(order.Id);
+        var existingOrder = await _orderWriteRepository.GetByIdAsync(order.Id);
         existingOrder!.UpdateMetadata("notes", "Test order update");
         existingOrder.UpdateOrderStatus(OrderStatus.Processing);
 
-        await _unitOfWork.OrderWriter.UpdateAsync(existingOrder);
+        await _orderWriteRepository.UpdateAsync(existingOrder);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedOrder = await _unitOfWork.OrderReader.GetDetailByIdAsync(order.Id);
+        var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
         updatedOrder.Should().NotBeNull();
         updatedOrder!.Status.Should().Be(OrderStatus.Processing);
         updatedOrder.Metadata.Should().ContainKey("notes");
@@ -200,21 +207,21 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .WithShippingAddress(shippingAddress)
             .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
 
         // Act - Load fresh entity and mark as paid
-        var existingOrder = await _unitOfWork.OrderWriter.GetByIdAsync(order.Id);
+        var existingOrder = await _orderWriteRepository.GetByIdAsync(order.Id);
         existingOrder!.MarkAsPaid();
 
-        await _unitOfWork.OrderWriter.UpdateAsync(existingOrder);
+        await _orderWriteRepository.UpdateAsync(existingOrder);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedOrder = await _unitOfWork.OrderReader.GetByIdAsync(order.Id);
+        var updatedOrder = await _orderReadRepository.GetByIdAsync(order.Id);
         updatedOrder.Should().NotBeNull();
         updatedOrder!.Status.Should().Be(OrderStatus.Processing);
         updatedOrder.PaymentStatus.Should().Be(existingOrder.PaymentStatus);
@@ -238,22 +245,22 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .AsPaidOrder()
             .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
 
         // Act - Load fresh entity and mark as shipped
-        var existingOrder = await _unitOfWork.OrderWriter.GetByIdAsync(order.Id);
+        var existingOrder = await _orderWriteRepository.GetByIdAsync(order.Id);
         var trackingNumber = "TRACK123456789";
         existingOrder!.MarkAsShipped(trackingNumber);
 
-        await _unitOfWork.OrderWriter.UpdateAsync(existingOrder);
+        await _orderWriteRepository.UpdateAsync(existingOrder);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedOrder = await _unitOfWork.OrderReader.GetDetailByIdAsync(order.Id);
+        var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
         updatedOrder.Should().NotBeNull();
         updatedOrder!.Status.Should().Be(OrderStatus.Shipped);
         updatedOrder.Metadata.Should().ContainKey("trackingNumber");
@@ -277,22 +284,22 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .WithShippingAddress(shippingAddress)
             .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
 
         // Act - Load fresh entity and cancel
-        var existingOrder = await _unitOfWork.OrderWriter.GetByIdAsync(order.Id);
+        var existingOrder = await _orderWriteRepository.GetByIdAsync(order.Id);
         var cancellationReason = "Customer requested cancellation";
         existingOrder!.Cancel(cancellationReason, true); // Use admin privileges for test
 
-        await _unitOfWork.OrderWriter.UpdateAsync(existingOrder);
+        await _orderWriteRepository.UpdateAsync(existingOrder);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedOrder = await _unitOfWork.OrderReader.GetDetailByIdAsync(order.Id);
+        var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
         updatedOrder.Should().NotBeNull();
         updatedOrder!.Status.Should().Be(OrderStatus.Cancelled);
         updatedOrder.Metadata.Should().ContainKey("cancellationReason");
@@ -316,15 +323,15 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .WithShippingAddress(shippingAddress)
             .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        await _unitOfWork.OrderWriter.DeleteAsync(order);
+        await _orderWriteRepository.DeleteAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.OrderReader.GetByIdAsync(order.Id);
+        var result = await _orderReadRepository.GetByIdAsync(order.Id);
         result.Should().BeNull();
     }
 
@@ -345,11 +352,11 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .WithShippingAddress(shippingAddress)
             .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.OrderWriter.GetByIdAsync(order.Id);
+        var result = await _orderWriteRepository.GetByIdAsync(order.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -366,7 +373,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.OrderWriter.GetByIdAsync(nonExistentId);
+        var result = await _orderWriteRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -390,13 +397,13 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var order2 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         var otherUserOrder = new OrderBuilder().WithUser(otherUser).WithShippingAddress(shippingAddress).Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order1);
-        await _unitOfWork.OrderWriter.AddAsync(order2);
-        await _unitOfWork.OrderWriter.AddAsync(otherUserOrder);
+        await _orderWriteRepository.AddAsync(order1);
+        await _orderWriteRepository.AddAsync(order2);
+        await _orderWriteRepository.AddAsync(otherUserOrder);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.OrderWriter.GetByUserIdAsync(user.Id);
+        var result = await _orderWriteRepository.GetByUserIdAsync(user.Id);
 
         // Assert
         result.Should().HaveCount(2);
@@ -418,15 +425,16 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var pendingOrder1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         var pendingOrder2 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
-        var shippedOrder = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).AsShippedOrder().Build();
+        var shippedOrder = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).AsShippedOrder()
+            .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(pendingOrder1);
-        await _unitOfWork.OrderWriter.AddAsync(pendingOrder2);
-        await _unitOfWork.OrderWriter.AddAsync(shippedOrder);
+        await _orderWriteRepository.AddAsync(pendingOrder1);
+        await _orderWriteRepository.AddAsync(pendingOrder2);
+        await _orderWriteRepository.AddAsync(shippedOrder);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.OrderWriter.GetByStatusAsync(OrderStatus.Pending);
+        var result = await _orderWriteRepository.GetByStatusAsync(OrderStatus.Pending);
 
         // Assert
         result.Should().HaveCount(2);
@@ -451,7 +459,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .WithShippingAddress(shippingAddress)
             .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Simulate concurrent access with two service scopes
@@ -461,20 +469,23 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var unitOfWork1 = scope1.ServiceProvider.GetRequiredService<IUnitOfWork>();
         var unitOfWork2 = scope2.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
+        var orderWriteRepository1 = scope1.ServiceProvider.GetRequiredService<IOrderWriteRepository>();
+        var orderWriteRepository2 = scope2.ServiceProvider.GetRequiredService<IOrderWriteRepository>();
+
         // Both contexts load the same entity (same Version initially)
-        var order1 = await unitOfWork1.OrderWriter.GetByIdAsync(order.Id);
-        var order2 = await unitOfWork2.OrderWriter.GetByIdAsync(order.Id);
+        var order1 = await orderWriteRepository1.GetByIdAsync(order.Id);
+        var order2 = await orderWriteRepository2.GetByIdAsync(order.Id);
 
         // Both try to modify the order
         order1!.UpdateMetadata("concurrentTest", "first");
         order2!.UpdateMetadata("concurrentTest", "second");
 
         // First update should succeed (Version incremented)
-        await unitOfWork1.OrderWriter.UpdateAsync(order1);
+        await orderWriteRepository1.UpdateAsync(order1);
         await unitOfWork1.SaveChangesAsync();
 
         // Second update should fail with concurrency exception (stale Version)
-        await unitOfWork2.OrderWriter.UpdateAsync(order2);
+        await orderWriteRepository2.UpdateAsync(order2);
         var action = () => unitOfWork2.SaveChangesAsync();
 
         // Assert
@@ -499,22 +510,22 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .AsPaidOrder()
             .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
 
         // Act - Load fresh entity and process refund
-        var existingOrder = await _unitOfWork.OrderWriter.GetByIdAsync(order.Id);
+        var existingOrder = await _orderWriteRepository.GetByIdAsync(order.Id);
         var refundReason = "Customer not satisfied";
         existingOrder!.ProcessRefund(refundReason);
 
-        await _unitOfWork.OrderWriter.UpdateAsync(existingOrder);
+        await _orderWriteRepository.UpdateAsync(existingOrder);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedOrder = await _unitOfWork.OrderReader.GetDetailByIdAsync(order.Id);
+        var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
         updatedOrder.Should().NotBeNull();
         updatedOrder!.Status.Should().Be(OrderStatus.Cancelled);
         updatedOrder.RefundedAmount.Should().Be(updatedOrder.Total);
@@ -544,23 +555,23 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .AsPaidOrder()
             .Build();
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
 
         // Act - Load fresh entity and process partial refund
-        var existingOrder = await _unitOfWork.OrderWriter.GetByIdAsync(order.Id);
+        var existingOrder = await _orderWriteRepository.GetByIdAsync(order.Id);
         var partialRefundAmount = Money.Create(50.00m, "USD").Value;
         var refundReason = "Partial refund for damaged item";
         existingOrder!.ProcessPartialRefund(partialRefundAmount, refundReason);
 
-        await _unitOfWork.OrderWriter.UpdateAsync(existingOrder);
+        await _orderWriteRepository.UpdateAsync(existingOrder);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedOrder = await _unitOfWork.OrderReader.GetDetailByIdAsync(order.Id);
+        var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
         updatedOrder.Should().NotBeNull();
         updatedOrder!.Status.Should().Be(OrderStatus.Processing); // Should still be processing, not cancelled
         updatedOrder.RefundedAmount.Should().Be(50.00m);
@@ -593,13 +604,13 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var unitPrice = Money.Create(29.99m, "USD").Value;
         order.AddItem(product, 2, unitPrice);
 
-        await _unitOfWork.OrderWriter.AddAsync(order);
+        await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
         var orderItem = order.Items.First();
 
         // Act
-        var result = await _unitOfWork.OrderWriter.GetOrderItemAsync(orderItem.Id);
+        var result = await _orderWriteRepository.GetOrderItemAsync(orderItem.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -618,7 +629,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var nonExistentOrderItemId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.OrderWriter.GetOrderItemAsync(nonExistentOrderItemId);
+        var result = await _orderWriteRepository.GetOrderItemAsync(nonExistentOrderItemId);
 
         // Assert
         result.Should().BeNull();

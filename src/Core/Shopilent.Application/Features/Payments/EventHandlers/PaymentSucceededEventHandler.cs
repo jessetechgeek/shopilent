@@ -6,6 +6,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Payments.Events;
 using Shopilent.Domain.Payments.Repositories.Read;
+using Shopilent.Domain.Sales.Repositories.Write;
 
 namespace Shopilent.Application.Features.Payments.EventHandlers;
 
@@ -13,6 +14,7 @@ internal sealed class
     PaymentSucceededEventHandler : INotificationHandler<DomainEventNotification<PaymentSucceededEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IOrderWriteRepository _orderWriteRepository;
     private readonly IPaymentReadRepository _paymentReadRepository;
     private readonly ILogger<PaymentSucceededEventHandler> _logger;
     private readonly ICacheService _cacheService;
@@ -20,12 +22,14 @@ internal sealed class
 
     public PaymentSucceededEventHandler(
         IUnitOfWork unitOfWork,
+        IOrderWriteRepository orderWriteRepository,
         IPaymentReadRepository paymentReadRepository,
         ILogger<PaymentSucceededEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService)
     {
         _unitOfWork = unitOfWork;
+        _orderWriteRepository = orderWriteRepository;
         _paymentReadRepository = paymentReadRepository;
         _logger = logger;
         _cacheService = cacheService;
@@ -55,7 +59,7 @@ internal sealed class
                 await _cacheService.RemoveByPatternAsync("orders-*", cancellationToken);
 
                 // Get the order to update its status
-                var order = await _unitOfWork.OrderWriter.GetByIdAsync(domainEvent.OrderId, cancellationToken);
+                var order = await _orderWriteRepository.GetByIdAsync(domainEvent.OrderId, cancellationToken);
 
                 if (order != null)
                 {
@@ -64,7 +68,7 @@ internal sealed class
                     if (result.IsSuccess)
                     {
                         // Update the order
-                        await _unitOfWork.OrderWriter.UpdateAsync(order, cancellationToken);
+                        await _orderWriteRepository.UpdateAsync(order, cancellationToken);
 
                         // Save changes to persist the updates
                         await _unitOfWork.SaveChangesAsync(cancellationToken);

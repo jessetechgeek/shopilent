@@ -25,6 +25,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockOrderWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockPaymentWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockPaymentService.Object);
         services.AddTransient(sp => Fixture.GetLogger<ProcessWebhookCommandHandlerV1>());

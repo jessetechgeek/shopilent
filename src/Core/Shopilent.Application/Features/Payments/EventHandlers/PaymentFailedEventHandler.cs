@@ -9,6 +9,7 @@ using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Events;
 using Shopilent.Domain.Payments.Repositories.Read;
+using Shopilent.Domain.Sales.Repositories.Write;
 
 namespace Shopilent.Application.Features.Payments.EventHandlers;
 
@@ -16,6 +17,7 @@ internal sealed class PaymentFailedEventHandler : INotificationHandler<DomainEve
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserReadRepository _userReadRepository;
+    private readonly IOrderWriteRepository _orderWriteRepository;
     private readonly IPaymentReadRepository _paymentReadRepository;
     private readonly ILogger<PaymentFailedEventHandler> _logger;
     private readonly ICacheService _cacheService;
@@ -25,6 +27,7 @@ internal sealed class PaymentFailedEventHandler : INotificationHandler<DomainEve
     public PaymentFailedEventHandler(
         IUnitOfWork unitOfWork,
         IUserReadRepository userReadRepository,
+        IOrderWriteRepository orderWriteRepository,
         IPaymentReadRepository paymentReadRepository,
         ILogger<PaymentFailedEventHandler> logger,
         ICacheService cacheService,
@@ -33,6 +36,7 @@ internal sealed class PaymentFailedEventHandler : INotificationHandler<DomainEve
     {
         _unitOfWork = unitOfWork;
         _userReadRepository = userReadRepository;
+        _orderWriteRepository = orderWriteRepository;
         _paymentReadRepository = paymentReadRepository;
         _logger = logger;
         _cacheService = cacheService;
@@ -64,7 +68,7 @@ internal sealed class PaymentFailedEventHandler : INotificationHandler<DomainEve
                 await _cacheService.RemoveByPatternAsync("orders-*", cancellationToken);
 
                 // Get the order to update its payment status
-                var order = await _unitOfWork.OrderWriter.GetByIdAsync(domainEvent.OrderId, cancellationToken);
+                var order = await _orderWriteRepository.GetByIdAsync(domainEvent.OrderId, cancellationToken);
 
                 if (order != null)
                 {
@@ -73,7 +77,7 @@ internal sealed class PaymentFailedEventHandler : INotificationHandler<DomainEve
                     if (result.IsSuccess)
                     {
                         // Update the order
-                        await _unitOfWork.OrderWriter.UpdateAsync(order, cancellationToken);
+                        await _orderWriteRepository.UpdateAsync(order, cancellationToken);
 
                         // Save changes to persist the updates
                         await _unitOfWork.SaveChangesAsync(cancellationToken);

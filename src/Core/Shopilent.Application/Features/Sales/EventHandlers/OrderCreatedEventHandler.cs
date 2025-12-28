@@ -3,32 +3,32 @@ using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Sales.Events;
+using Shopilent.Domain.Sales.Repositories.Read;
 
 namespace Shopilent.Application.Features.Sales.EventHandlers;
 
 internal sealed class OrderCreatedEventHandler : INotificationHandler<DomainEventNotification<OrderCreatedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserReadRepository _userReadRepository;
+    private readonly IOrderReadRepository _orderReadRepository;
     private readonly ILogger<OrderCreatedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
     private readonly IEmailService _emailService;
 
     public OrderCreatedEventHandler(
-        IUnitOfWork unitOfWork,
         IUserReadRepository userReadRepository,
+        IOrderReadRepository orderReadRepository,
         ILogger<OrderCreatedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
-        _unitOfWork = unitOfWork;
         _userReadRepository = userReadRepository;
+        _orderReadRepository = orderReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -45,7 +45,7 @@ internal sealed class OrderCreatedEventHandler : INotificationHandler<DomainEven
         try
         {
             // Get order details
-            var order = await _unitOfWork.OrderReader.GetDetailByIdAsync(domainEvent.OrderId, cancellationToken);
+            var order = await _orderReadRepository.GetDetailByIdAsync(domainEvent.OrderId, cancellationToken);
 
             if (order != null && order.UserId.HasValue)
             {

@@ -3,39 +3,41 @@ using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Sales.Events;
+using Shopilent.Domain.Sales.Repositories.Read;
 
 namespace Shopilent.Application.Features.Sales.EventHandlers;
 
-internal sealed  class OrderPartiallyRefundedEventHandler : INotificationHandler<DomainEventNotification<OrderPartiallyRefundedEvent>>
+internal sealed class
+    OrderPartiallyRefundedEventHandler : INotificationHandler<DomainEventNotification<OrderPartiallyRefundedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserReadRepository _userReadRepository;
+    private readonly IOrderReadRepository _orderReadRepository;
     private readonly ILogger<OrderPartiallyRefundedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
     private readonly IEmailService _emailService;
 
     public OrderPartiallyRefundedEventHandler(
-        IUnitOfWork unitOfWork,
         IUserReadRepository userReadRepository,
+        IOrderReadRepository orderReadRepository,
         ILogger<OrderPartiallyRefundedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
-        _unitOfWork = unitOfWork;
         _userReadRepository = userReadRepository;
+        _orderReadRepository = orderReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
         _emailService = emailService;
     }
 
-    public async Task Handle(DomainEventNotification<OrderPartiallyRefundedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<OrderPartiallyRefundedEvent> notification,
+        CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
@@ -47,7 +49,7 @@ internal sealed  class OrderPartiallyRefundedEventHandler : INotificationHandler
         try
         {
             // Get order details
-            var order = await _unitOfWork.OrderReader.GetDetailByIdAsync(domainEvent.OrderId, cancellationToken);
+            var order = await _orderReadRepository.GetDetailByIdAsync(domainEvent.OrderId, cancellationToken);
 
             if (order != null)
             {
@@ -62,9 +64,10 @@ internal sealed  class OrderPartiallyRefundedEventHandler : INotificationHandler
                     if (user != null)
                     {
                         string subject = $"Partial Refund Processed for Order #{order.Id}";
-                        string message = $"A partial refund of {domainEvent.Amount.Amount} {domainEvent.Amount.Currency} " +
-                                         $"for order #{order.Id} has been processed. This amount will be " +
-                                         $"credited back to your original payment method.";
+                        string message =
+                            $"A partial refund of {domainEvent.Amount.Amount} {domainEvent.Amount.Currency} " +
+                            $"for order #{order.Id} has been processed. This amount will be " +
+                            $"credited back to your original payment method.";
 
                         if (!string.IsNullOrEmpty(domainEvent.Reason))
                         {
@@ -78,7 +81,8 @@ internal sealed  class OrderPartiallyRefundedEventHandler : INotificationHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing OrderPartiallyRefundedEvent for OrderId: {OrderId}", domainEvent.OrderId);
+            _logger.LogError(ex, "Error processing OrderPartiallyRefundedEvent for OrderId: {OrderId}",
+                domainEvent.OrderId);
         }
     }
 }

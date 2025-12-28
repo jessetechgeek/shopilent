@@ -25,6 +25,7 @@ internal sealed class
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
     private readonly IAddressWriteRepository _addressWriteRepository;
+    private readonly IOrderWriteRepository _orderWriteRepository;
     private readonly ICartWriteRepository _cartWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<CreateOrderFromCartCommandHandlerV1> _logger;
@@ -33,6 +34,7 @@ internal sealed class
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
         IAddressWriteRepository addressWriteRepository,
+        IOrderWriteRepository orderWriteRepository,
         ICartWriteRepository cartWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<CreateOrderFromCartCommandHandlerV1> logger)
@@ -40,6 +42,7 @@ internal sealed class
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
         _addressWriteRepository = addressWriteRepository;
+        _orderWriteRepository = orderWriteRepository;
         _cartWriteRepository = cartWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
@@ -181,7 +184,7 @@ internal sealed class
             }
 
             // Save order
-            await _unitOfWork.OrderWriter.AddAsync(order, cancellationToken);
+            await _orderWriteRepository.AddAsync(order, cancellationToken);
 
             // Clear cart after successful order creation
             var clearCartResult = cart.Clear();

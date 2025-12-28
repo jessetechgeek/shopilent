@@ -1,9 +1,5 @@
 using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
-using Shopilent.Domain.Payments.Repositories.Read;
-using Shopilent.Domain.Payments.Repositories.Write;
-using Shopilent.Domain.Sales.Repositories.Read;
-using Shopilent.Domain.Sales.Repositories.Write;
 
 namespace Shopilent.Application.Abstractions.Persistence;
 
@@ -14,9 +10,6 @@ public interface IUnitOfWork : IDisposable
 
     IProductVariantReadRepository ProductVariantReader { get; }
     IProductVariantWriteRepository ProductVariantWriter { get; }
-
-    IOrderReadRepository OrderReader { get; }
-    IOrderWriteRepository OrderWriter { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
