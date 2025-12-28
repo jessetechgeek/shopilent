@@ -87,7 +87,8 @@ public class ApiIntegrationTestFixture : IAsyncLifetime
                 ["ConnectionStrings:DefaultConnection"] = PostgreSqlContainer.GetConnectionString(),
                 ["ConnectionStrings:PostgreSql"] = PostgreSqlContainer.GetConnectionString(),
                 // Explicitly set empty read replicas array to force using write connection for reads
-                ["ConnectionStrings:PostgreSqlReadReplicas"] = "",
+                ["ConnectionStrings:PostgreSqlReadReplicas:0"] = null,
+                ["ConnectionStrings:PostgreSqlReadReplicas:1"] = null,
                 ["Redis:ConnectionString"] = RedisContainer.GetConnectionString(),
                 ["Redis:InstanceName"] = "ApiIntegrationTest",
                 ["MinIO:Endpoint"] = MinioContainer.GetConnectionString(),
