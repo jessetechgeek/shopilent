@@ -6,21 +6,29 @@ using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Shipping.DTOs;
 using Shopilent.Domain.Shipping.Errors;
+using Shopilent.Domain.Shipping.Repositories.Read;
+using Shopilent.Domain.Shipping.Repositories.Write;
 
 namespace Shopilent.Application.Features.Shipping.Commands.SetAddressDefault.V1;
 
 internal sealed class SetAddressDefaultCommandHandlerV1 : ICommandHandler<SetAddressDefaultCommandV1, AddressDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAddressWriteRepository _addressWriteRepository;
+    private readonly IAddressReadRepository _addressReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<SetAddressDefaultCommandHandlerV1> _logger;
 
     public SetAddressDefaultCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IAddressWriteRepository addressWriteRepository,
+        IAddressReadRepository addressReadRepository,
         ICurrentUserContext currentUserContext,
         ILogger<SetAddressDefaultCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _addressWriteRepository = addressWriteRepository;
+        _addressReadRepository = addressReadRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -43,7 +51,7 @@ internal sealed class SetAddressDefaultCommandHandlerV1 : ICommandHandler<SetAdd
             var userId = _currentUserContext.UserId.Value;
 
             // Get the address to set as default
-            var address = await _unitOfWork.AddressWriter.GetByIdAsync(request.AddressId, cancellationToken);
+            var address = await _addressWriteRepository.GetByIdAsync(request.AddressId, cancellationToken);
             if (address == null)
             {
                 _logger.LogWarning("Address with ID {AddressId} not found", request.AddressId);
@@ -69,12 +77,12 @@ internal sealed class SetAddressDefaultCommandHandlerV1 : ICommandHandler<SetAdd
                     request.AddressId, userId);
 
                 var currentDefaultDto =
-                    await _unitOfWork.AddressReader.GetByIdAsync(request.AddressId, cancellationToken);
+                    await _addressReadRepository.GetByIdAsync(request.AddressId, cancellationToken);
                 return Result.Success(currentDefaultDto);
             }
 
             // Get all addresses of the same type for this user to unset any existing defaults
-            var userAddresses = await _unitOfWork.AddressWriter.GetByUserIdAsync(userId, cancellationToken);
+            var userAddresses = await _addressWriteRepository.GetByUserIdAsync(userId, cancellationToken);
             var addressesOfSameType = userAddresses
                 .Where(a => a.AddressType == address.AddressType ||
                             address.AddressType == Domain.Shipping.Enums.AddressType.Both)
@@ -91,7 +99,7 @@ internal sealed class SetAddressDefaultCommandHandlerV1 : ICommandHandler<SetAdd
                     return Result.Failure<AddressDto>(unsetResult.Error);
                 }
 
-                await _unitOfWork.AddressWriter.UpdateAsync(existingAddress, cancellationToken);
+                await _addressWriteRepository.UpdateAsync(existingAddress, cancellationToken);
             }
 
             // Set the new address as default
@@ -103,13 +111,13 @@ internal sealed class SetAddressDefaultCommandHandlerV1 : ICommandHandler<SetAdd
                 return Result.Failure<AddressDto>(setDefaultResult.Error);
             }
 
-            await _unitOfWork.AddressWriter.UpdateAsync(address, cancellationToken);
+            await _addressWriteRepository.UpdateAsync(address, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // Return the updated address DTO
-            var updatedAddressDto = await _unitOfWork.AddressReader.GetByIdAsync(request.AddressId, cancellationToken);
+            var updatedAddressDto = await _addressReadRepository.GetByIdAsync(request.AddressId, cancellationToken);
 
             _logger.LogInformation("Successfully set address {AddressId} as default for user {UserId}",
                 request.AddressId, userId);

@@ -6,21 +6,25 @@ using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
 using Shopilent.Domain.Shipping.Errors;
+using Shopilent.Domain.Shipping.Repositories.Write;
 
 namespace Shopilent.Application.Features.Shipping.Commands.DeleteAddress.V1;
 
 internal sealed class DeleteAddressCommandHandlerV1 : ICommandHandler<DeleteAddressCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAddressWriteRepository _addressWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<DeleteAddressCommandHandlerV1> _logger;
 
     public DeleteAddressCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IAddressWriteRepository addressWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<DeleteAddressCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _addressWriteRepository = addressWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -38,7 +42,7 @@ internal sealed class DeleteAddressCommandHandlerV1 : ICommandHandler<DeleteAddr
             }
 
             // Get address by ID
-            var address = await _unitOfWork.AddressWriter.GetByIdAsync(request.Id, cancellationToken);
+            var address = await _addressWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (address == null)
             {
                 return Result.Failure(AddressErrors.NotFound(request.Id));
@@ -58,7 +62,7 @@ internal sealed class DeleteAddressCommandHandlerV1 : ICommandHandler<DeleteAddr
             }
 
             // Delete address from repository
-            await _unitOfWork.AddressWriter.DeleteAsync(address, cancellationToken);
+            await _addressWriteRepository.DeleteAsync(address, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -2,16 +2,16 @@ using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
-using Shopilent.Domain.Catalog.Repositories.Write;
+using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
-using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.DTOs;
 using Shopilent.Domain.Sales.Errors;
-using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Domain.Sales.ValueObjects;
+using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Shipping.Errors;
 using Shopilent.Domain.Shipping.Repositories.Write;
 
@@ -21,15 +21,18 @@ internal sealed class
     CreateOrderFromCartCommandHandlerV1 : ICommandHandler<CreateOrderFromCartCommandV1, CreateOrderFromCartResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAddressWriteRepository _addressWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<CreateOrderFromCartCommandHandlerV1> _logger;
 
     public CreateOrderFromCartCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IAddressWriteRepository addressWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<CreateOrderFromCartCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _addressWriteRepository = addressWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -76,7 +79,7 @@ internal sealed class
 
             // Get shipping address
             var shippingAddress =
-                await _unitOfWork.AddressWriter.GetByIdAsync(request.ShippingAddressId, cancellationToken);
+                await _addressWriteRepository.GetByIdAsync(request.ShippingAddressId, cancellationToken);
             if (shippingAddress == null)
                 return Result.Failure<CreateOrderFromCartResponseV1>(AddressErrors.NotFound(request.ShippingAddressId));
 
@@ -85,11 +88,11 @@ internal sealed class
                 return Result.Failure<CreateOrderFromCartResponseV1>(AddressErrors.NotFound(request.ShippingAddressId));
 
             // Get billing address (use shipping address if not provided)
-            Domain.Shipping.Address billingAddress;
+            Address billingAddress;
             if (request.BillingAddressId.HasValue)
             {
                 billingAddress =
-                    await _unitOfWork.AddressWriter.GetByIdAsync(request.BillingAddressId.Value, cancellationToken);
+                    await _addressWriteRepository.GetByIdAsync(request.BillingAddressId.Value, cancellationToken);
                 if (billingAddress == null)
                     return Result.Failure<CreateOrderFromCartResponseV1>(
                         AddressErrors.NotFound(request.BillingAddressId.Value));
@@ -136,7 +139,7 @@ internal sealed class
                     return Result.Failure<CreateOrderFromCartResponseV1>(ProductErrors.NotFound(cartItem.ProductId));
 
                 // Get variant if specified
-                Domain.Catalog.ProductVariant variant = null;
+                ProductVariant variant = null;
                 if (cartItem.VariantId.HasValue)
                 {
                     variant = await _unitOfWork.ProductVariantWriter.GetByIdAsync(cartItem.VariantId.Value,
@@ -221,7 +224,7 @@ internal sealed class
         {
             _logger.LogError(ex, "Error creating order from cart for user {UserId}", _currentUserContext.UserId);
             return Result.Failure<CreateOrderFromCartResponseV1>(
-                Domain.Common.Errors.Error.Failure(
+                Error.Failure(
                     code: "CreateOrderFromCart.Failed",
                     message: $"Failed to create order from cart: {ex.Message}"));
         }
@@ -244,7 +247,7 @@ internal sealed class
         return Money.Create(total, "USD").Value; // Assuming USD currency
     }
 
-    private Money CalculateTax(Cart cart, Domain.Shipping.Address shippingAddress)
+    private Money CalculateTax(Cart cart, Address shippingAddress)
     {
         // Implement tax calculation based on shipping address
         // This is a simplified version
@@ -253,7 +256,7 @@ internal sealed class
         return Money.Create(subtotal.Amount * taxRate, subtotal.Currency).Value;
     }
 
-    private Money CalculateShippingCost(Cart cart, Domain.Shipping.Address shippingAddress, string? shippingMethod)
+    private Money CalculateShippingCost(Cart cart, Address shippingAddress, string? shippingMethod)
     {
         // Implement shipping cost calculation
         // This is a simplified version

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Email;
@@ -139,9 +140,6 @@ public class TestFixture
 
     private void SetupUnitOfWorkRepositories()
     {
-        // Catalog repositories
-        // MockUnitOfWork.Setup(uow => uow.CategoryReader).Returns(MockCategoryReadRepository.Object);
-        // MockUnitOfWork.Setup(uow => uow.CategoryWriter).Returns(MockCategoryWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.ProductReader).Returns(MockProductReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.ProductWriter).Returns(MockProductWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.ProductVariantReader).Returns(MockProductVariantReadRepository.Object);
@@ -166,10 +164,6 @@ public class TestFixture
         MockUnitOfWork.Setup(uow => uow.PaymentWriter).Returns(MockPaymentWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.PaymentMethodReader).Returns(MockPaymentMethodReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.PaymentMethodWriter).Returns(MockPaymentMethodWriteRepository.Object);
-
-        // Shipping repositories
-        MockUnitOfWork.Setup(uow => uow.AddressReader).Returns(MockAddressReadRepository.Object);
-        MockUnitOfWork.Setup(uow => uow.AddressWriter).Returns(MockAddressWriteRepository.Object);
     }
 
     /// <summary>
@@ -181,7 +175,7 @@ public class TestFixture
         if (!_loggers.ContainsKey(type))
         {
             // Create a NullLogger instead of a mocked logger
-            _loggers[type] = Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<T>();
+            _loggers[type] = NullLoggerFactory.Instance.CreateLogger<T>();
         }
 
         return (ILogger<T>)_loggers[type];

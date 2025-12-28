@@ -1,29 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Shopilent.Application.Abstractions.Persistence;
-using Shopilent.Domain.Audit.Repositories;
-using Shopilent.Domain.Audit.Repositories.Read;
-using Shopilent.Domain.Audit.Repositories.Write;
-using Shopilent.Domain.Catalog.Repositories;
 using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
-using Shopilent.Domain.Common.Repositories;
-using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Identity.Repositories;
 using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Identity.Repositories.Write;
-using Shopilent.Domain.Outbox.Repositories.Read;
-using Shopilent.Domain.Outbox.Repositories.Write;
-using Shopilent.Domain.Payments.Repositories;
 using Shopilent.Domain.Payments.Repositories.Read;
 using Shopilent.Domain.Payments.Repositories.Write;
-using Shopilent.Domain.Sales.Repositories;
 using Shopilent.Domain.Sales.Repositories.Read;
 using Shopilent.Domain.Sales.Repositories.Write;
-using Shopilent.Domain.Shipping.Repositories;
-using Shopilent.Domain.Shipping.Repositories.Read;
-using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Context;
 
 namespace Shopilent.Infrastructure.Persistence.PostgreSQL;
@@ -61,9 +47,6 @@ public class UnitOfWork : IUnitOfWork
     public IPaymentMethodReadRepository PaymentMethodReader { get; }
     public IPaymentMethodWriteRepository PaymentMethodWriter { get; }
 
-    public IAddressReadRepository AddressReader { get; }
-    public IAddressWriteRepository AddressWriter { get; }
-
     public UnitOfWork(
         ApplicationDbContext dbContext,
         IProductReadRepository productRepository,
@@ -83,9 +66,7 @@ public class UnitOfWork : IUnitOfWork
         IPaymentReadRepository paymentRepository,
         IPaymentWriteRepository paymentWriter,
         IPaymentMethodReadRepository paymentMethodRepository,
-        IPaymentMethodWriteRepository paymentMethodWriter,
-        IAddressReadRepository addressRepository,
-        IAddressWriteRepository addressWriter)
+        IPaymentMethodWriteRepository paymentMethodWriter)
     {
         _dbContext = dbContext;
         ProductReader = productRepository;
@@ -106,8 +87,6 @@ public class UnitOfWork : IUnitOfWork
         PaymentWriter = paymentWriter;
         PaymentMethodReader = paymentMethodRepository;
         PaymentMethodWriter = paymentMethodWriter;
-        AddressReader = addressRepository;
-        AddressWriter = addressWriter;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

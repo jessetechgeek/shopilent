@@ -4,9 +4,9 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Shipping;
+using Shopilent.Domain.Shipping.Enums;
 using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Domain.Shipping.ValueObjects;
 
@@ -15,15 +15,18 @@ namespace Shopilent.Application.Features.Shipping.Commands.CreateAddress.V1;
 internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddressCommandV1, CreateAddressResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAddressWriteRepository _addressWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<CreateAddressCommandHandlerV1> _logger;
 
     public CreateAddressCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IAddressWriteRepository addressWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<CreateAddressCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _addressWriteRepository = addressWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -80,7 +83,7 @@ internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddr
             // If this is set as default, unset other default addresses of the same type
             if (request.IsDefault)
             {
-                var existingAddresses = await _unitOfWork.AddressWriter.GetByUserIdAsync(userId, cancellationToken);
+                var existingAddresses = await _addressWriteRepository.GetByUserIdAsync(userId, cancellationToken);
                 foreach (var existingAddress in existingAddresses.Where(a =>
                              a.AddressType == request.AddressType && a.IsDefault))
                 {
@@ -91,18 +94,18 @@ internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddr
                             existingAddress.Id, unsetResult.Error.Message);
                     }
 
-                    await _unitOfWork.AddressWriter.UpdateAsync(existingAddress, cancellationToken);
+                    await _addressWriteRepository.UpdateAsync(existingAddress, cancellationToken);
                 }
             }
 
             // Create address using the appropriate factory method based on address type
             Result<Address> addressResult = request.AddressType switch
             {
-                Domain.Shipping.Enums.AddressType.Shipping => Address.CreateShipping(
+                AddressType.Shipping => Address.CreateShipping(
                     user, postalAddressResult.Value, phoneNumber, request.IsDefault),
-                Domain.Shipping.Enums.AddressType.Billing => Address.CreateBilling(
+                AddressType.Billing => Address.CreateBilling(
                     user, postalAddressResult.Value, phoneNumber, request.IsDefault),
-                Domain.Shipping.Enums.AddressType.Both => Address.CreateBoth(
+                AddressType.Both => Address.CreateBoth(
                     user, postalAddressResult.Value, phoneNumber, request.IsDefault),
                 _ => Result.Failure<Address>(
                     Error.Validation("CreateAddress.InvalidAddressType", "Invalid address type specified."))
@@ -114,7 +117,7 @@ internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddr
             }
 
             // Save the address
-            var savedAddress = await _unitOfWork.AddressWriter.AddAsync(addressResult.Value, cancellationToken);
+            var savedAddress = await _addressWriteRepository.AddAsync(addressResult.Value, cancellationToken);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -2,26 +2,26 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Outbox;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Shipping.Events;
+using Shopilent.Domain.Shipping.Repositories.Read;
 
 namespace Shopilent.Application.Features.Shipping.EventHandlers;
 
 internal sealed class AddressCreatedEventHandler : INotificationHandler<DomainEventNotification<AddressCreatedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAddressReadRepository _addressReadRepository;
     private readonly ILogger<AddressCreatedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
 
     public AddressCreatedEventHandler(
-        IUnitOfWork unitOfWork,
+        IAddressReadRepository addressReadRepository,
         ILogger<AddressCreatedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService)
     {
-        _unitOfWork = unitOfWork;
+        _addressReadRepository = addressReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -44,7 +44,7 @@ internal sealed class AddressCreatedEventHandler : INotificationHandler<DomainEv
             await _cacheService.RemoveByPatternAsync($"default-address-*-{domainEvent.UserId}", cancellationToken);
 
             // Get address details to check if it's a default address
-            var address = await _unitOfWork.AddressReader.GetByIdAsync(domainEvent.AddressId, cancellationToken);
+            var address = await _addressReadRepository.GetByIdAsync(domainEvent.AddressId, cancellationToken);
 
             if (address != null && address.IsDefault)
             {

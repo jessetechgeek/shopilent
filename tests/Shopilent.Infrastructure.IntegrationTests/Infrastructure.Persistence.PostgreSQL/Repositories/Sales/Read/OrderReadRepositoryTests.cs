@@ -1,6 +1,7 @@
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Domain.Sales.Enums;
+using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -10,6 +11,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class OrderReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IAddressWriteRepository _addressWriteRepository = null!;
 
     public OrderReadRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
     {
@@ -18,6 +20,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _addressWriteRepository = GetService<IAddressWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -30,7 +33,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         var order = new OrderBuilder()
@@ -76,7 +79,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         var order = new OrderBuilder()
@@ -129,7 +132,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
         await _unitOfWork.UserWriter.AddAsync(otherUser);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         var order1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -174,7 +177,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         var pendingOrder1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -204,7 +207,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         var pendingOrder = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -228,7 +231,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         var order1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -266,7 +269,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         var order = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -304,7 +307,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         var order1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -336,7 +339,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         var order = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -362,7 +365,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
         // Create multiple orders
@@ -431,8 +434,8 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         await _unitOfWork.UserWriter.AddAsync(user1);
         await _unitOfWork.UserWriter.AddAsync(user2);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress1);
-        await _unitOfWork.AddressWriter.AddAsync(shippingAddress2);
+        await _addressWriteRepository.AddAsync(shippingAddress1);
+        await _addressWriteRepository.AddAsync(shippingAddress2);
         await _unitOfWork.SaveChangesAsync();
 
         var order1 = new OrderBuilder().WithUser(user1).WithShippingAddress(shippingAddress1).Build();
