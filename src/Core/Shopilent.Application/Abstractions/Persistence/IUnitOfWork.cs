@@ -20,9 +20,6 @@ public interface IUnitOfWork : IDisposable
     IProductVariantReadRepository ProductVariantReader { get; }
     IProductVariantWriteRepository ProductVariantWriter { get; }
 
-    IUserReadRepository UserReader { get; }
-    IUserWriteRepository UserWriter { get; }
-
     IRefreshTokenReadRepository RefreshTokenReader { get; }
     IRefreshTokenWriteRepository RefreshTokenWriter { get; }
 

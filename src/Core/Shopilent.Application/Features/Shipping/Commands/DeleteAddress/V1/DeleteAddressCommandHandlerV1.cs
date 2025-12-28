@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Shipping.Errors;
 using Shopilent.Domain.Shipping.Repositories.Write;
 
@@ -13,17 +14,20 @@ namespace Shopilent.Application.Features.Shipping.Commands.DeleteAddress.V1;
 internal sealed class DeleteAddressCommandHandlerV1 : ICommandHandler<DeleteAddressCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly IAddressWriteRepository _addressWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<DeleteAddressCommandHandlerV1> _logger;
 
     public DeleteAddressCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         IAddressWriteRepository addressWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<DeleteAddressCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _addressWriteRepository = addressWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
@@ -35,7 +39,7 @@ internal sealed class DeleteAddressCommandHandlerV1 : ICommandHandler<DeleteAddr
         {
             // Get current user
             var currentUser =
-                await _unitOfWork.UserReader.GetByIdAsync(_currentUserContext.UserId!.Value, cancellationToken);
+                await _userReadRepository.GetByIdAsync(_currentUserContext.UserId!.Value, cancellationToken);
             if (currentUser == null)
             {
                 return Result.Failure(UserErrors.NotFound(_currentUserContext.UserId.Value));

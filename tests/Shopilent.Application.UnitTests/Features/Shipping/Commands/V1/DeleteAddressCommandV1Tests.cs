@@ -21,12 +21,15 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockUserWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockUserReadRepository.Object);
         services.AddTransient(sp => Fixture.MockAddressWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<DeleteAddressCommandHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<DeleteAddressCommandV1>();
         });
 
@@ -44,10 +47,7 @@ public class DeleteAddressCommandV1Tests : TestBase
         var userId = Guid.NewGuid();
         var addressId = Guid.NewGuid();
 
-        var command = new DeleteAddressCommandV1
-        {
-            Id = addressId
-        };
+        var command = new DeleteAddressCommandV1 { Id = addressId };
 
         var userDto = new UserDto { Id = userId, Email = "test@example.com", IsActive = true };
         var address = CreateTestAddress(addressId, userId);
@@ -91,10 +91,7 @@ public class DeleteAddressCommandV1Tests : TestBase
         // Arrange
         var addressId = Guid.NewGuid();
 
-        var command = new DeleteAddressCommandV1
-        {
-            Id = addressId
-        };
+        var command = new DeleteAddressCommandV1 { Id = addressId };
 
         // Don't set authenticated user (CurrentUserContext.UserId will be null)
 
@@ -122,10 +119,7 @@ public class DeleteAddressCommandV1Tests : TestBase
         var userId = Guid.NewGuid();
         var addressId = Guid.NewGuid();
 
-        var command = new DeleteAddressCommandV1
-        {
-            Id = addressId
-        };
+        var command = new DeleteAddressCommandV1 { Id = addressId };
 
         // Setup authenticated user
         Fixture.SetAuthenticatedUser(userId);
@@ -160,10 +154,7 @@ public class DeleteAddressCommandV1Tests : TestBase
         var userId = Guid.NewGuid();
         var addressId = Guid.NewGuid();
 
-        var command = new DeleteAddressCommandV1
-        {
-            Id = addressId
-        };
+        var command = new DeleteAddressCommandV1 { Id = addressId };
 
         var userDto = new UserDto { Id = userId, Email = "test@example.com", IsActive = true };
 
@@ -206,10 +197,7 @@ public class DeleteAddressCommandV1Tests : TestBase
         var otherUserId = Guid.NewGuid();
         var addressId = Guid.NewGuid();
 
-        var command = new DeleteAddressCommandV1
-        {
-            Id = addressId
-        };
+        var command = new DeleteAddressCommandV1 { Id = addressId };
 
         var userDto = new UserDto { Id = userId, Email = "test@example.com", IsActive = true };
         var address = CreateTestAddress(addressId, otherUserId); // Address belongs to other user
@@ -251,10 +239,7 @@ public class DeleteAddressCommandV1Tests : TestBase
         var userId = Guid.NewGuid();
         var addressId = Guid.NewGuid();
 
-        var command = new DeleteAddressCommandV1
-        {
-            Id = addressId
-        };
+        var command = new DeleteAddressCommandV1 { Id = addressId };
 
         var userDto = new UserDto { Id = userId, Email = "test@example.com", IsActive = true };
         var address = CreateTestAddress(addressId, userId, AddressType.Shipping);
@@ -283,7 +268,8 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Verify delete was called
         Fixture.MockAddressWriteRepository.Verify(
-            repo => repo.DeleteAsync(It.Is<Address>(a => a.Id == addressId && a.AddressType == AddressType.Shipping), CancellationToken),
+            repo => repo.DeleteAsync(It.Is<Address>(a => a.Id == addressId && a.AddressType == AddressType.Shipping),
+                CancellationToken),
             Times.Once);
 
         // Verify save was called
@@ -299,10 +285,7 @@ public class DeleteAddressCommandV1Tests : TestBase
         var userId = Guid.NewGuid();
         var addressId = Guid.NewGuid();
 
-        var command = new DeleteAddressCommandV1
-        {
-            Id = addressId
-        };
+        var command = new DeleteAddressCommandV1 { Id = addressId };
 
         var userDto = new UserDto { Id = userId, Email = "test@example.com", IsActive = true };
         var address = CreateTestAddress(addressId, userId, AddressType.Billing);
@@ -331,7 +314,8 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Verify delete was called
         Fixture.MockAddressWriteRepository.Verify(
-            repo => repo.DeleteAsync(It.Is<Address>(a => a.Id == addressId && a.AddressType == AddressType.Billing), CancellationToken),
+            repo => repo.DeleteAsync(It.Is<Address>(a => a.Id == addressId && a.AddressType == AddressType.Billing),
+                CancellationToken),
             Times.Once);
 
         // Verify save was called
@@ -340,7 +324,8 @@ public class DeleteAddressCommandV1Tests : TestBase
             Times.Once);
     }
 
-    private static Address CreateTestAddress(Guid addressId, Guid userId, AddressType addressType = AddressType.Shipping)
+    private static Address CreateTestAddress(Guid addressId, Guid userId,
+        AddressType addressType = AddressType.Shipping)
     {
         return new AddressBuilder()
             .WithId(addressId)

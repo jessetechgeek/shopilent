@@ -19,6 +19,7 @@ internal sealed class
     AddPaymentMethodCommandHandlerV1 : ICommandHandler<AddPaymentMethodCommandV1, AddPaymentMethodResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IPaymentService _paymentService;
     private readonly ILogger<AddPaymentMethodCommandHandlerV1> _logger;
@@ -26,11 +27,13 @@ internal sealed class
 
     public AddPaymentMethodCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         ICurrentUserContext currentUserContext,
         IPaymentService paymentService,
         ILogger<AddPaymentMethodCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _currentUserContext = currentUserContext;
         _paymentService = paymentService;
         _logger = logger;
@@ -51,7 +54,7 @@ internal sealed class
                     message: "User must be authenticated to add payment methods"));
             }
 
-            var user = await _unitOfWork.UserWriter.GetByIdAsync(userId.Value, cancellationToken);
+            var user = await _userWriteRepository.GetByIdAsync(userId.Value, cancellationToken);
             if (user == null)
             {
                 _logger.LogWarning("User not found: {UserId}", userId);

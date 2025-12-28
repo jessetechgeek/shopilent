@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Events;
 
@@ -13,6 +14,7 @@ namespace Shopilent.Application.Features.Payments.EventHandlers;
 internal sealed  class PaymentFailedEventHandler : INotificationHandler<DomainEventNotification<PaymentFailedEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<PaymentFailedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -20,12 +22,14 @@ internal sealed  class PaymentFailedEventHandler : INotificationHandler<DomainEv
 
     public PaymentFailedEventHandler(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<PaymentFailedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -80,7 +84,7 @@ internal sealed  class PaymentFailedEventHandler : INotificationHandler<DomainEv
                     // If order has user, send payment failure notification
                     if (order.UserId.HasValue)
                     {
-                        var user = await _unitOfWork.UserReader.GetByIdAsync(order.UserId.Value, cancellationToken);
+                        var user = await _userReadRepository.GetByIdAsync(order.UserId.Value, cancellationToken);
                         if (user != null)
                         {
                             string subject = $"Payment Failed for Order #{order.Id}";

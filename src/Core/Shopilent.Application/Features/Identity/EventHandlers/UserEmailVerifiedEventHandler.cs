@@ -6,25 +6,26 @@ using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Events;
+using Shopilent.Domain.Identity.Repositories.Read;
 
 namespace Shopilent.Application.Features.Identity.EventHandlers;
 
 internal sealed  class UserEmailVerifiedEventHandler : INotificationHandler<DomainEventNotification<UserEmailVerifiedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<UserEmailVerifiedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
     private readonly IEmailService _emailService;
 
     public UserEmailVerifiedEventHandler(
-        IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<UserEmailVerifiedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
-        _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -45,7 +46,7 @@ internal sealed  class UserEmailVerifiedEventHandler : INotificationHandler<Doma
             await _cacheService.RemoveByPatternAsync("users-*", cancellationToken);
 
             // Get user details
-            var user = await _unitOfWork.UserReader.GetByIdAsync(domainEvent.UserId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(domainEvent.UserId, cancellationToken);
 
             if (user != null)
             {

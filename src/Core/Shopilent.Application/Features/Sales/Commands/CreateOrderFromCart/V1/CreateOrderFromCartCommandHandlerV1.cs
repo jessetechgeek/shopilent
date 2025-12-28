@@ -7,6 +7,7 @@ using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.DTOs;
 using Shopilent.Domain.Sales.Errors;
@@ -21,17 +22,20 @@ internal sealed class
     CreateOrderFromCartCommandHandlerV1 : ICommandHandler<CreateOrderFromCartCommandV1, CreateOrderFromCartResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly IAddressWriteRepository _addressWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<CreateOrderFromCartCommandHandlerV1> _logger;
 
     public CreateOrderFromCartCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         IAddressWriteRepository addressWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<CreateOrderFromCartCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _addressWriteRepository = addressWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
@@ -49,7 +53,7 @@ internal sealed class
             if (!_currentUserContext.UserId.HasValue)
                 return Result.Failure<CreateOrderFromCartResponseV1>(UserErrors.NotAuthenticated);
 
-            var user = await _unitOfWork.UserWriter.GetByIdAsync(_currentUserContext.UserId.Value, cancellationToken);
+            var user = await _userWriteRepository.GetByIdAsync(_currentUserContext.UserId.Value, cancellationToken);
             if (user == null)
                 return Result.Failure<CreateOrderFromCartResponseV1>(
                     UserErrors.NotFound(_currentUserContext.UserId.Value));

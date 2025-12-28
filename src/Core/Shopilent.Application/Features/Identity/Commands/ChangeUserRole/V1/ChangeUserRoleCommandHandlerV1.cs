@@ -12,13 +12,16 @@ namespace Shopilent.Application.Features.Identity.Commands.ChangeUserRole.V1;
 internal sealed class ChangeUserRoleCommandHandlerV1 : ICommandHandler<ChangeUserRoleCommandV1, string>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly ILogger<ChangeUserRoleCommandHandlerV1> _logger;
 
     public ChangeUserRoleCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         ILogger<ChangeUserRoleCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _logger = logger;
     }
 
@@ -27,7 +30,7 @@ internal sealed class ChangeUserRoleCommandHandlerV1 : ICommandHandler<ChangeUse
         try
         {
             // Get the user
-            var user = await _unitOfWork.UserWriter.GetByIdAsync(request.UserId, cancellationToken);
+            var user = await _userWriteRepository.GetByIdAsync(request.UserId, cancellationToken);
             if (user == null)
             {
                 _logger.LogWarning("User with ID {UserId} not found", request.UserId);

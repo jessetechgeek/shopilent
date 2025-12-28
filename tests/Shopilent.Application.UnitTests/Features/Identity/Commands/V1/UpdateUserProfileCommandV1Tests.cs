@@ -19,6 +19,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
     {
         var services = new ServiceCollection();
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockUserWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<UpdateUserProfileCommandHandlerV1>());
 
@@ -37,7 +38,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         var user = User.Create(email, "hashedPassword", originalFullName).Value;
         var userId = user.Id; // Use the actual user's ID
         var currentUserId = Guid.NewGuid();
-        
+
         var command = new UpdateUserProfileCommandV1
         {
             UserId = userId,
@@ -49,8 +50,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
 
         Fixture.SetAuthenticatedUser(currentUserId);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -78,8 +79,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         user.ModifiedBy.Should().Be(currentUserId);
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.GetByIdAsync(userId, CancellationToken),
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
@@ -99,8 +100,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             LastName = "Doe"
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync((User)null);
 
         // Act
@@ -111,8 +112,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         result.Error.Code.Should().Be(UserErrors.NotFound(userId).Code);
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.GetByIdAsync(userId, CancellationToken),
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
@@ -136,8 +137,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         var fullName = FullName.Create("Original", "Name").Value;
         var user = User.Create(email, "hashedPassword", fullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         // Act
@@ -170,8 +171,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         var fullName = FullName.Create("Original", "Name").Value;
         var user = User.Create(email, "hashedPassword", fullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         // Act
@@ -205,8 +206,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         var fullName = FullName.Create("Original", "Name").Value;
         var user = User.Create(email, "hashedPassword", fullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         // Act
@@ -239,8 +240,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         var originalFullName = FullName.Create("Original", "Name").Value;
         var user = User.Create(email, "hashedPassword", originalFullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -276,8 +277,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         var originalFullName = FullName.Create("Original", "Name").Value;
         var user = User.Create(email, "hashedPassword", originalFullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -314,8 +315,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         // Don't set authenticated user (no current user context)
         Fixture.MockCurrentUserContext.Setup(ctx => ctx.UserId).Returns((Guid?)null);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -347,8 +348,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             LastName = "Doe"
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ThrowsAsync(new Exception("Database error"));
 
         // Act
@@ -383,8 +384,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         var originalFullName = FullName.Create("Original", "Name").Value;
         var user = User.Create(email, "hashedPassword", originalFullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -399,7 +400,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         result.Value.Should().NotBeNull();
         result.Value.FirstName.Should().Be(firstName);
         result.Value.LastName.Should().Be(lastName);
-        
+
         if (string.IsNullOrEmpty(middleName))
         {
             // FullName.Create stores empty strings as-is, not as null
@@ -436,8 +437,8 @@ public class UpdateUserProfileCommandV1Tests : TestBase
         var originalFullName = FullName.Create("Original", "Name").Value;
         var user = User.Create(email, "hashedPassword", originalFullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -451,7 +452,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
 
         // Assert
         var afterExecution = DateTime.UtcNow;
-        
+
         result.IsSuccess.Should().BeTrue();
         result.Value.UpdatedAt.Should().BeOnOrAfter(beforeExecution);
         result.Value.UpdatedAt.Should().BeOnOrBefore(afterExecution);

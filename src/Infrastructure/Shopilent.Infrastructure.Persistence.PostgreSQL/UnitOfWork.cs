@@ -29,9 +29,6 @@ public class UnitOfWork : IUnitOfWork
     public IProductVariantReadRepository ProductVariantReader { get; }
     public IProductVariantWriteRepository ProductVariantWriter { get; }
 
-    public IUserReadRepository UserReader { get; }
-    public IUserWriteRepository UserWriter { get; }
-
     public IRefreshTokenReadRepository RefreshTokenReader { get; }
     public IRefreshTokenWriteRepository RefreshTokenWriter { get; }
 
@@ -55,8 +52,6 @@ public class UnitOfWork : IUnitOfWork
         IAttributeWriteRepository attributeWriter,
         IProductVariantReadRepository productVariantRepository,
         IProductVariantWriteRepository productVariantWriter,
-        IUserReadRepository userRepository,
-        IUserWriteRepository userWriter,
         IRefreshTokenReadRepository refreshTokenRepository,
         IRefreshTokenWriteRepository refreshTokenWriter,
         ICartReadRepository cartRepository,
@@ -75,8 +70,6 @@ public class UnitOfWork : IUnitOfWork
         AttributeWriter = attributeWriter;
         ProductVariantReader = productVariantRepository;
         ProductVariantWriter = productVariantWriter;
-        UserReader = userRepository;
-        UserWriter = userWriter;
         RefreshTokenReader = refreshTokenRepository;
         RefreshTokenWriter = refreshTokenWriter;
         CartReader = cartRepository;

@@ -3,8 +3,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Identity;
+using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Infrastructure.Identity.Abstractions;
 using Shopilent.Infrastructure.Identity.Configuration;
 using Shopilent.Infrastructure.Identity.Configuration.Extensions;
@@ -12,6 +17,7 @@ using Shopilent.Infrastructure.Identity.Configuration.Settings;
 using Shopilent.Infrastructure.Identity.Factories;
 using Shopilent.Infrastructure.Identity.Services;
 using Shopilent.Infrastructure.Identity.Stores;
+using PasswordOptions = Shopilent.Infrastructure.Identity.Configuration.Settings.PasswordOptions;
 
 namespace Shopilent.Infrastructure.Identity.Extensions;
 
@@ -32,13 +38,13 @@ public static class IdentityServiceExtensions
 
         // Configure options
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
-        services.Configure<Configuration.Settings.PasswordOptions>(options =>
+        services.Configure<PasswordOptions>(options =>
         {
             options.SaltSize = 16;
             options.HashSize = 32;
             options.Iterations = 100000;
         });
-        services.Configure<Configuration.CookieSettings>(configuration.GetSection("Cookies"));
+        services.Configure<CookieSettings>(configuration.GetSection("Cookies"));
 
         // Register common services (used by both providers)
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
@@ -90,11 +96,13 @@ public static class IdentityServiceExtensions
             // Custom JWT authentication (original implementation)
             services.AddScoped<IAuthenticationService>(provider =>
                 AuthenticationServiceFactory.Create(
-                    provider.GetRequiredService<Application.Abstractions.Persistence.IUnitOfWork>(),
-                    provider.GetRequiredService<Application.Abstractions.Email.IEmailService>(),
+                    provider.GetRequiredService<IUnitOfWork>(),
+                    provider.GetRequiredService<IUserWriteRepository>(),
+                    provider.GetRequiredService<IUserReadRepository>(),
+                    provider.GetRequiredService<IEmailService>(),
                     provider.GetRequiredService<ILogger<AuthenticationService>>(),
-                    provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>(),
-                    provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<Configuration.Settings.PasswordOptions>>()));
+                    provider.GetRequiredService<IOptions<JwtSettings>>(),
+                    provider.GetRequiredService<IOptions<PasswordOptions>>()));
 
             Console.WriteLine("✓ Authentication Provider: Custom JWT");
         }

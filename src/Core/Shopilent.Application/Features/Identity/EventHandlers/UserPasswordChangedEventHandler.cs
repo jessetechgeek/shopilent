@@ -6,12 +6,14 @@ using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Events;
+using Shopilent.Domain.Identity.Repositories.Read;
 
 namespace Shopilent.Application.Features.Identity.EventHandlers;
 
 internal sealed  class UserPasswordChangedEventHandler : INotificationHandler<DomainEventNotification<UserPasswordChangedEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<UserPasswordChangedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -19,12 +21,14 @@ internal sealed  class UserPasswordChangedEventHandler : INotificationHandler<Do
 
     public UserPasswordChangedEventHandler(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<UserPasswordChangedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -40,7 +44,7 @@ internal sealed  class UserPasswordChangedEventHandler : INotificationHandler<Do
         try
         {
             // Get user details
-            var user = await _unitOfWork.UserReader.GetByIdAsync(domainEvent.UserId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(domainEvent.UserId, cancellationToken);
 
             if (user != null)
             {

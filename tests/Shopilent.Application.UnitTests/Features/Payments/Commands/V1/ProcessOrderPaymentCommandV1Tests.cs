@@ -27,6 +27,8 @@ public class ProcessOrderPaymentCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockUserWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockOrderWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.MockPaymentService.Object);
         services.AddTransient(sp => Fixture.GetLogger<ProcessOrderPaymentCommandHandlerV1>());

@@ -1,36 +1,40 @@
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Events;
+using Shopilent.Domain.Identity.Repositories.Read;
 
 namespace Shopilent.Application.Features.Identity.EventHandlers;
 
-internal sealed  class UserCreatedEventHandler : INotificationHandler<DomainEventNotification<UserCreatedEvent>>
+internal sealed class UserCreatedEventHandler : INotificationHandler<DomainEventNotification<UserCreatedEvent>>
 {
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<UserCreatedEventHandler> _logger;
     private readonly IEmailService _emailService;
     private readonly IEmailTemplateService _emailTemplateService;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _configuration;
 
     public UserCreatedEventHandler(ILogger<UserCreatedEventHandler> logger,
         IEmailService emailService,
         IEmailTemplateService emailTemplateService,
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         IConfiguration configuration)
     {
         _logger = logger;
         _emailService = emailService;
         _emailTemplateService = emailTemplateService;
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _configuration = configuration;
     }
 
-    public async Task Handle(DomainEventNotification<UserCreatedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<UserCreatedEvent> notification,
+        CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
@@ -38,7 +42,7 @@ internal sealed  class UserCreatedEventHandler : INotificationHandler<DomainEven
 
         try
         {
-            var user = await _unitOfWork.UserReader.GetByIdAsync(domainEvent.UserId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(domainEvent.UserId, cancellationToken);
             if (user == null)
             {
                 _logger.LogWarning("User with ID {UserId} not found when sending welcome email", domainEvent.UserId);

@@ -2,6 +2,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Audit.Enums;
 using Shopilent.Domain.Audit.Repositories.Read;
 using Shopilent.Domain.Audit.Repositories.Write;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -11,6 +12,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class AuditLogReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
     private IAuditLogWriteRepository _auditLogWriteRepository = null!;
     private IAuditLogReadRepository _auditLogReadRepository = null!;
 
@@ -21,6 +23,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         _auditLogWriteRepository = GetService<IAuditLogWriteRepository>();
         _auditLogReadRepository = GetService<IAuditLogReadRepository>();
         return Task.CompletedTask;
@@ -33,7 +36,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
@@ -79,7 +82,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var auditLog1 = AuditLogBuilder.CreateForUser(user, "Product");
@@ -120,7 +123,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var entityType = "Product";
@@ -188,8 +191,8 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         var user1 = UserBuilder.CreateDefaultUser();
         var user2 = UserBuilder.CreateDefaultUser();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
         await _unitOfWork.SaveChangesAsync();
 
         // Create audit logs for user1
@@ -251,7 +254,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Create audit logs with different actions
@@ -298,7 +301,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Create audit logs with Create and Update actions only
@@ -323,7 +326,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Create 10 audit logs with distinct timestamps to ensure proper ordering
@@ -376,7 +379,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Create only 2 audit logs
@@ -423,7 +426,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var entityType = "Product";
@@ -484,7 +487,7 @@ public class AuditLogReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Create audit logs for each action type

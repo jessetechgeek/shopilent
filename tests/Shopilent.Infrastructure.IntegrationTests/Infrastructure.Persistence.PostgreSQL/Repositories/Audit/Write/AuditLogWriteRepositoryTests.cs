@@ -4,6 +4,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Audit.Enums;
 using Shopilent.Domain.Audit.Repositories.Read;
 using Shopilent.Domain.Audit.Repositories.Write;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -13,6 +14,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class AuditLogWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
     private IAuditLogWriteRepository _auditLogWriteRepository = null!;
     private IAuditLogReadRepository _auditLogReadRepository = null!;
 
@@ -23,6 +25,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         _auditLogWriteRepository = GetService<IAuditLogWriteRepository>();
         _auditLogReadRepository = GetService<IAuditLogReadRepository>();
         return Task.CompletedTask;
@@ -35,7 +38,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
@@ -84,7 +87,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var oldValues = new Dictionary<string, object>
@@ -137,7 +140,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
@@ -167,7 +170,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
@@ -190,7 +193,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
@@ -233,7 +236,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var entityType = "Product";
@@ -277,8 +280,8 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         var user1 = UserBuilder.CreateDefaultUser();
         var user2 = UserBuilder.CreateDefaultUser();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
         await _unitOfWork.SaveChangesAsync();
 
         var user1AuditLog1 = AuditLogBuilder.CreateForUser(user1, "Product");
@@ -323,7 +326,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var createAuditLog1 = AuditLogBuilder.CreateCreateAuditLog("Product", Guid.NewGuid(), user);
@@ -369,7 +372,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var auditLogs = new List<Domain.Audit.AuditLog>
@@ -408,7 +411,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
@@ -455,7 +458,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
@@ -483,7 +486,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.CreateDefaultUser();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var entityType = "Product";

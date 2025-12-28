@@ -2,6 +2,7 @@ using MediatR;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales;
 
 namespace Shopilent.Application.Features.Sales.Commands.CreateCart.V1;
@@ -9,13 +10,16 @@ namespace Shopilent.Application.Features.Sales.Commands.CreateCart.V1;
 internal sealed class CreateCartCommandHandlerV1 : IRequestHandler<CreateCartCommandV1, Result<CreateCartResponseV1>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
 
     public CreateCartCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         ICurrentUserContext currentUserContext)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _currentUserContext = currentUserContext;
     }
 
@@ -59,7 +63,7 @@ internal sealed class CreateCartCommandHandlerV1 : IRequestHandler<CreateCartCom
         }
 
         // Get user for authenticated cart
-        var user = await _unitOfWork.UserWriter.GetByIdAsync(userId.Value, cancellationToken);
+        var user = await _userWriteRepository.GetByIdAsync(userId.Value, cancellationToken);
         if (user == null)
         {
             return Result.Failure<CreateCartResponseV1>(

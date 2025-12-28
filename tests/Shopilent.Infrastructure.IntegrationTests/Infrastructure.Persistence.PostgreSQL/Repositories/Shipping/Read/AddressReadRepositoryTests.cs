@@ -1,4 +1,5 @@
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Shipping.Enums;
 using Shopilent.Domain.Shipping.Repositories.Read;
 using Shopilent.Infrastructure.IntegrationTests.Common;
@@ -10,6 +11,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class AddressReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
     private IAddressReadRepository _addressReadRepository;
 
     public AddressReadRepositoryTests(IntegrationTestFixture fixture) : base(fixture) { }
@@ -17,6 +19,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         _addressReadRepository = GetService<IAddressReadRepository>();
         return Task.CompletedTask;
     }
@@ -33,7 +36,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .WithUniqueData()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -104,8 +107,8 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBilling()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -142,8 +145,8 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .WithUniqueData()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -194,7 +197,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsNotDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -221,7 +224,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -248,7 +251,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Should return the "Both" address for shipping requests
@@ -281,7 +284,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsNotDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -315,7 +318,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Request default address for shipping
@@ -360,7 +363,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBoth()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -404,7 +407,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBoth()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -447,7 +450,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBoth()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -473,7 +476,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBilling()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Request shipping addresses when only billing exists

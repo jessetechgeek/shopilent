@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Exceptions;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Shipping.Enums;
 using Shopilent.Domain.Shipping.Repositories.Read;
@@ -16,6 +17,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class AddressWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
     private IAddressWriteRepository _addressWriteRepository = null!;
     private IAddressReadRepository _addressReadRepository = null!;
 
@@ -24,6 +26,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         _addressWriteRepository = GetService<IAddressWriteRepository>();
         _addressReadRepository = GetService<IAddressReadRepository>();
         return Task.CompletedTask;
@@ -45,7 +48,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
@@ -80,7 +83,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
@@ -103,7 +106,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .WithUniqueData()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
@@ -153,7 +156,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .AsShipping()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
@@ -187,7 +190,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .IsNotDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
@@ -220,7 +223,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .WithUniqueData()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -244,7 +247,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .WithUniqueData()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -289,7 +292,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .IsNotDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -339,7 +342,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .IsNotDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -366,7 +369,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .IsNotDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
@@ -400,7 +403,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .IsDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Request default address for shipping
@@ -430,7 +433,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .WithUniqueData()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Simulate concurrent access with two service scopes
@@ -482,7 +485,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
         };
 
         // Act - Add user with multiple addresses
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert - All addresses should be persisted
@@ -523,7 +526,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert

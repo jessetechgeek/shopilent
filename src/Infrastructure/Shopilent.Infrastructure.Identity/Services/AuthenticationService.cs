@@ -7,6 +7,8 @@ using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.DTOs;
 using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Infrastructure.Identity.Abstractions;
 
@@ -15,6 +17,8 @@ namespace Shopilent.Infrastructure.Identity.Services;
 public class AuthenticationService : IAuthenticationService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly IJwtService _jwtService;
     private readonly IPasswordService _passwordService;
     private readonly IEmailService _emailService;
@@ -22,12 +26,16 @@ public class AuthenticationService : IAuthenticationService
 
     internal AuthenticationService(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
+        IUserReadRepository userReadRepository,
         IJwtService jwtService,
         IPasswordService passwordService,
         IEmailService emailService,
         ILogger<AuthenticationService> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
+        _userReadRepository = userReadRepository;
         _jwtService = jwtService;
         _passwordService = passwordService;
         _emailService = emailService;
@@ -55,7 +63,7 @@ public class AuthenticationService : IAuthenticationService
             try
             {
                 // Find user by email
-                var user = await _unitOfWork.UserWriter.GetByEmailAsync(email.Value, cancellationToken);
+                var user = await _userWriteRepository.GetByEmailAsync(email.Value, cancellationToken);
                 if (user == null)
                     return Result.Failure<AuthTokenResponse>(UserErrors.InvalidCredentials);
 
@@ -98,7 +106,7 @@ public class AuthenticationService : IAuthenticationService
                     return Result.Failure<AuthTokenResponse>(tokenResult.Error);
 
                 // Update the user entity
-                await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+                await _userWriteRepository.UpdateAsync(user, cancellationToken);
 
                 // Save all changes in a single operation
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -161,7 +169,7 @@ public class AuthenticationService : IAuthenticationService
             try
             {
                 // Check if email already exists
-                bool emailExists = await _unitOfWork.UserReader.EmailExistsAsync(email.Value, null, cancellationToken);
+                bool emailExists = await _userReadRepository.EmailExistsAsync(email.Value, null, cancellationToken);
                 if (emailExists)
                     return Result.Failure<AuthTokenResponse>(UserErrors.EmailAlreadyExists(email.Value));
 
@@ -200,7 +208,7 @@ public class AuthenticationService : IAuthenticationService
                 user.GenerateEmailVerificationToken();
 
                 // Save user
-                await _unitOfWork.UserWriter.AddAsync(user, cancellationToken);
+                await _userWriteRepository.AddAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 // Generate tokens
@@ -214,7 +222,7 @@ public class AuthenticationService : IAuthenticationService
                     return Result.Failure<AuthTokenResponse>(tokenResult.Error);
 
                 // Update user with refresh token
-                await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+                await _userWriteRepository.UpdateAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 // Send verification email
@@ -278,7 +286,7 @@ public class AuthenticationService : IAuthenticationService
                     return Result.Failure<AuthTokenResponse>(RefreshTokenErrors.Revoked(token.RevokedReason));
 
                 // Get user
-                var user = await _unitOfWork.UserWriter.GetByIdAsync(token.UserId, cancellationToken);
+                var user = await _userWriteRepository.GetByIdAsync(token.UserId, cancellationToken);
                 if (user == null)
                     return Result.Failure<AuthTokenResponse>(UserErrors.NotFound(token.UserId));
 
@@ -299,7 +307,7 @@ public class AuthenticationService : IAuthenticationService
                 if (tokenResult.IsFailure)
                     return Result.Failure<AuthTokenResponse>(tokenResult.Error);
 
-                await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+                await _userWriteRepository.UpdateAsync(user, cancellationToken);
 
                 // Save changes
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -358,7 +366,7 @@ public class AuthenticationService : IAuthenticationService
                     return Result.Success(); // Already revoked, no action needed
 
                 // Get user
-                var user = await _unitOfWork.UserWriter.GetByIdAsync(token.UserId, cancellationToken);
+                var user = await _userWriteRepository.GetByIdAsync(token.UserId, cancellationToken);
                 if (user == null)
                     return Result.Failure(UserErrors.NotFound(token.UserId));
 
@@ -412,7 +420,7 @@ public class AuthenticationService : IAuthenticationService
                 return Result.Failure<UserDto>(UserErrors.InvalidCredentials);
 
             // Get user
-            var user = await _unitOfWork.UserReader.GetByIdAsync(userId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(userId, cancellationToken);
             if (user == null)
                 return Result.Failure<UserDto>(UserErrors.NotFound(userId));
 
@@ -442,7 +450,7 @@ public class AuthenticationService : IAuthenticationService
                 return Result.Failure(UserErrors.EmailRequired);
 
             // Get user by email
-            var user = await _unitOfWork.UserWriter.GetByEmailAsync(email.Value, cancellationToken);
+            var user = await _userWriteRepository.GetByEmailAsync(email.Value, cancellationToken);
             if (user == null)
                 return Result.Failure(UserErrors.NotFound(Guid.Empty));
 
@@ -452,7 +460,7 @@ public class AuthenticationService : IAuthenticationService
 
             // Generate new verification token
             user.GenerateEmailVerificationToken();
-            await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+            await _userWriteRepository.UpdateAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // Send verification email
@@ -487,7 +495,7 @@ public class AuthenticationService : IAuthenticationService
             try
             {
                 // Find user by verification token
-                var user = await _unitOfWork.UserWriter.GetByEmailVerificationTokenAsync(token, cancellationToken);
+                var user = await _userWriteRepository.GetByEmailVerificationTokenAsync(token, cancellationToken);
                 if (user == null)
                     return Result.Failure(Error.Validation(
                         code: "EmailVerification.InvalidToken",
@@ -508,7 +516,7 @@ public class AuthenticationService : IAuthenticationService
                     return result;
 
                 // Save changes
-                await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+                await _userWriteRepository.UpdateAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 // Commit transaction
@@ -544,13 +552,13 @@ public class AuthenticationService : IAuthenticationService
                 return Result.Failure(UserErrors.EmailRequired);
 
             // Find user by email (don't reveal if email exists or not for security)
-            var user = await _unitOfWork.UserWriter.GetByEmailAsync(email.Value, cancellationToken);
+            var user = await _userWriteRepository.GetByEmailAsync(email.Value, cancellationToken);
             if (user == null)
                 return Result.Success(); // Pretend success even if user doesn't exist
 
             // Generate password reset token
             user.GeneratePasswordResetToken();
-            await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+            await _userWriteRepository.UpdateAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // Send password reset email
@@ -589,7 +597,7 @@ public class AuthenticationService : IAuthenticationService
             try
             {
                 // Find user by reset token
-                var user = await _unitOfWork.UserWriter.GetByPasswordResetTokenAsync(token, cancellationToken);
+                var user = await _userWriteRepository.GetByPasswordResetTokenAsync(token, cancellationToken);
                 if (user == null)
                     return Result.Failure(Error.Validation(
                         code: "PasswordReset.InvalidToken",
@@ -621,7 +629,7 @@ public class AuthenticationService : IAuthenticationService
                 user.RevokeAllRefreshTokens("Password changed");
 
                 // Save changes
-                await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+                await _userWriteRepository.UpdateAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 // Commit transaction
@@ -667,7 +675,7 @@ public class AuthenticationService : IAuthenticationService
             try
             {
                 // Get user
-                var user = await _unitOfWork.UserWriter.GetByIdAsync(userId, cancellationToken);
+                var user = await _userWriteRepository.GetByIdAsync(userId, cancellationToken);
                 if (user == null)
                     return Result.Failure(UserErrors.NotFound(userId));
 
@@ -687,7 +695,7 @@ public class AuthenticationService : IAuthenticationService
                 user.RevokeAllRefreshTokens("Password changed");
 
                 // Save changes
-                await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+                await _userWriteRepository.UpdateAsync(user, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 // Commit transaction

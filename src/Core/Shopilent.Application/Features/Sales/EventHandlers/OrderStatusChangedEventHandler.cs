@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Events;
 
@@ -13,6 +14,7 @@ namespace Shopilent.Application.Features.Sales.EventHandlers;
 internal sealed  class OrderStatusChangedEventHandler : INotificationHandler<DomainEventNotification<OrderStatusChangedEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<OrderStatusChangedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -20,12 +22,14 @@ internal sealed  class OrderStatusChangedEventHandler : INotificationHandler<Dom
 
     public OrderStatusChangedEventHandler(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<OrderStatusChangedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -55,7 +59,7 @@ internal sealed  class OrderStatusChangedEventHandler : INotificationHandler<Dom
             if (order != null && order.UserId.HasValue)
             {
                 // Get user information
-                var user = await _unitOfWork.UserReader.GetByIdAsync(order.UserId.Value, cancellationToken);
+                var user = await _userReadRepository.GetByIdAsync(order.UserId.Value, cancellationToken);
 
                 if (user != null)
                 {

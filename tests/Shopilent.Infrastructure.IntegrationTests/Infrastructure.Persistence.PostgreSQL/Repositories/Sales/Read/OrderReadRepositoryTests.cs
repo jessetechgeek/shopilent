@@ -1,5 +1,6 @@
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Models;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
@@ -11,6 +12,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class OrderReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
     private IAddressWriteRepository _addressWriteRepository = null!;
 
     public OrderReadRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
@@ -20,6 +22,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         _addressWriteRepository = GetService<IAddressWriteRepository>();
         return Task.CompletedTask;
     }
@@ -32,7 +35,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -78,7 +81,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -130,8 +133,8 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var otherUser = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.UserWriter.AddAsync(otherUser);
+        await _userWriteRepository.AddAsync(user);
+        await _userWriteRepository.AddAsync(otherUser);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -176,7 +179,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -206,7 +209,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -230,7 +233,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -268,7 +271,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -306,7 +309,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -338,7 +341,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -364,7 +367,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -432,8 +435,8 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress1 = new AddressBuilder().WithUser(user1).Build();
         var shippingAddress2 = new AddressBuilder().WithUser(user2).Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
         await _addressWriteRepository.AddAsync(shippingAddress1);
         await _addressWriteRepository.AddAsync(shippingAddress2);
         await _unitOfWork.SaveChangesAsync();

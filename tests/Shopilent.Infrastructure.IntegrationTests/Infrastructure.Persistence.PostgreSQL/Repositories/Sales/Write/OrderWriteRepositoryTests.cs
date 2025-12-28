@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Domain.Shipping.Repositories.Write;
@@ -15,6 +16,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class OrderWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
     private ICategoryWriteRepository _categoryWriteRepository = null!;
     private IAddressWriteRepository _addressWriteRepository = null!;
 
@@ -25,6 +27,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         _addressWriteRepository = GetService<IAddressWriteRepository>();
         return Task.CompletedTask;
@@ -38,7 +41,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -76,7 +79,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -105,7 +108,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
 
         var category = new CategoryBuilder().Build();
@@ -148,7 +151,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -188,7 +191,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -225,7 +228,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -265,7 +268,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -304,7 +307,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -333,7 +336,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -378,8 +381,8 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var otherUser = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.UserWriter.AddAsync(otherUser);
+        await _userWriteRepository.AddAsync(user);
+        await _userWriteRepository.AddAsync(otherUser);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -409,7 +412,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -439,7 +442,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -486,7 +489,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -528,7 +531,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.SaveChangesAsync();
 
@@ -572,7 +575,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
 
         var category = new CategoryBuilder().Build();

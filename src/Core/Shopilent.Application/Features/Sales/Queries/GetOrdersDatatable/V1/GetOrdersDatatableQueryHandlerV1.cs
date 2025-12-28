@@ -4,32 +4,36 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Identity.Repositories.Read;
 
 namespace Shopilent.Application.Features.Sales.Queries.GetOrdersDatatable.V1;
 
-internal sealed class GetOrdersDatatableQueryHandlerV1 : 
+internal sealed class GetOrdersDatatableQueryHandlerV1 :
     IQueryHandler<GetOrdersDatatableQueryV1, DataTableResult<OrderDatatableDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<GetOrdersDatatableQueryHandlerV1> _logger;
 
     public GetOrdersDatatableQueryHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<GetOrdersDatatableQueryHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
     }
 
     public async Task<Result<DataTableResult<OrderDatatableDto>>> Handle(
-        GetOrdersDatatableQueryV1 request, 
+        GetOrdersDatatableQueryV1 request,
         CancellationToken cancellationToken)
     {
         try
         {
             // Get datatable results from repository
             var result = await _unitOfWork.OrderReader.GetOrderDetailDataTableAsync(
-                request.Request, 
+                request.Request,
                 cancellationToken);
 
             // Map to OrderDatatableDto
@@ -41,19 +45,19 @@ internal sealed class GetOrdersDatatableQueryHandlerV1 :
                 string userFullName = null;
                 if (order.UserId.HasValue)
                 {
-                    var user = await _unitOfWork.UserReader.GetByIdAsync(
-                        order.UserId.Value, 
+                    var user = await _userReadRepository.GetByIdAsync(
+                        order.UserId.Value,
                         cancellationToken);
-                        
+
                     userEmail = user?.Email;
                     userFullName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : null;
                 }
-                
+
                 // Get items count for this order
                 var orderDetail = await _unitOfWork.OrderReader.GetDetailByIdAsync(
-                    order.Id, 
+                    order.Id,
                     cancellationToken);
-                    
+
                 var itemsCount = orderDetail?.Items?.Count ?? 0;
 
                 dtoItems.Add(new OrderDatatableDto
@@ -93,7 +97,7 @@ internal sealed class GetOrdersDatatableQueryHandlerV1 :
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving orders for datatable");
-            
+
             return Result.Failure<DataTableResult<OrderDatatableDto>>(
                 Error.Failure(
                     code: "Orders.GetDataTableFailed",

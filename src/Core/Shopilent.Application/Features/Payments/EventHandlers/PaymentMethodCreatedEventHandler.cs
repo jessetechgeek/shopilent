@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Payments.Events;
 
 namespace Shopilent.Application.Features.Payments.EventHandlers;
@@ -12,6 +13,7 @@ namespace Shopilent.Application.Features.Payments.EventHandlers;
 internal sealed  class PaymentMethodCreatedEventHandler : INotificationHandler<DomainEventNotification<PaymentMethodCreatedEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<PaymentMethodCreatedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -19,12 +21,14 @@ internal sealed  class PaymentMethodCreatedEventHandler : INotificationHandler<D
 
     public PaymentMethodCreatedEventHandler(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<PaymentMethodCreatedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -47,7 +51,7 @@ internal sealed  class PaymentMethodCreatedEventHandler : INotificationHandler<D
             await _cacheService.RemoveByPatternAsync($"payment-methods-user-{domainEvent.UserId}", cancellationToken);
 
             // Get user details
-            var user = await _unitOfWork.UserReader.GetByIdAsync(domainEvent.UserId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(domainEvent.UserId, cancellationToken);
 
             if (user != null)
             {

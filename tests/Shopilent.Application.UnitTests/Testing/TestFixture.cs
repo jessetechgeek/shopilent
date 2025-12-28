@@ -148,8 +148,6 @@ public class TestFixture
         MockUnitOfWork.Setup(uow => uow.AttributeWriter).Returns(MockAttributeWriteRepository.Object);
 
         // Identity repositories
-        MockUnitOfWork.Setup(uow => uow.UserReader).Returns(MockUserReadRepository.Object);
-        MockUnitOfWork.Setup(uow => uow.UserWriter).Returns(MockUserWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.RefreshTokenReader).Returns(MockRefreshTokenReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.RefreshTokenWriter).Returns(MockRefreshTokenWriteRepository.Object);
 

@@ -5,13 +5,15 @@ using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Sales.Events;
 
 namespace Shopilent.Application.Features.Sales.EventHandlers;
 
-internal sealed  class OrderShippedEventHandler : INotificationHandler<DomainEventNotification<OrderShippedEvent>>
+internal sealed class OrderShippedEventHandler : INotificationHandler<DomainEventNotification<OrderShippedEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<OrderShippedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -19,12 +21,14 @@ internal sealed  class OrderShippedEventHandler : INotificationHandler<DomainEve
 
     public OrderShippedEventHandler(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<OrderShippedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -63,7 +67,7 @@ internal sealed  class OrderShippedEventHandler : INotificationHandler<DomainEve
                 // If order has user, send shipping notification email
                 if (order.UserId.HasValue)
                 {
-                    var user = await _unitOfWork.UserReader.GetByIdAsync(order.UserId.Value, cancellationToken);
+                    var user = await _userReadRepository.GetByIdAsync(order.UserId.Value, cancellationToken);
                     if (user != null)
                     {
                         string subject = $"Your Order #{order.Id} Has Shipped";

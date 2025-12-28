@@ -19,7 +19,7 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public GetUsersDatatableQueryV1Tests()
     {
         var services = new ServiceCollection();
-        services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockUserReadRepository.Object);
         services.AddTransient(sp => Fixture.MockAddressReadRepository.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetUsersDatatableQueryHandlerV1>());
 
@@ -78,8 +78,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var addresses2 = new List<AddressDto> { new AddressDto { Id = Guid.NewGuid() } };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         Fixture.MockAddressReadRepository
@@ -126,8 +126,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
         secondUser.AddressCount.Should().Be(1);
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken),
+        Fixture.MockUserReadRepository.Verify(
+            repo => repo.GetDataTableAsync(datatableRequest, CancellationToken),
             Times.Once);
 
         Fixture.MockAddressReadRepository.Verify(
@@ -161,8 +161,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         Fixture.MockAddressReadRepository
@@ -189,8 +189,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
         var emptyUsers = new List<UserDto>();
         var datatableResult = new DataTableResult<UserDto>(2, 5, 0, emptyUsers);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         // Act
@@ -239,8 +239,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         Fixture.MockAddressReadRepository
@@ -281,8 +281,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         Fixture.MockAddressReadRepository
@@ -305,8 +305,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ThrowsAsync(new Exception("Database connection failed"));
 
         // Act
@@ -345,8 +345,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         Fixture.MockAddressReadRepository
@@ -389,8 +389,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         Fixture.MockAddressReadRepository
@@ -419,8 +419,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
         var emptyUsers = new List<UserDto>();
         var datatableResult = new DataTableResult<UserDto>(3, 100, 0, emptyUsers);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         // Act
@@ -432,8 +432,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
         result.Value.RecordsTotal.Should().Be(100);
 
         // Verify the exact request was passed to the repository
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserReader.GetDataTableAsync(
+        Fixture.MockUserReadRepository.Verify(
+            repo => repo.GetDataTableAsync(
                 It.Is<DataTableRequest>(r => r.Draw == 3 && r.Start == 20 && r.Length == 10),
                 CancellationToken),
             Times.Once);

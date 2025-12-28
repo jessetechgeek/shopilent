@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Exceptions;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Infrastructure.IntegrationTests.Common;
@@ -13,6 +14,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class PaymentWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
 
     public PaymentWriteRepositoryTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -22,6 +24,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -40,7 +43,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithStripeCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
 
         // Act
@@ -82,7 +85,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithPaymentMethod(paymentMethod)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
         await _unitOfWork.OrderWriter.AddAsync(order);
 
@@ -112,7 +115,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithAmount(100m)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -152,7 +155,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithAmount(50m)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -190,7 +193,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithAmount(200m)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -218,7 +221,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithAmount(80m)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -264,7 +267,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         var transactionId = "txn_write_test_123";
         payment.MarkAsSucceeded(transactionId);
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -309,7 +312,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithAmount(90m)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -358,7 +361,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithPayPal()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment1);
         await _unitOfWork.PaymentWriter.AddAsync(payment2);
@@ -408,7 +411,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         succeededPayment.MarkAsSucceeded("txn_success_write");
         failedPayment.MarkAsFailed("Payment failed");
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order1);
         await _unitOfWork.OrderWriter.AddAsync(order2);
         await _unitOfWork.OrderWriter.AddAsync(order3);
@@ -464,7 +467,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithAmount(120m)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -522,7 +525,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             await _unitOfWork.OrderWriter.AddAsync(order);
         }
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
 
         // Act - Add multiple payments
         foreach (var payment in payments)
@@ -568,7 +571,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithAmount(250m)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();

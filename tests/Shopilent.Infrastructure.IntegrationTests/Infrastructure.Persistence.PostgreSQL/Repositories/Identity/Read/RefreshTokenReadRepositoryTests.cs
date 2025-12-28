@@ -1,4 +1,5 @@
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -8,6 +9,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class RefreshTokenReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
 
     public RefreshTokenReadRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
     {
@@ -16,6 +18,7 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -28,7 +31,7 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
         var user = new UserBuilder().Build();
         var refreshToken = RefreshTokenBuilder.ForUser(user).Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
@@ -72,7 +75,7 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
             .WithToken($"test_token_{DateTime.Now.Ticks}")
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
@@ -123,8 +126,8 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
             .WithToken($"other_token_{DateTime.Now.Ticks}")
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.UserWriter.AddAsync(otherUser);
+        await _userWriteRepository.AddAsync(user);
+        await _userWriteRepository.AddAsync(otherUser);
         await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken1);
         await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken2);
         await _unitOfWork.RefreshTokenWriter.AddAsync(otherUserToken);
@@ -177,7 +180,7 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
             .WithToken($"revoked_token_{DateTime.Now.Ticks}")
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.RefreshTokenWriter.AddAsync(activeToken);
         await _unitOfWork.RefreshTokenWriter.AddAsync(expiredToken);
         await _unitOfWork.RefreshTokenWriter.AddAsync(revokedToken);
@@ -210,7 +213,7 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
         // Only expired token
         var expiredToken = RefreshTokenBuilder.CreateExpiredToken(user);
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.RefreshTokenWriter.AddAsync(expiredToken);
         await _unitOfWork.SaveChangesAsync();
 
@@ -244,8 +247,8 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
             .WithToken($"token2_{DateTime.Now.Ticks}")
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
         await _unitOfWork.RefreshTokenWriter.AddAsync(token1);
         await _unitOfWork.RefreshTokenWriter.AddAsync(token2);
         await _unitOfWork.SaveChangesAsync();
@@ -276,7 +279,7 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
             .WithToken($"revoked_{DateTime.Now.Ticks}")
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.RefreshTokenWriter.AddAsync(activeToken);
         await _unitOfWork.RefreshTokenWriter.AddAsync(revokedToken);
         await _unitOfWork.SaveChangesAsync();
@@ -308,7 +311,7 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
             .WithToken(tokenValue)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.RefreshTokenWriter.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
@@ -347,8 +350,8 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
             .WithToken($"user2_token_{DateTime.Now.Ticks}")
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
         await _unitOfWork.RefreshTokenWriter.AddAsync(user1Token);
         await _unitOfWork.RefreshTokenWriter.AddAsync(user2Token);
         await _unitOfWork.SaveChangesAsync();
@@ -374,7 +377,7 @@ public class RefreshTokenReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act

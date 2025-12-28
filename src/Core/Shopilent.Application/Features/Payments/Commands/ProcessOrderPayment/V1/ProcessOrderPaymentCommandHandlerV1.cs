@@ -6,6 +6,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments;
 using Shopilent.Domain.Payments.DTOs;
 using Shopilent.Domain.Payments.Enums;
@@ -20,17 +21,20 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
     : ICommandHandler<ProcessOrderPaymentCommandV1, ProcessOrderPaymentResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly IPaymentService _paymentService;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<ProcessOrderPaymentCommandHandlerV1> _logger;
 
     public ProcessOrderPaymentCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         IPaymentService paymentService,
         ICurrentUserContext currentUserContext,
         ILogger<ProcessOrderPaymentCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _paymentService = paymentService;
         _currentUserContext = currentUserContext;
         _logger = logger;
@@ -81,7 +85,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
             User user = null;
             if (order.UserId.HasValue)
             {
-                user = await _unitOfWork.UserWriter.GetByIdAsync(order.UserId.Value, cancellationToken);
+                user = await _userWriteRepository.GetByIdAsync(order.UserId.Value, cancellationToken);
             }
 
             // Validate payment method if provided and get token
@@ -140,7 +144,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
                 }
             }
 
-           
+
             // Add off-session metadata for proper payment processing
             var paymentMetadata = new Dictionary<string, object>(request.Metadata ?? new Dictionary<string, object>());
 

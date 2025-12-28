@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
@@ -10,6 +12,8 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Payments.Data
 public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
+    private IUserReadRepository _userReadRepository = null!;
 
     public PaymentWorkflowIntegrationTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -19,6 +23,8 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
+        _userReadRepository = GetService<IUserReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -48,14 +54,14 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
             .Build();
 
         // Act - Persist all entities in correct order
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert - Verify all entities are persisted
-        var persistedUser = await _unitOfWork.UserReader.GetByIdAsync(user.Id);
+        var persistedUser = await _userReadRepository.GetByIdAsync(user.Id);
         var persistedOrder = await _unitOfWork.OrderReader.GetByIdAsync(order.Id);
         var persistedPaymentMethod = await _unitOfWork.PaymentMethodReader.GetByIdAsync(paymentMethod.Id);
         var persistedPayment = await _unitOfWork.PaymentReader.GetByIdAsync(payment.Id);
@@ -89,7 +95,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
             .WithStripeCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -128,7 +134,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
             .WithStripeCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -176,7 +182,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         payment2.MarkAsSucceeded("pi_test_retry_success");
 
         // Act
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment1);
         await _unitOfWork.PaymentWriter.AddAsync(payment2);
@@ -204,7 +210,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
         var order = OrderBuilder.Random().WithUser(user).Build();
-        
+
         var paymentMethod = PaymentMethodBuilder.Random()
             .WithUser(user)
             .WithCreditCard()
@@ -219,7 +225,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
@@ -254,7 +260,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         succeededPayment.MarkAsSucceeded("pi_test_success");
         failedPayment.MarkAsFailed("Insufficient funds");
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order1);
         await _unitOfWork.OrderWriter.AddAsync(order2);
         await _unitOfWork.OrderWriter.AddAsync(order3);
@@ -296,7 +302,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -316,7 +322,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var payments = new List<Domain.Payments.Payment>();
@@ -336,7 +342,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
             await _unitOfWork.OrderWriter.AddAsync(order);
             await _unitOfWork.PaymentWriter.AddAsync(payment);
             await _unitOfWork.SaveChangesAsync();
-            
+
             // Add delay to ensure different creation timestamps
             await Task.Delay(50);
         }
@@ -346,7 +352,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 
         // Assert
         recentPayments.Should().HaveCount(3);
-        
+
         // Should be ordered by creation time descending (most recent first)
         var orderedPayments = recentPayments.ToList();
         for (int i = 0; i < orderedPayments.Count - 1; i++)
@@ -367,7 +373,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
         var order = OrderBuilder.Random().WithUser(user).Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.SaveChangesAsync();
 
@@ -376,7 +382,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         {
             using var scope = ServiceProvider.CreateScope();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            
+
             var payment = PaymentBuilder.Random()
                 .WithOrder(order)
                 .WithUser(user)
@@ -386,7 +392,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 
             await unitOfWork.PaymentWriter.AddAsync(payment);
             await unitOfWork.SaveChangesAsync();
-            
+
             return payment.Id;
         });
 

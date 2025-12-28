@@ -4,6 +4,8 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Shipping.Enums;
@@ -15,17 +17,20 @@ namespace Shopilent.Application.Features.Shipping.Commands.CreateAddress.V1;
 internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddressCommandV1, CreateAddressResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly IAddressWriteRepository _addressWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<CreateAddressCommandHandlerV1> _logger;
 
     public CreateAddressCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         IAddressWriteRepository addressWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<CreateAddressCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _addressWriteRepository = addressWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
@@ -46,7 +51,7 @@ internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddr
             var userId = _currentUserContext.UserId.Value;
 
             // Get user from repository
-            var user = await _unitOfWork.UserWriter.GetByIdAsync(userId, cancellationToken);
+            var user = await _userWriteRepository.GetByIdAsync(userId, cancellationToken);
             if (user == null)
             {
                 return Result.Failure<CreateAddressResponseV1>(

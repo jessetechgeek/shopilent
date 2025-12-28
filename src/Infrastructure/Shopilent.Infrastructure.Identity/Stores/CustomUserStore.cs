@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 
 namespace Shopilent.Infrastructure.Identity.Stores;
@@ -21,10 +22,12 @@ internal sealed  class CustomUserStore :
     IUserPhoneNumberStore<User>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
 
-    public CustomUserStore(IUnitOfWork unitOfWork)
+    public CustomUserStore(IUnitOfWork unitOfWork, IUserWriteRepository userWriteRepository)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
     }
 
     #region IUserStore<User>
@@ -33,7 +36,7 @@ internal sealed  class CustomUserStore :
     {
         try
         {
-            await _unitOfWork.UserWriter.AddAsync(user, cancellationToken);
+            await _userWriteRepository.AddAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return IdentityResult.Success;
         }
@@ -51,7 +54,7 @@ internal sealed  class CustomUserStore :
     {
         try
         {
-            await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+            await _userWriteRepository.UpdateAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return IdentityResult.Success;
         }
@@ -69,7 +72,7 @@ internal sealed  class CustomUserStore :
     {
         try
         {
-            await _unitOfWork.UserWriter.DeleteAsync(user, cancellationToken);
+            await _userWriteRepository.DeleteAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return IdentityResult.Success;
         }
@@ -88,7 +91,7 @@ internal sealed  class CustomUserStore :
         if (!Guid.TryParse(userId, out var userGuid))
             return Task.FromResult<User?>(null);
 
-        return _unitOfWork.UserWriter.GetByIdAsync(userGuid, cancellationToken);
+        return _userWriteRepository.GetByIdAsync(userGuid, cancellationToken);
     }
 
     public Task<User?> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
@@ -97,7 +100,7 @@ internal sealed  class CustomUserStore :
         // ASP.NET Identity passes normalized (uppercase) username
         // Convert back to lowercase for our repository search
         var email = normalizedUserName?.ToLowerInvariant();
-        return _unitOfWork.UserWriter.GetByEmailAsync(email, cancellationToken);
+        return _userWriteRepository.GetByEmailAsync(email, cancellationToken);
     }
 
     public Task<string?> GetNormalizedUserNameAsync(User user, CancellationToken cancellationToken)
@@ -162,7 +165,7 @@ internal sealed  class CustomUserStore :
         // ASP.NET Identity passes normalized (uppercase) email
         // Convert back to lowercase for our repository search
         var email = normalizedEmail?.ToLowerInvariant();
-        return _unitOfWork.UserWriter.GetByEmailAsync(email, cancellationToken);
+        return _userWriteRepository.GetByEmailAsync(email, cancellationToken);
     }
 
     public Task<string?> GetEmailAsync(User user, CancellationToken cancellationToken)

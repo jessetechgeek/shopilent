@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -12,6 +13,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class CartWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
     private ICategoryWriteRepository _categoryWriteRepository = null!;
 
     public CartWriteRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
@@ -21,6 +23,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         return Task.CompletedTask;
     }
@@ -32,7 +35,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var cart = new CartBuilder()
@@ -86,7 +89,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
         await _categoryWriteRepository.AddAsync(category);
@@ -122,7 +125,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var cart = new CartBuilder()
@@ -159,7 +162,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
         await _categoryWriteRepository.AddAsync(category);
@@ -202,7 +205,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var cart = new CartBuilder().WithUser(user).Build();
@@ -225,7 +228,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var cart = new CartBuilder().WithUser(user).Build();
@@ -262,7 +265,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var cart = new CartBuilder().WithUser(user).Build();
@@ -299,7 +302,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
         await _categoryWriteRepository.AddAsync(category);
@@ -348,7 +351,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var cart = new CartBuilder()
@@ -393,7 +396,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
         await _categoryWriteRepository.AddAsync(category);
@@ -437,7 +440,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         var anonymousCart = new CartBuilder()
@@ -469,7 +472,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
         await _categoryWriteRepository.AddAsync(category);
@@ -514,7 +517,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = new UserBuilder().Build();
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
         await _categoryWriteRepository.AddAsync(category);

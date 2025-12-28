@@ -19,7 +19,7 @@ public class GetUserAddressesQueryV1Tests : TestBase
         var services = new ServiceCollection();
 
         // Register handler dependencies
-        services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockUserReadRepository.Object);
         services.AddTransient(sp => Fixture.MockAddressReadRepository.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetUserAddressesQueryHandlerV1>());
 

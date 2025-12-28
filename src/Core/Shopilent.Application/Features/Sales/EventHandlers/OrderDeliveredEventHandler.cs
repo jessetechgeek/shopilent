@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Sales.Events;
 
 namespace Shopilent.Application.Features.Sales.EventHandlers;
@@ -12,6 +13,7 @@ namespace Shopilent.Application.Features.Sales.EventHandlers;
 internal sealed  class OrderDeliveredEventHandler : INotificationHandler<DomainEventNotification<OrderDeliveredEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<OrderDeliveredEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -19,12 +21,14 @@ internal sealed  class OrderDeliveredEventHandler : INotificationHandler<DomainE
 
     public OrderDeliveredEventHandler(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<OrderDeliveredEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -52,7 +56,7 @@ internal sealed  class OrderDeliveredEventHandler : INotificationHandler<DomainE
                 // If order has user, send delivery notification and feedback request
                 if (order.UserId.HasValue)
                 {
-                    var user = await _unitOfWork.UserReader.GetByIdAsync(order.UserId.Value, cancellationToken);
+                    var user = await _userReadRepository.GetByIdAsync(order.UserId.Value, cancellationToken);
                     if (user != null)
                     {
                         string subject = $"Your Order #{order.Id} Has Been Delivered";

@@ -7,6 +7,7 @@ using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.Errors;
 
@@ -15,15 +16,18 @@ namespace Shopilent.Application.Features.Sales.Commands.AddItemToCart.V1;
 internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToCartCommandV1, AddItemToCartResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<AddItemToCartCommandHandlerV1> _logger;
 
     public AddItemToCartCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<AddItemToCartCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -36,12 +40,12 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
             User? user = null;
             if (_currentUserContext.IsAuthenticated && _currentUserContext.UserId.HasValue)
             {
-                user = await _unitOfWork.UserWriter.GetByIdAsync(_currentUserContext.UserId.Value, cancellationToken);
+                user = await _userWriteRepository.GetByIdAsync(_currentUserContext.UserId.Value, cancellationToken);
             }
 
             // Get cart by ID if specified, otherwise get or create user's cart
             Cart? cart = null;
-            
+
             if (request.CartId.HasValue)
             {
                 // Get cart by specified ID
@@ -64,14 +68,14 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
                             _logger.LogError("Failed to assign cart to user: {Error}", assignResult.Error);
                             return Result.Failure<AddItemToCartResponseV1>(assignResult.Error);
                         }
-                        
+
                         // Update cart with user assignment
                         await _unitOfWork.CartWriter.UpdateAsync(cart, cancellationToken);
                     }
                     else if (cart.UserId != user.Id)
                     {
                         // Cart belongs to different user
-                        _logger.LogWarning("Cart belongs to different user. CartId: {CartId}, UserId: {UserId}, CartUserId: {CartUserId}", 
+                        _logger.LogWarning("Cart belongs to different user. CartId: {CartId}, UserId: {UserId}, CartUserId: {CartUserId}",
                             request.CartId, user.Id, cart.UserId);
                         return Result.Failure<AddItemToCartResponseV1>(
                             Error.Forbidden("Cart.AccessDenied", "You don't have access to this cart"));
@@ -97,7 +101,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
 
                     cart = cartResult.Value;
                     await _unitOfWork.CartWriter.AddAsync(cart, cancellationToken);
-                    
+
                     // Save the new cart to database first
                     var saveCartResult = await _unitOfWork.SaveChangesAsync(cancellationToken);
                     if (saveCartResult == 0)
@@ -106,7 +110,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
                         return Result.Failure<AddItemToCartResponseV1>(
                             Error.Failure("Cart.CreateFailed", "Failed to create cart"));
                     }
-                    
+
                     _logger.LogInformation("New cart created and saved. CartId: {CartId}", cart.Id);
                 }
             }

@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Features.Payments.Commands.ProcessWebhook.V1;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
@@ -11,8 +13,9 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Payments.Data
 [Collection("IntegrationTests")]
 public class WebhookWorkflowTests : IntegrationTestBase
 {
-    private IUnitOfWork _unitOfWork = null!;
     private IMediator _mediator = null!;
+    private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
 
     public WebhookWorkflowTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -21,8 +24,9 @@ public class WebhookWorkflowTests : IntegrationTestBase
 
     protected override Task InitializeTestServices()
     {
-        _unitOfWork = GetService<IUnitOfWork>();
         _mediator = GetService<IMediator>();
+        _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -42,7 +46,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .WithStripeCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -84,7 +88,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             Signature = null, // No signature validation in integration tests
             Headers = new Dictionary<string, string>()
         };
-        
+
         var result = await _mediator.Send(command);
 
         // Assert
@@ -117,7 +121,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .WithStripeCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -164,7 +168,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             Signature = null, // No signature validation in integration tests
             Headers = new Dictionary<string, string>()
         };
-        
+
         var result = await _mediator.Send(command);
 
         // Assert
@@ -201,7 +205,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         // Mark payment as succeeded first
         payment.MarkAsSucceeded("pi_test_webhook_refund");
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -242,7 +246,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             Signature = null, // No signature validation in integration tests
             Headers = new Dictionary<string, string>()
         };
-        
+
         var result = await _mediator.Send(command);
 
         // Assert
@@ -297,7 +301,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             Signature = null, // No signature validation in integration tests
             Headers = new Dictionary<string, string>()
         };
-        
+
         var result = await _mediator.Send(command);
 
         // Assert
@@ -344,7 +348,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             Signature = "invalid_signature",
             Headers = headers
         };
-        
+
         var result = await _mediator.Send(command);
 
         // Assert
@@ -380,7 +384,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             Signature = "valid_signature_here",
             Headers = headers
         };
-        
+
         var result = await _mediator.Send(command);
 
         // Assert
@@ -427,7 +431,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             Signature = null, // No signature validation in integration tests
             Headers = new Dictionary<string, string>()
         };
-        
+
         var result = await _mediator.Send(command);
 
         // Assert
@@ -463,7 +467,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .WithStripeCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order1);
         await _unitOfWork.OrderWriter.AddAsync(order2);
         await _unitOfWork.PaymentWriter.AddAsync(payment1);
@@ -477,7 +481,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             {
                 using var scope = ServiceProvider.CreateScope();
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                
+
                 var payload = $$"""
                 {
                     "id": "evt_concurrent_1",
@@ -514,14 +518,14 @@ public class WebhookWorkflowTests : IntegrationTestBase
                     Signature = null,
                     Headers = new Dictionary<string, string>()
                 };
-                
+
                 return await mediator.Send(command);
             }),
             Task.Run(async () =>
             {
                 using var scope = ServiceProvider.CreateScope();
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                
+
                 var payload = $$"""
                 {
                     "id": "evt_concurrent_2",
@@ -561,7 +565,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
                     Signature = null,
                     Headers = new Dictionary<string, string>()
                 };
-                
+
                 return await mediator.Send(command);
             })
         };
@@ -600,7 +604,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .WithStripeCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.OrderWriter.AddAsync(order);
         await _unitOfWork.PaymentWriter.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
@@ -641,7 +645,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
             Signature = null,
             Headers = new Dictionary<string, string>()
         };
-        
+
         var firstResult = await _mediator.Send(command);
         var secondResult = await _mediator.Send(command);
 

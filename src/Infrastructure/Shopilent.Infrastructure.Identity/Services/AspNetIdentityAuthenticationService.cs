@@ -8,6 +8,8 @@ using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.DTOs;
 using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Infrastructure.Identity.Abstractions;
 
@@ -23,6 +25,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly IJwtService _jwtService;
     private readonly IEmailService _emailService;
     private readonly ILogger<AspNetIdentityAuthenticationService> _logger;
@@ -31,6 +34,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
         UserManager<User> userManager,
         SignInManager<User> signInManager,
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         IJwtService jwtService,
         IEmailService emailService,
         ILogger<AspNetIdentityAuthenticationService> logger)
@@ -38,6 +42,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
         _userManager = userManager;
         _signInManager = signInManager;
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _jwtService = jwtService;
         _emailService = emailService;
         _logger = logger;
@@ -441,7 +446,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
                     message: "The verification token is invalid."));
 
             // Find user by verification token (using our domain method)
-            var user = await _unitOfWork.UserWriter.GetByEmailVerificationTokenAsync(token, cancellationToken);
+            var user = await _userWriteRepository.GetByEmailVerificationTokenAsync(token, cancellationToken);
             if (user == null)
                 return Result.Failure(Error.Validation(
                     code: "EmailVerification.InvalidToken",
@@ -518,7 +523,7 @@ internal sealed class AspNetIdentityAuthenticationService : IAuthenticationServi
                 return Result.Failure(UserErrors.PasswordRequired);
 
             // Find user by reset token (using our domain method)
-            var user = await _unitOfWork.UserWriter.GetByPasswordResetTokenAsync(token, cancellationToken);
+            var user = await _userWriteRepository.GetByPasswordResetTokenAsync(token, cancellationToken);
             if (user == null)
                 return Result.Failure(Error.Validation(
                     code: "PasswordReset.InvalidToken",
