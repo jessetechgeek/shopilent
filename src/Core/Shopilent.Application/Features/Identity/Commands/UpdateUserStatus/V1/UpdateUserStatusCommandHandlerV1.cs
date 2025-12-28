@@ -6,21 +6,25 @@ using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Write;
 
 namespace Shopilent.Application.Features.Identity.Commands.UpdateUserStatus.V1;
 
 internal sealed class UpdateUserStatusCommandHandlerV1 : ICommandHandler<UpdateUserStatusCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<UpdateUserStatusCommandHandlerV1> _logger;
 
     public UpdateUserStatusCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<UpdateUserStatusCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -30,15 +34,15 @@ internal sealed class UpdateUserStatusCommandHandlerV1 : ICommandHandler<UpdateU
         try
         {
             // Get user by ID
-            var user = await _unitOfWork.UserWriter.GetByIdAsync(request.Id, cancellationToken);
+            var user = await _userWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (user == null)
             {
                 return Result.Failure(UserErrors.NotFound(request.Id));
             }
 
             // Prevent self-deactivation
-            if (_currentUserContext.UserId.HasValue && 
-                _currentUserContext.UserId.Value == request.Id && 
+            if (_currentUserContext.UserId.HasValue &&
+                _currentUserContext.UserId.Value == request.Id &&
                 !request.IsActive)
             {
                 return Result.Failure(UserErrors.CannotDeactivateSelf);
@@ -69,7 +73,7 @@ internal sealed class UpdateUserStatusCommandHandlerV1 : ICommandHandler<UpdateU
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("User status updated successfully. ID: {UserId}, IsActive: {IsActive}", 
+            _logger.LogInformation("User status updated successfully. ID: {UserId}, IsActive: {IsActive}",
                 user.Id, request.IsActive);
 
             return Result.Success();

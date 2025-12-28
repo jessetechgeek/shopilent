@@ -13,7 +13,7 @@ public class GetAllCategoriesQueryV1Tests : TestBase
     public GetAllCategoriesQueryV1Tests()
     {
         _handler = new GetAllCategoriesQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockCategoryReadRepository.Object,
             Fixture.GetLogger<GetAllCategoriesQueryHandlerV1>());
     }
 
@@ -111,13 +111,13 @@ public class GetAllCategoriesQueryV1Tests : TestBase
         result.Error.Code.Should().Be("Categories.GetAllFailed");
         result.Error.Message.Should().Contain("Test exception");
     }
-    
+
     [Fact]
     public async Task Handle_VerifiesCacheKeyAndExpirationAreSet()
     {
         // Arrange
         var query = new GetAllCategoriesQueryV1();
-        
+
         // Mock successful repository call
         Fixture.MockCategoryReadRepository
             .Setup(repo => repo.ListAllAsync(CancellationToken))
@@ -131,13 +131,13 @@ public class GetAllCategoriesQueryV1Tests : TestBase
         query.Expiration.Should().NotBeNull();
         query.Expiration.Should().Be(TimeSpan.FromMinutes(30));
     }
-    
+
     [Fact]
     public async Task Handle_VerifiesFilteringIsNotApplied()
     {
         // Arrange
         var query = new GetAllCategoriesQueryV1();
-        
+
         // Create mixed categories
         var allCategories = new List<CategoryDto>
         {
@@ -167,7 +167,7 @@ public class GetAllCategoriesQueryV1Tests : TestBase
         result.Value.Count.Should().Be(2);
         result.Value.Should().Contain(c => c.Name == "Active Category");
         result.Value.Should().Contain(c => c.Name == "Inactive Category");
-        
+
         // Verify we're using ListAllAsync and not filtering by activity status
         Fixture.MockCategoryReadRepository.Verify(
             repo => repo.ListAllAsync(CancellationToken),

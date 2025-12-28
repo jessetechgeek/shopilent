@@ -3,6 +3,8 @@ using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Read;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -11,15 +13,21 @@ namespace Shopilent.Application.Features.Catalog.Commands.DeleteAttribute.V1;
 internal sealed class DeleteAttributeCommandHandlerV1 : ICommandHandler<DeleteAttributeCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductReadRepository _productReadRepository;
+    private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<DeleteAttributeCommandHandlerV1> _logger;
 
     public DeleteAttributeCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductReadRepository productReadRepository,
+        IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<DeleteAttributeCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productReadRepository = productReadRepository;
+        _attributeWriteRepository = attributeWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -29,20 +37,22 @@ internal sealed class DeleteAttributeCommandHandlerV1 : ICommandHandler<DeleteAt
         try
         {
             // Get attribute by ID
-            var attribute = await _unitOfWork.AttributeWriter.GetByIdAsync(request.Id, cancellationToken);
+            var attribute = await _attributeWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (attribute == null)
             {
                 return Result.Failure(AttributeErrors.NotFound(request.Id));
             }
 
             // Check if attribute is used by any products
-            var productsWithAttribute = await _unitOfWork.ProductReader.SearchAsync($"attribute:{attribute.Name}", cancellationToken: cancellationToken);
+            var productsWithAttribute = await _productReadRepository.SearchAsync($"attribute:{attribute.Name}",
+                cancellationToken: cancellationToken);
             if (productsWithAttribute != null && productsWithAttribute.Count > 0)
             {
                 return Result.Failure(
                     Error.Conflict(
                         code: "Attribute.InUse",
-                        message: $"Cannot delete attribute '{attribute.Name}' because it is used by {productsWithAttribute.Count} products"));
+                        message:
+                        $"Cannot delete attribute '{attribute.Name}' because it is used by {productsWithAttribute.Count} products"));
             }
 
             // Call domain delete method to raise AttributeDeletedEvent
@@ -53,7 +63,7 @@ internal sealed class DeleteAttributeCommandHandlerV1 : ICommandHandler<DeleteAt
             }
 
             // Delete attribute from repository
-            await _unitOfWork.AttributeWriter.DeleteAsync(attribute, cancellationToken);
+            await _attributeWriteRepository.DeleteAsync(attribute, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

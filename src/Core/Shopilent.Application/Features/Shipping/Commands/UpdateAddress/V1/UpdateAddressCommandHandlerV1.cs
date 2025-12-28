@@ -15,15 +15,18 @@ internal sealed class UpdateAddressCommandHandlerV1 : ICommandHandler<UpdateAddr
 {
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAddressWriteRepository _addressWriteRepository;
     private readonly ILogger<UpdateAddressCommandHandlerV1> _logger;
 
     public UpdateAddressCommandHandlerV1(
         ICurrentUserContext currentUserContext,
         IUnitOfWork unitOfWork,
+        IAddressWriteRepository addressWriteRepository,
         ILogger<UpdateAddressCommandHandlerV1> logger)
     {
         _currentUserContext = currentUserContext;
         _unitOfWork = unitOfWork;
+        _addressWriteRepository = addressWriteRepository;
         _logger = logger;
     }
 
@@ -37,7 +40,7 @@ internal sealed class UpdateAddressCommandHandlerV1 : ICommandHandler<UpdateAddr
                 request.Id, _currentUserContext.UserId);
 
             // Get the address
-            var address = await _unitOfWork.AddressWriter.GetByIdAsync(request.Id, cancellationToken);
+            var address = await _addressWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (address == null)
             {
                 _logger.LogWarning("Address {AddressId} not found", request.Id);
@@ -105,7 +108,7 @@ internal sealed class UpdateAddressCommandHandlerV1 : ICommandHandler<UpdateAddr
             }
 
             // Save changes
-            await _unitOfWork.AddressWriter.UpdateAsync(address, cancellationToken);
+            await _addressWriteRepository.UpdateAsync(address, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("Successfully updated address {AddressId} for user {UserId}",

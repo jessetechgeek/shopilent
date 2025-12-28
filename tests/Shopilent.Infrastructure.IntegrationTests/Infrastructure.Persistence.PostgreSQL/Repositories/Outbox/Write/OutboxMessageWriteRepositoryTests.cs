@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Outbox;
+using Shopilent.Domain.Outbox.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -10,6 +11,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IOutboxMessageWriteRepository _outboxMessageWriteRepository = null!;
 
     public OutboxMessageWriteRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
     {
@@ -18,6 +20,8 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _outboxMessageWriteRepository = GetService<IOutboxMessageWriteRepository>();
+
         return Task.CompletedTask;
     }
 
@@ -32,11 +36,11 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         var outboxMessage = OutboxMessageBuilder.CreateDefault();
 
         // Act
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var result = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         result.Should().NotBeNull();
         result!.Id.Should().Be(outboxMessage.Id);
         result.Type.Should().Be(outboxMessage.Type);
@@ -55,11 +59,11 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var outboxMessage = OutboxMessageBuilder.CreateDomainEvent("UserCreated", Guid.NewGuid());
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var result = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -76,7 +80,7 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(nonExistentId);
+        var result = await _outboxMessageWriteRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -89,22 +93,22 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var outboxMessage = OutboxMessageBuilder.CreateDefault();
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(outboxMessage).State = EntityState.Detached;
 
         // Act - Load fresh entity and update
-        var existingMessage = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var existingMessage = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         var errorMessage = "Test error occurred";
         existingMessage!.MarkAsFailed(errorMessage);
 
-        await _unitOfWork.OutboxMessageWriter.UpdateAsync(existingMessage);
+        await _outboxMessageWriteRepository.UpdateAsync(existingMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var updatedMessage = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var updatedMessage = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         updatedMessage.Should().NotBeNull();
         updatedMessage!.Error.Should().Be(errorMessage);
         updatedMessage.RetryCount.Should().Be(1);
@@ -118,15 +122,15 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var outboxMessage = OutboxMessageBuilder.CreateDefault();
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        await _unitOfWork.OutboxMessageWriter.DeleteAsync(outboxMessage);
+        await _outboxMessageWriteRepository.DeleteAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var result = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         result.Should().BeNull();
     }
 
@@ -153,12 +157,13 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         for (int i = 0; i < messages.Count; i++)
         {
             messages[i].Reschedule(scheduledTimes[i] - DateTime.UtcNow);
-            await _unitOfWork.OutboxMessageWriter.AddAsync(messages[i]);
+            await _outboxMessageWriteRepository.AddAsync(messages[i]);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.OutboxMessageWriter.GetUnprocessedMessagesAsync(10);
+        var result = await _outboxMessageWriteRepository.GetUnprocessedMessagesAsync(10);
 
         // Assert
         result.Should().NotBeNull();
@@ -177,12 +182,13 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         var messages = OutboxMessageBuilder.CreateMultipleUnprocessed(5, DateTime.UtcNow.AddMinutes(-5));
         foreach (var message in messages)
         {
-            await _unitOfWork.OutboxMessageWriter.AddAsync(message);
+            await _outboxMessageWriteRepository.AddAsync(message);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.OutboxMessageWriter.GetUnprocessedMessagesAsync(3);
+        var result = await _outboxMessageWriteRepository.GetUnprocessedMessagesAsync(3);
 
         // Assert
         result.Should().NotBeNull();
@@ -198,12 +204,12 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         var pastMessage = OutboxMessageBuilder.CreateScheduledInPast();
         var futureMessage = OutboxMessageBuilder.CreateScheduledInFuture();
 
-        await _unitOfWork.OutboxMessageWriter.AddAsync(pastMessage);
-        await _unitOfWork.OutboxMessageWriter.AddAsync(futureMessage);
+        await _outboxMessageWriteRepository.AddAsync(pastMessage);
+        await _outboxMessageWriteRepository.AddAsync(futureMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.OutboxMessageWriter.GetUnprocessedMessagesAsync(10);
+        var result = await _outboxMessageWriteRepository.GetUnprocessedMessagesAsync(10);
 
         // Assert
         result.Should().NotBeNull();
@@ -220,12 +226,12 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         var unprocessedMessage = OutboxMessageBuilder.CreateDefault();
         var processedMessage = OutboxMessageBuilder.CreateProcessed();
 
-        await _unitOfWork.OutboxMessageWriter.AddAsync(unprocessedMessage);
-        await _unitOfWork.OutboxMessageWriter.AddAsync(processedMessage);
+        await _outboxMessageWriteRepository.AddAsync(unprocessedMessage);
+        await _outboxMessageWriteRepository.AddAsync(processedMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.OutboxMessageWriter.GetUnprocessedMessagesAsync(10);
+        var result = await _outboxMessageWriteRepository.GetUnprocessedMessagesAsync(10);
 
         // Assert
         result.Should().NotBeNull();
@@ -240,14 +246,14 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var outboxMessage = OutboxMessageBuilder.CreateDefault();
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        await _unitOfWork.OutboxMessageWriter.MarkAsProcessedAsync(outboxMessage.Id);
+        await _outboxMessageWriteRepository.MarkAsProcessedAsync(outboxMessage.Id);
 
         // Assert
-        var result = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var result = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         result.Should().NotBeNull();
         result!.ProcessedAt.Should().NotBeNull();
         result.ProcessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
@@ -262,7 +268,7 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act & Assert
-        var act = async () => await _unitOfWork.OutboxMessageWriter.MarkAsProcessedAsync(nonExistentId);
+        var act = async () => await _outboxMessageWriteRepository.MarkAsProcessedAsync(nonExistentId);
         await act.Should().NotThrowAsync();
     }
 
@@ -273,16 +279,16 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var outboxMessage = OutboxMessageBuilder.CreateDefault();
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         var errorMessage = "Processing failed due to network timeout";
 
         // Act
-        await _unitOfWork.OutboxMessageWriter.MarkAsFailedAsync(outboxMessage.Id, errorMessage);
+        await _outboxMessageWriteRepository.MarkAsFailedAsync(outboxMessage.Id, errorMessage);
 
         // Assert
-        var result = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var result = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         result.Should().NotBeNull();
         result!.Error.Should().Be(errorMessage);
         result.RetryCount.Should().Be(1);
@@ -296,16 +302,16 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var outboxMessage = OutboxMessageBuilder.CreateDefault();
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Mark as failed multiple times
-        await _unitOfWork.OutboxMessageWriter.MarkAsFailedAsync(outboxMessage.Id, "First failure");
-        await _unitOfWork.OutboxMessageWriter.MarkAsFailedAsync(outboxMessage.Id, "Second failure");
-        await _unitOfWork.OutboxMessageWriter.MarkAsFailedAsync(outboxMessage.Id, "Third failure");
+        await _outboxMessageWriteRepository.MarkAsFailedAsync(outboxMessage.Id, "First failure");
+        await _outboxMessageWriteRepository.MarkAsFailedAsync(outboxMessage.Id, "Second failure");
+        await _outboxMessageWriteRepository.MarkAsFailedAsync(outboxMessage.Id, "Third failure");
 
         // Assert
-        var result = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var result = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         result.Should().NotBeNull();
         result!.Error.Should().Be("Third failure");
         result.RetryCount.Should().Be(3);
@@ -320,7 +326,7 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act & Assert
-        var act = async () => await _unitOfWork.OutboxMessageWriter.MarkAsFailedAsync(nonExistentId, "Error");
+        var act = async () => await _outboxMessageWriteRepository.MarkAsFailedAsync(nonExistentId, "Error");
         await act.Should().NotThrowAsync();
     }
 
@@ -346,24 +352,24 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         recentProcessedMessage.MarkAsProcessed();
         SetProcessedAt(recentProcessedMessage, DateTime.UtcNow.AddDays(-3));
 
-        await _unitOfWork.OutboxMessageWriter.AddAsync(oldProcessedMessage);
-        await _unitOfWork.OutboxMessageWriter.AddAsync(recentProcessedMessage);
-        await _unitOfWork.OutboxMessageWriter.AddAsync(unprocessedMessage);
+        await _outboxMessageWriteRepository.AddAsync(oldProcessedMessage);
+        await _outboxMessageWriteRepository.AddAsync(recentProcessedMessage);
+        await _outboxMessageWriteRepository.AddAsync(unprocessedMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var deletedCount = await _unitOfWork.OutboxMessageWriter.DeleteProcessedMessagesAsync(cutoffTime);
+        var deletedCount = await _outboxMessageWriteRepository.DeleteProcessedMessagesAsync(cutoffTime);
 
         // Assert
         deletedCount.Should().Be(1);
 
-        var oldResult = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(oldProcessedMessage.Id);
+        var oldResult = await _outboxMessageWriteRepository.GetByIdAsync(oldProcessedMessage.Id);
         oldResult.Should().BeNull();
 
-        var recentResult = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(recentProcessedMessage.Id);
+        var recentResult = await _outboxMessageWriteRepository.GetByIdAsync(recentProcessedMessage.Id);
         recentResult.Should().NotBeNull();
 
-        var unprocessedResult = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(unprocessedMessage.Id);
+        var unprocessedResult = await _outboxMessageWriteRepository.GetByIdAsync(unprocessedMessage.Id);
         unprocessedResult.Should().NotBeNull();
     }
 
@@ -377,12 +383,12 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         var recentProcessedMessage = OutboxMessageBuilder.CreateProcessed();
         var unprocessedMessage = OutboxMessageBuilder.CreateDefault();
 
-        await _unitOfWork.OutboxMessageWriter.AddAsync(recentProcessedMessage);
-        await _unitOfWork.OutboxMessageWriter.AddAsync(unprocessedMessage);
+        await _outboxMessageWriteRepository.AddAsync(recentProcessedMessage);
+        await _outboxMessageWriteRepository.AddAsync(unprocessedMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var deletedCount = await _unitOfWork.OutboxMessageWriter.DeleteProcessedMessagesAsync(cutoffTime);
+        var deletedCount = await _outboxMessageWriteRepository.DeleteProcessedMessagesAsync(cutoffTime);
 
         // Assert
         deletedCount.Should().Be(0);
@@ -397,7 +403,7 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         var cutoffTime = DateTime.UtcNow.AddDays(-7);
 
         // Act
-        var deletedCount = await _unitOfWork.OutboxMessageWriter.DeleteProcessedMessagesAsync(cutoffTime);
+        var deletedCount = await _outboxMessageWriteRepository.DeleteProcessedMessagesAsync(cutoffTime);
 
         // Assert
         deletedCount.Should().Be(0);
@@ -423,12 +429,13 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         // Act
         foreach (var message in messages)
         {
-            await _unitOfWork.OutboxMessageWriter.AddAsync(message);
+            await _outboxMessageWriteRepository.AddAsync(message);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var unprocessedMessages = await _unitOfWork.OutboxMessageWriter.GetUnprocessedMessagesAsync(10);
+        var unprocessedMessages = await _outboxMessageWriteRepository.GetUnprocessedMessagesAsync(10);
         unprocessedMessages.Should().HaveCount(3);
 
         // Verify by checking the Content field which contains our actual event data
@@ -444,11 +451,11 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var outboxMessage = OutboxMessageBuilder.CreateDefault();
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.OutboxMessageWriter.GetUnprocessedMessagesAsync(0);
+        var result = await _outboxMessageWriteRepository.GetUnprocessedMessagesAsync(0);
 
         // Assert
         result.Should().NotBeNull();
@@ -462,34 +469,34 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var outboxMessage = OutboxMessageBuilder.CreateDefault();
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Test state transitions
         // 1. Mark as failed
         outboxMessage.MarkAsFailed("First error");
-        await _unitOfWork.OutboxMessageWriter.UpdateAsync(outboxMessage);
+        await _outboxMessageWriteRepository.UpdateAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
-        var afterFirstFailure = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var afterFirstFailure = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         afterFirstFailure!.Error.Should().Be("First error");
         afterFirstFailure.RetryCount.Should().Be(1);
 
         // 2. Mark as failed again
         outboxMessage.MarkAsFailed("Second error");
-        await _unitOfWork.OutboxMessageWriter.UpdateAsync(outboxMessage);
+        await _outboxMessageWriteRepository.UpdateAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
-        var afterSecondFailure = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var afterSecondFailure = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         afterSecondFailure!.Error.Should().Be("Second error");
         afterSecondFailure.RetryCount.Should().Be(2);
 
         // 3. Mark as processed
         outboxMessage.MarkAsProcessed();
-        await _unitOfWork.OutboxMessageWriter.UpdateAsync(outboxMessage);
+        await _outboxMessageWriteRepository.UpdateAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
-        var afterProcessed = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var afterProcessed = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         afterProcessed!.ProcessedAt.Should().NotBeNull();
         afterProcessed.Error.Should().BeNull();
         afterProcessed.RetryCount.Should().Be(2); // Retry count should remain
@@ -502,7 +509,7 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var outboxMessage = OutboxMessageBuilder.CreateDefault();
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         var originalScheduledAt = outboxMessage.ScheduledAt;
@@ -510,11 +517,11 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
 
         // Act
         outboxMessage.Reschedule(delay);
-        await _unitOfWork.OutboxMessageWriter.UpdateAsync(outboxMessage);
+        await _outboxMessageWriteRepository.UpdateAsync(outboxMessage);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var result = await _unitOfWork.OutboxMessageWriter.GetByIdAsync(outboxMessage.Id);
+        var result = await _outboxMessageWriteRepository.GetByIdAsync(outboxMessage.Id);
         result.Should().NotBeNull();
         result!.ScheduledAt.Should().BeAfter(originalScheduledAt.Value);
         result.ScheduledAt.Should().BeCloseTo(DateTime.UtcNow.Add(delay), TimeSpan.FromSeconds(10));
@@ -528,10 +535,10 @@ public class OutboxMessageWriteRepositoryTests : IntegrationTestBase
     {
         // Use reflection to set ProcessedAt for testing
         var field = typeof(OutboxMessage)
-            .GetField("<ProcessedAt>k__BackingField", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            .GetField("<ProcessedAt>k__BackingField",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         field?.SetValue(message, processedAt);
     }
-
 
     #endregion
 }

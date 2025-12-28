@@ -6,6 +6,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.S3Storage;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
@@ -16,6 +17,9 @@ namespace Shopilent.Application.Features.Catalog.Commands.CreateProduct.V1;
 internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProductCommandV1, CreateProductResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductWriteRepository _productWriteRepository;
+    private readonly ICategoryWriteRepository _categoryWriteRepository;
+    private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IS3StorageService _s3StorageService;
     private readonly IImageService _imageService;
@@ -23,12 +27,18 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
 
     public CreateProductCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductWriteRepository productWriteRepository,
+        ICategoryWriteRepository categoryWriteRepository,
+        IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
         IS3StorageService s3StorageService,
         IImageService imageService,
         ILogger<CreateProductCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productWriteRepository = productWriteRepository;
+        _categoryWriteRepository = categoryWriteRepository;
+        _attributeWriteRepository = attributeWriteRepository;
         _currentUserContext = currentUserContext;
         _s3StorageService = s3StorageService;
         _imageService = imageService;
@@ -41,7 +51,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
         try
         {
             // Check if slug already exists
-            var slugExists = await _unitOfWork.ProductWriter.SlugExistsAsync(request.Slug, null, cancellationToken);
+            var slugExists = await _productWriteRepository.SlugExistsAsync(request.Slug, null, cancellationToken);
             if (slugExists)
             {
                 return Result.Failure<CreateProductResponseV1>(ProductErrors.DuplicateSlug(request.Slug));
@@ -50,7 +60,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
             // Check if SKU exists
             if (!string.IsNullOrWhiteSpace(request.Sku))
             {
-                var skuExists = await _unitOfWork.ProductWriter.SkuExistsAsync(request.Sku, null, cancellationToken);
+                var skuExists = await _productWriteRepository.SkuExistsAsync(request.Sku, null, cancellationToken);
                 if (skuExists)
                 {
                     return Result.Failure<CreateProductResponseV1>(ProductErrors.DuplicateSku(request.Sku));
@@ -106,7 +116,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
             {
                 foreach (var categoryId in request.CategoryIds)
                 {
-                    var category = await _unitOfWork.CategoryWriter.GetByIdAsync(categoryId, cancellationToken);
+                    var category = await _categoryWriteRepository.GetByIdAsync(categoryId, cancellationToken);
                     if (category != null)
                     {
                         product.AddCategory(category);
@@ -125,7 +135,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
                 foreach (var attributeDto in request.Attributes)
                 {
                     var attribute =
-                        await _unitOfWork.AttributeWriter.GetByIdAsync(attributeDto.AttributeId, cancellationToken);
+                        await _attributeWriteRepository.GetByIdAsync(attributeDto.AttributeId, cancellationToken);
                     if (attribute != null)
                     {
                         // Add the attribute to the product
@@ -192,7 +202,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
             }
 
             // Add to repository
-            await _unitOfWork.ProductWriter.AddAsync(product, cancellationToken);
+            await _productWriteRepository.AddAsync(product, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

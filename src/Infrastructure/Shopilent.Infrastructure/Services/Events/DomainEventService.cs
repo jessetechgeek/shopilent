@@ -5,22 +5,26 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Common.Events;
 using Shopilent.Domain.Outbox;
+using Shopilent.Domain.Outbox.Repositories.Write;
 
 namespace Shopilent.Infrastructure.Services.Events;
 
 public class DomainEventService : IDomainEventService
 {
-   private readonly IPublisher _mediator;
+    private readonly IPublisher _mediator;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IOutboxMessageWriteRepository _outboxMessageWriteRepository;
     private readonly ILogger<DomainEventService> _logger;
 
     public DomainEventService(
         IPublisher mediator,
         IUnitOfWork unitOfWork,
+        IOutboxMessageWriteRepository outboxMessageWriteRepository,
         ILogger<DomainEventService> logger)
     {
         _mediator = mediator;
         _unitOfWork = unitOfWork;
+        _outboxMessageWriteRepository = outboxMessageWriteRepository;
         _logger = logger;
     }
 
@@ -50,6 +54,6 @@ public class DomainEventService : IDomainEventService
 
         // Create an outbox message and add it to the current context
         var outboxMessage = OutboxMessage.Create(notification);
-        await _unitOfWork.OutboxMessageWriter.AddAsync(outboxMessage, cancellationToken);
+        await _outboxMessageWriteRepository.AddAsync(outboxMessage, cancellationToken);
     }
 }

@@ -6,12 +6,18 @@ using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Events;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
 
 namespace Shopilent.Application.Features.Identity.EventHandlers;
 
-internal sealed  class UserPasswordChangedEventHandler : INotificationHandler<DomainEventNotification<UserPasswordChangedEvent>>
+internal sealed class
+    UserPasswordChangedEventHandler : INotificationHandler<DomainEventNotification<UserPasswordChangedEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
+    private readonly IRefreshTokenWriteRepository _refreshTokenWriteRepository;
+    private readonly IRefreshTokenReadRepository _refreshTokenReadRepository;
     private readonly ILogger<UserPasswordChangedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -19,19 +25,26 @@ internal sealed  class UserPasswordChangedEventHandler : INotificationHandler<Do
 
     public UserPasswordChangedEventHandler(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
+        IRefreshTokenWriteRepository refreshTokenWriteRepository,
+        IRefreshTokenReadRepository refreshTokenReadRepository,
         ILogger<UserPasswordChangedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
+        _refreshTokenWriteRepository = refreshTokenWriteRepository;
+        _refreshTokenReadRepository = refreshTokenReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
         _emailService = emailService;
     }
 
-    public async Task Handle(DomainEventNotification<UserPasswordChangedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<UserPasswordChangedEvent> notification,
+        CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
@@ -40,22 +53,23 @@ internal sealed  class UserPasswordChangedEventHandler : INotificationHandler<Do
         try
         {
             // Get user details
-            var user = await _unitOfWork.UserReader.GetByIdAsync(domainEvent.UserId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(domainEvent.UserId, cancellationToken);
 
             if (user != null)
             {
                 // Revoke all active refresh tokens for this user
-                var refreshTokens = await _unitOfWork.RefreshTokenReader.GetActiveTokensAsync(domainEvent.UserId, cancellationToken);
+                var refreshTokens =
+                    await _refreshTokenReadRepository.GetActiveTokensAsync(domainEvent.UserId, cancellationToken);
                 if (refreshTokens != null && refreshTokens.Count > 0)
                 {
                     foreach (var token in refreshTokens)
                     {
                         // Get the token from the write repository to revoke it
-                        var refreshToken = await _unitOfWork.RefreshTokenWriter.GetByIdAsync(token.Id, cancellationToken);
+                        var refreshToken = await _refreshTokenWriteRepository.GetByIdAsync(token.Id, cancellationToken);
                         if (refreshToken != null)
                         {
                             refreshToken.Revoke("Password changed");
-                            await _unitOfWork.RefreshTokenWriter.UpdateAsync(refreshToken, cancellationToken);
+                            await _refreshTokenWriteRepository.UpdateAsync(refreshToken, cancellationToken);
                         }
                     }
 

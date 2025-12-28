@@ -14,7 +14,7 @@ public class GetChildCategoriesQueryV1Tests : TestBase
     public GetChildCategoriesQueryV1Tests()
     {
         _handler = new GetChildCategoriesQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockCategoryReadRepository.Object,
             Fixture.GetLogger<GetChildCategoriesQueryHandlerV1>());
     }
 

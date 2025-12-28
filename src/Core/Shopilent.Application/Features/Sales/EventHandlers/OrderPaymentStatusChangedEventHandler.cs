@@ -3,31 +3,34 @@ using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Sales.Events;
+using Shopilent.Domain.Sales.Repositories.Read;
 
 namespace Shopilent.Application.Features.Sales.EventHandlers;
 
-internal sealed  class
-    OrderPaymentStatusChangedEventHandler : INotificationHandler<
+internal sealed class OrderPaymentStatusChangedEventHandler : INotificationHandler<
     DomainEventNotification<OrderPaymentStatusChangedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
+    private readonly IOrderReadRepository _orderReadRepository;
     private readonly ILogger<OrderPaymentStatusChangedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
     private readonly IEmailService _emailService;
 
     public OrderPaymentStatusChangedEventHandler(
-        IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
+        IOrderReadRepository orderReadRepository,
         ILogger<OrderPaymentStatusChangedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
-        _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
+        _orderReadRepository = orderReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -52,12 +55,12 @@ internal sealed  class
             await _cacheService.RemoveByPatternAsync("orders-*", cancellationToken);
 
             // Get order details
-            var order = await _unitOfWork.OrderReader.GetDetailByIdAsync(domainEvent.OrderId, cancellationToken);
+            var order = await _orderReadRepository.GetDetailByIdAsync(domainEvent.OrderId, cancellationToken);
 
             if (order != null && order.UserId.HasValue)
             {
                 // Get user information
-                var user = await _unitOfWork.UserReader.GetByIdAsync(order.UserId.Value, cancellationToken);
+                var user = await _userReadRepository.GetByIdAsync(order.UserId.Value, cancellationToken);
 
                 if (user != null)
                 {

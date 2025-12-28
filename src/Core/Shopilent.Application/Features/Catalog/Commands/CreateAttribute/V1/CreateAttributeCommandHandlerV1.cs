@@ -3,6 +3,7 @@ using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -11,15 +12,18 @@ namespace Shopilent.Application.Features.Catalog.Commands.CreateAttribute.V1;
 internal sealed class CreateAttributeCommandHandlerV1 : ICommandHandler<CreateAttributeCommandV1, CreateAttributeResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<CreateAttributeCommandHandlerV1> _logger;
 
     public CreateAttributeCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<CreateAttributeCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _attributeWriteRepository = attributeWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -29,7 +33,7 @@ internal sealed class CreateAttributeCommandHandlerV1 : ICommandHandler<CreateAt
         try
         {
             // Check if name already exists
-            var nameExists = await _unitOfWork.AttributeWriter.NameExistsAsync(request.Name, null, cancellationToken);
+            var nameExists = await _attributeWriteRepository.NameExistsAsync(request.Name, null, cancellationToken);
             if (nameExists)
             {
                 return Result.Failure<CreateAttributeResponseV1>(AttributeErrors.DuplicateName(request.Name));
@@ -76,7 +80,7 @@ internal sealed class CreateAttributeCommandHandlerV1 : ICommandHandler<CreateAt
             }
 
             // Add to repository
-            await _unitOfWork.AttributeWriter.AddAsync(attribute, cancellationToken);
+            await _attributeWriteRepository.AddAsync(attribute, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -3,8 +3,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Identity;
+using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Infrastructure.Identity.Abstractions;
 using Shopilent.Infrastructure.Identity.Configuration;
 using Shopilent.Infrastructure.Identity.Configuration.Extensions;
@@ -12,6 +18,7 @@ using Shopilent.Infrastructure.Identity.Configuration.Settings;
 using Shopilent.Infrastructure.Identity.Factories;
 using Shopilent.Infrastructure.Identity.Services;
 using Shopilent.Infrastructure.Identity.Stores;
+using PasswordOptions = Shopilent.Infrastructure.Identity.Configuration.Settings.PasswordOptions;
 
 namespace Shopilent.Infrastructure.Identity.Extensions;
 
@@ -22,7 +29,7 @@ public static class IdentityServiceExtensions
         // Configure auth provider settings
         services.Configure<AuthProviderSettings>(configuration.GetSection("Authentication"));
         var authProviderSettings = configuration.GetSection("Authentication").Get<AuthProviderSettings>()
-            ?? new AuthProviderSettings();
+                                   ?? new AuthProviderSettings();
 
         // Validate provider configuration
         if (!authProviderSettings.IsValid(out var errorMessage))
@@ -32,13 +39,13 @@ public static class IdentityServiceExtensions
 
         // Configure options
         services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
-        services.Configure<Configuration.Settings.PasswordOptions>(options =>
+        services.Configure<PasswordOptions>(options =>
         {
             options.SaltSize = 16;
             options.HashSize = 32;
             options.Iterations = 100000;
         });
-        services.Configure<Configuration.CookieSettings>(configuration.GetSection("Cookies"));
+        services.Configure<CookieSettings>(configuration.GetSection("Cookies"));
 
         // Register common services (used by both providers)
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
@@ -54,30 +61,30 @@ public static class IdentityServiceExtensions
         {
             // ASP.NET Core Identity configuration
             services.AddIdentity<User, IdentityRole>(options =>
-            {
-                // Password settings (stronger security)
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequireNonAlphanumeric = true;
-                options.Password.RequiredLength = 8;
-                options.Password.RequiredUniqueChars = 1;
+                {
+                    // Password settings (stronger security)
+                    options.Password.RequireDigit = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequireNonAlphanumeric = true;
+                    options.Password.RequiredLength = 8;
+                    options.Password.RequiredUniqueChars = 1;
 
-                // Lockout settings (with time-based reset)
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
-                options.Lockout.MaxFailedAccessAttempts = 5;
-                options.Lockout.AllowedForNewUsers = true;
+                    // Lockout settings (with time-based reset)
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.Lockout.AllowedForNewUsers = true;
 
-                // User settings
-                options.User.RequireUniqueEmail = true;
+                    // User settings
+                    options.User.RequireUniqueEmail = true;
 
-                // SignIn settings
-                options.SignIn.RequireConfirmedEmail = false; // Can be enabled based on requirements
-                options.SignIn.RequireConfirmedPhoneNumber = false;
-            })
-            .AddUserStore<CustomUserStore>()
-            .AddRoleStore<CustomRoleStore>()
-            .AddDefaultTokenProviders();
+                    // SignIn settings
+                    options.SignIn.RequireConfirmedEmail = false; // Can be enabled based on requirements
+                    options.SignIn.RequireConfirmedPhoneNumber = false;
+                })
+                .AddUserStore<CustomUserStore>()
+                .AddRoleStore<CustomRoleStore>()
+                .AddDefaultTokenProviders();
             // Note: Uses ASP.NET Identity's default PasswordHasher<User> (PBKDF2 with 100k+ iterations)
 
             // Register AspNetIdentityAuthenticationService
@@ -90,11 +97,14 @@ public static class IdentityServiceExtensions
             // Custom JWT authentication (original implementation)
             services.AddScoped<IAuthenticationService>(provider =>
                 AuthenticationServiceFactory.Create(
-                    provider.GetRequiredService<Application.Abstractions.Persistence.IUnitOfWork>(),
-                    provider.GetRequiredService<Application.Abstractions.Email.IEmailService>(),
+                    provider.GetRequiredService<IUnitOfWork>(),
+                    provider.GetRequiredService<IUserWriteRepository>(),
+                    provider.GetRequiredService<IUserReadRepository>(),
+                    provider.GetRequiredService<IRefreshTokenWriteRepository>(),
+                    provider.GetRequiredService<IEmailService>(),
                     provider.GetRequiredService<ILogger<AuthenticationService>>(),
-                    provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>(),
-                    provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<Configuration.Settings.PasswordOptions>>()));
+                    provider.GetRequiredService<IOptions<JwtSettings>>(),
+                    provider.GetRequiredService<IOptions<PasswordOptions>>()));
 
             Console.WriteLine("✓ Authentication Provider: Custom JWT");
         }

@@ -19,7 +19,7 @@ public class GetUserQueryV1Tests : TestBase
     public GetUserQueryV1Tests()
     {
         var services = new ServiceCollection();
-        services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockUserReadRepository.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetUserQueryHandlerV1>());
 
         services.AddMediatRWithValidation();
@@ -33,10 +33,7 @@ public class GetUserQueryV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var query = new GetUserQueryV1
-        {
-            Id = userId
-        };
+        var query = new GetUserQueryV1 { Id = userId };
 
         var expectedUserDetail = new UserDetailDto
         {
@@ -61,8 +58,8 @@ public class GetUserQueryV1Tests : TestBase
             LastModified = null
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(userId, CancellationToken))
             .ReturnsAsync(expectedUserDetail);
 
         // Act
@@ -82,8 +79,8 @@ public class GetUserQueryV1Tests : TestBase
         result.Value.EmailVerified.Should().Be(expectedUserDetail.EmailVerified);
 
         // Verify repository interaction
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken),
+        Fixture.MockUserReadRepository.Verify(
+            repo => repo.GetDetailByIdAsync(userId, CancellationToken),
             Times.Once);
     }
 
@@ -92,13 +89,10 @@ public class GetUserQueryV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var query = new GetUserQueryV1
-        {
-            Id = userId
-        };
+        var query = new GetUserQueryV1 { Id = userId };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(userId, CancellationToken))
             .ReturnsAsync((UserDetailDto)null);
 
         // Act
@@ -109,8 +103,8 @@ public class GetUserQueryV1Tests : TestBase
         result.Error.Code.Should().Be(UserErrors.NotFound(userId).Code);
 
         // Verify repository interaction
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken),
+        Fixture.MockUserReadRepository.Verify(
+            repo => repo.GetDetailByIdAsync(userId, CancellationToken),
             Times.Once);
     }
 
@@ -121,10 +115,7 @@ public class GetUserQueryV1Tests : TestBase
         var userId = Guid.NewGuid();
         var creatorId = Guid.NewGuid();
         var modifierId = Guid.NewGuid();
-        var query = new GetUserQueryV1
-        {
-            Id = userId
-        };
+        var query = new GetUserQueryV1 { Id = userId };
 
         var addresses = new List<AddressDto>
         {
@@ -194,8 +185,8 @@ public class GetUserQueryV1Tests : TestBase
             LastModified = DateTime.UtcNow.AddDays(-3)
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(userId, CancellationToken))
             .ReturnsAsync(expectedUserDetail);
 
         // Act
@@ -238,10 +229,7 @@ public class GetUserQueryV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var query = new GetUserQueryV1
-        {
-            Id = userId
-        };
+        var query = new GetUserQueryV1 { Id = userId };
 
         var expectedUserDetail = new UserDetailDto
         {
@@ -264,8 +252,8 @@ public class GetUserQueryV1Tests : TestBase
             LastModified = null
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(userId, CancellationToken))
             .ReturnsAsync(expectedUserDetail);
 
         // Act
@@ -287,13 +275,10 @@ public class GetUserQueryV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var query = new GetUserQueryV1
-        {
-            Id = userId
-        };
+        var query = new GetUserQueryV1 { Id = userId };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(userId, CancellationToken))
             .ThrowsAsync(new Exception("Database connection error"));
 
         // Act
@@ -311,10 +296,7 @@ public class GetUserQueryV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var query = new GetUserQueryV1
-        {
-            Id = userId
-        };
+        var query = new GetUserQueryV1 { Id = userId };
 
         // Assert - Verify the query implements ICachedQuery
         query.CacheKey.Should().Be($"user-detail-{userId}");
@@ -329,10 +311,7 @@ public class GetUserQueryV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var query = new GetUserQueryV1
-        {
-            Id = userId
-        };
+        var query = new GetUserQueryV1 { Id = userId };
 
         var expectedUserDetail = new UserDetailDto
         {
@@ -350,8 +329,8 @@ public class GetUserQueryV1Tests : TestBase
             FailedLoginAttempts = 0
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(userId, CancellationToken))
             .ReturnsAsync(expectedUserDetail);
 
         // Act
@@ -370,10 +349,7 @@ public class GetUserQueryV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var query = new GetUserQueryV1
-        {
-            Id = userId
-        };
+        var query = new GetUserQueryV1 { Id = userId };
 
         var lastFailedAttempt = failedAttempts > 0 ? DateTime.UtcNow.AddHours(-2) : (DateTime?)null;
 
@@ -394,8 +370,8 @@ public class GetUserQueryV1Tests : TestBase
             LastFailedAttempt = lastFailedAttempt
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(userId, CancellationToken))
             .ReturnsAsync(expectedUserDetail);
 
         // Act
@@ -412,10 +388,7 @@ public class GetUserQueryV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var query = new GetUserQueryV1
-        {
-            Id = userId
-        };
+        var query = new GetUserQueryV1 { Id = userId };
 
         var expectedUserDetail = new UserDetailDto
         {
@@ -440,8 +413,8 @@ public class GetUserQueryV1Tests : TestBase
             LastModified = null
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDetailByIdAsync(userId, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(userId, CancellationToken))
             .ReturnsAsync(expectedUserDetail);
 
         // Act

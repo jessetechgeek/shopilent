@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.DTOs;
+using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -9,19 +9,19 @@ namespace Shopilent.Application.Features.Catalog.Queries.GetVariantBySku.V1;
 
 internal sealed class GetVariantBySkuQueryHandlerV1 : IQueryHandler<GetVariantBySkuQueryV1, ProductVariantDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductVariantReadRepository _productVariantReader;
     private readonly ILogger<GetVariantBySkuQueryHandlerV1> _logger;
 
     public GetVariantBySkuQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        IProductVariantReadRepository productVariantReader,
         ILogger<GetVariantBySkuQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _productVariantReader = productVariantReader;
         _logger = logger;
     }
 
     public async Task<Result<ProductVariantDto>> Handle(
-        GetVariantBySkuQueryV1 request, 
+        GetVariantBySkuQueryV1 request,
         CancellationToken cancellationToken)
     {
         try
@@ -32,8 +32,8 @@ internal sealed class GetVariantBySkuQueryHandlerV1 : IQueryHandler<GetVariantBy
                     Error.Validation(message: "SKU cannot be empty"));
             }
 
-            var variant = await _unitOfWork.ProductVariantReader.GetBySkuAsync(request.Sku, cancellationToken);
-            
+            var variant = await _productVariantReader.GetBySkuAsync(request.Sku, cancellationToken);
+
             if (variant == null)
             {
                 _logger.LogWarning("Product variant with SKU {Sku} was not found", request.Sku);
@@ -47,10 +47,10 @@ internal sealed class GetVariantBySkuQueryHandlerV1 : IQueryHandler<GetVariantBy
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving product variant with SKU {Sku}", request.Sku);
-            
+
             return Result.Failure<ProductVariantDto>(
                 Error.Failure(
-                    code: "ProductVariant.GetBySkuFailed", 
+                    code: "ProductVariant.GetBySkuFailed",
                     message: $"Failed to retrieve product variant: {ex.Message}"));
         }
     }

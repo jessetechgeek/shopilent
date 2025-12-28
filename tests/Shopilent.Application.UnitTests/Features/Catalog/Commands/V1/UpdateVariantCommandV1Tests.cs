@@ -32,6 +32,7 @@ public class UpdateVariantCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockProductVariantWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.MockS3StorageService.Object);
         services.AddTransient(sp => Fixture.MockImageService.Object);

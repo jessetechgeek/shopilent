@@ -2,20 +2,29 @@ using MediatR;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales;
+using Shopilent.Domain.Sales.Repositories.Write;
 
 namespace Shopilent.Application.Features.Sales.Commands.CreateCart.V1;
 
 internal sealed class CreateCartCommandHandlerV1 : IRequestHandler<CreateCartCommandV1, Result<CreateCartResponseV1>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICartWriteRepository _cartWriteRepository;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
 
     public CreateCartCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        ICartWriteRepository cartWriteRepository,
+        IUserWriteRepository userWriteRepository,
         ICurrentUserContext currentUserContext)
     {
         _unitOfWork = unitOfWork;
+        _cartWriteRepository = cartWriteRepository;
+        _userWriteRepository = userWriteRepository;
         _currentUserContext = currentUserContext;
     }
 
@@ -45,7 +54,7 @@ internal sealed class CreateCartCommandHandlerV1 : IRequestHandler<CreateCartCom
             }
 
             // Save cart
-            var savedAnonymousCart = await _unitOfWork.CartWriter.AddAsync(anonymousCart, cancellationToken);
+            var savedAnonymousCart = await _cartWriteRepository.AddAsync(anonymousCart, cancellationToken);
 
             // Return response
             return Result.Success(new CreateCartResponseV1
@@ -59,15 +68,15 @@ internal sealed class CreateCartCommandHandlerV1 : IRequestHandler<CreateCartCom
         }
 
         // Get user for authenticated cart
-        var user = await _unitOfWork.UserWriter.GetByIdAsync(userId.Value, cancellationToken);
+        var user = await _userWriteRepository.GetByIdAsync(userId.Value, cancellationToken);
         if (user == null)
         {
             return Result.Failure<CreateCartResponseV1>(
-                Domain.Identity.Errors.UserErrors.NotFound(userId.Value));
+                UserErrors.NotFound(userId.Value));
         }
 
         // Check if user already has an active cart
-        var existingCart = await _unitOfWork.CartWriter.GetByUserIdAsync(userId.Value, cancellationToken);
+        var existingCart = await _cartWriteRepository.GetByUserIdAsync(userId.Value, cancellationToken);
         if (existingCart != null)
         {
             // Return existing cart instead of creating a new one
@@ -98,7 +107,7 @@ internal sealed class CreateCartCommandHandlerV1 : IRequestHandler<CreateCartCom
         var cart = cartResult.Value;
 
         // Save cart
-        var savedCart = await _unitOfWork.CartWriter.AddAsync(cart, cancellationToken);
+        var savedCart = await _cartWriteRepository.AddAsync(cart, cancellationToken);
 
         // Return response
         return Result.Success(new CreateCartResponseV1

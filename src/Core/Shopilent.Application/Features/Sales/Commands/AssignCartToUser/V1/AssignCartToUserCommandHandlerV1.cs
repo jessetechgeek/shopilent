@@ -5,22 +5,30 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales.Errors;
+using Shopilent.Domain.Sales.Repositories.Write;
 
 namespace Shopilent.Application.Features.Sales.Commands.AssignCartToUser.V1;
 
 internal sealed class AssignCartToUserCommandHandlerV1 : ICommandHandler<AssignCartToUserCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
+    private readonly ICartWriteRepository _cartWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<AssignCartToUserCommandHandlerV1> _logger;
 
     public AssignCartToUserCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
+        ICartWriteRepository cartWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<AssignCartToUserCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
+        _cartWriteRepository = cartWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -40,7 +48,7 @@ internal sealed class AssignCartToUserCommandHandlerV1 : ICommandHandler<AssignC
             var userId = _currentUserContext.UserId.Value;
 
             // Get the cart by ID
-            var cart = await _unitOfWork.CartWriter.GetByIdAsync(request.CartId, cancellationToken);
+            var cart = await _cartWriteRepository.GetByIdAsync(request.CartId, cancellationToken);
             if (cart == null)
             {
                 return Result.Failure(CartErrors.CartNotFound(request.CartId));
@@ -52,7 +60,7 @@ internal sealed class AssignCartToUserCommandHandlerV1 : ICommandHandler<AssignC
                 // If it's already assigned to the current user, return success
                 if (cart.UserId.Value == userId)
                 {
-                    _logger.LogInformation("Cart {CartId} is already assigned to user {UserId}", 
+                    _logger.LogInformation("Cart {CartId} is already assigned to user {UserId}",
                         request.CartId, userId);
                     return Result.Success();
                 }
@@ -64,14 +72,14 @@ internal sealed class AssignCartToUserCommandHandlerV1 : ICommandHandler<AssignC
             }
 
             // Get the user to assign the cart to
-            var user = await _unitOfWork.UserWriter.GetByIdAsync(userId, cancellationToken);
+            var user = await _userWriteRepository.GetByIdAsync(userId, cancellationToken);
             if (user == null)
             {
                 return Result.Failure(UserErrors.NotFound(userId));
             }
 
             // Check if user already has a cart
-            var existingUserCart = await _unitOfWork.CartWriter.GetByUserIdAsync(userId, cancellationToken);
+            var existingUserCart = await _cartWriteRepository.GetByUserIdAsync(userId, cancellationToken);
             if (existingUserCart != null)
             {
                 // If user already has a cart, we could merge them or return an error
@@ -85,7 +93,7 @@ internal sealed class AssignCartToUserCommandHandlerV1 : ICommandHandler<AssignC
             var assignResult = cart.AssignToUser(user);
             if (assignResult.IsFailure)
             {
-                _logger.LogWarning("Failed to assign cart {CartId} to user {UserId}: {Error}", 
+                _logger.LogWarning("Failed to assign cart {CartId} to user {UserId}: {Error}",
                     request.CartId, userId, assignResult.Error.Message);
                 return assignResult;
             }
@@ -93,14 +101,14 @@ internal sealed class AssignCartToUserCommandHandlerV1 : ICommandHandler<AssignC
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Cart {CartId} successfully assigned to user {UserId}", 
+            _logger.LogInformation("Cart {CartId} successfully assigned to user {UserId}",
                 request.CartId, userId);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning cart {CartId} to user: {ErrorMessage}", 
+            _logger.LogError(ex, "Error assigning cart {CartId} to user: {ErrorMessage}",
                 request.CartId, ex.Message);
 
             return Result.Failure(

@@ -5,20 +5,25 @@ using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Enums;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Shipping.Repositories.Read;
 
 namespace Shopilent.Application.Features.Identity.Queries.GetUsersDatatable.V1;
 
 internal sealed class GetUsersDatatableQueryHandlerV1 :
     IQueryHandler<GetUsersDatatableQueryV1, DataTableResult<UserDatatableDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
+    private readonly IAddressReadRepository _addressReadRepository;
     private readonly ILogger<GetUsersDatatableQueryHandlerV1> _logger;
 
     public GetUsersDatatableQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
+        IAddressReadRepository addressReadRepository,
         ILogger<GetUsersDatatableQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
+        _addressReadRepository = addressReadRepository;
         _logger = logger;
     }
 
@@ -29,7 +34,7 @@ internal sealed class GetUsersDatatableQueryHandlerV1 :
         try
         {
             // Get datatable results from repository
-            var result = await _unitOfWork.UserReader.GetDataTableAsync(
+            var result = await _userReadRepository.GetDataTableAsync(
                 request.Request,
                 cancellationToken);
 
@@ -38,7 +43,7 @@ internal sealed class GetUsersDatatableQueryHandlerV1 :
             foreach (var user in result.Data)
             {
                 // Get user addresses count
-                var addresses = await _unitOfWork.AddressReader.GetByUserIdAsync(
+                var addresses = await _addressReadRepository.GetByUserIdAsync(
                     user.Id,
                     cancellationToken);
 

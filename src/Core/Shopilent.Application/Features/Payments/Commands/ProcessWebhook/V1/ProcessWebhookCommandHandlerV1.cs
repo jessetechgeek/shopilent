@@ -4,27 +4,32 @@ using Shopilent.Application.Abstractions.Payments;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Payments.Enums;
-using Shopilent.Domain.Payments.Repositories;
+using Shopilent.Domain.Payments.Errors;
 using Shopilent.Domain.Payments.Repositories.Write;
-using Shopilent.Domain.Sales.Repositories;
 using Shopilent.Domain.Sales.Repositories.Write;
+using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Application.Features.Payments.Commands.ProcessWebhook.V1;
 
 internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWebhookCommandV1, WebhookResult>
 {
     private readonly IPaymentService _paymentService;
-
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IOrderWriteRepository _orderWriteRepository;
+    private readonly IPaymentWriteRepository _paymentWriteRepository;
     private readonly ILogger<ProcessWebhookCommandHandlerV1> _logger;
 
     public ProcessWebhookCommandHandlerV1(
         IPaymentService paymentService,
         IUnitOfWork unitOfWork,
+        IOrderWriteRepository orderWriteRepository,
+        IPaymentWriteRepository paymentWriteRepository,
         ILogger<ProcessWebhookCommandHandlerV1> logger)
     {
         _paymentService = paymentService;
         _unitOfWork = unitOfWork;
+        _orderWriteRepository = orderWriteRepository;
+        _paymentWriteRepository = paymentWriteRepository;
         _logger = logger;
     }
 
@@ -40,7 +45,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
             {
                 _logger.LogError("Unknown payment provider: {Provider}", request.Provider);
                 return Result.Failure<WebhookResult>(
-                    Domain.Payments.Errors.PaymentErrors.InvalidProvider);
+                    PaymentErrors.InvalidProvider);
             }
 
             // Process the webhook through the payment service
@@ -71,7 +76,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
         {
             _logger.LogError(ex, "Unexpected error processing webhook for provider: {Provider}", request.Provider);
             return Result.Failure<WebhookResult>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed($"Unexpected error: {ex.Message}"));
+                PaymentErrors.ProcessingFailed($"Unexpected error: {ex.Message}"));
         }
     }
 
@@ -149,7 +154,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
     {
         // Find payment by transaction ID
         var payment =
-            await _unitOfWork.PaymentWriter.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
+            await _paymentWriteRepository.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
         if (payment == null)
         {
             _logger.LogWarning("Payment not found for transaction ID {TransactionId}", webhookResult.TransactionId);
@@ -162,7 +167,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
         // Update associated order if exists
         if (payment.OrderId != Guid.Empty)
         {
-            var order = await _unitOfWork.OrderWriter.GetByIdAsync(payment.OrderId, cancellationToken);
+            var order = await _orderWriteRepository.GetByIdAsync(payment.OrderId, cancellationToken);
             if (order != null)
             {
                 order.MarkAsPaid();
@@ -181,7 +186,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
     {
         // Find payment by transaction ID
         var payment =
-            await _unitOfWork.PaymentWriter.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
+            await _paymentWriteRepository.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
         if (payment == null)
         {
             _logger.LogWarning("Payment not found for transaction ID {TransactionId}", webhookResult.TransactionId);
@@ -198,7 +203,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
         // Update associated order if exists
         if (payment.OrderId != Guid.Empty)
         {
-            var order = await _unitOfWork.OrderWriter.GetByIdAsync(payment.OrderId, cancellationToken);
+            var order = await _orderWriteRepository.GetByIdAsync(payment.OrderId, cancellationToken);
             if (order != null)
             {
                 // Optionally cancel the order if payment failed
@@ -224,7 +229,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
 
         // For disputes, the transaction ID might be the charge ID, try to find payment
         var payment =
-            await _unitOfWork.PaymentWriter.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
+            await _paymentWriteRepository.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
         if (payment == null)
         {
             _logger.LogWarning("Payment not found for disputed transaction ID {TransactionId}", transactionId);
@@ -232,7 +237,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
         }
 
         // Update payment status to disputed
-        payment.UpdateStatus(Domain.Payments.Enums.PaymentStatus.Disputed);
+        payment.UpdateStatus(PaymentStatus.Disputed);
 
         _logger.LogInformation("Marked payment {PaymentId} as disputed for transaction {TransactionId}",
             payment.Id, transactionId);
@@ -243,7 +248,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
     {
         // Find payment by transaction ID
         var payment =
-            await _unitOfWork.PaymentWriter.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
+            await _paymentWriteRepository.GetByExternalReferenceAsync(webhookResult.TransactionId, cancellationToken);
         if (payment == null)
         {
             _logger.LogWarning("Payment not found for refunded transaction ID {TransactionId}",
@@ -257,7 +262,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
         // Update associated order if exists
         if (payment.OrderId != Guid.Empty)
         {
-            var order = await _unitOfWork.OrderWriter.GetByIdAsync(payment.OrderId, cancellationToken);
+            var order = await _orderWriteRepository.GetByIdAsync(payment.OrderId, cancellationToken);
             if (order != null)
             {
                 // Process order refund - check if it's full or partial refund
@@ -272,7 +277,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
                     {
                         // Convert from cents to dollars for Stripe
                         var refundAmountResult =
-                            Domain.Sales.ValueObjects.Money.Create(refundAmountDecimal / 100, payment.Amount.Currency);
+                            Money.Create(refundAmountDecimal / 100, payment.Amount.Currency);
                         if (refundAmountResult.IsSuccess)
                         {
                             var refundAmount = refundAmountResult.Value;

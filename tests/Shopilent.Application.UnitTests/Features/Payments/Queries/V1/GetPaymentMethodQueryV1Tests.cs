@@ -19,7 +19,7 @@ public class GetPaymentMethodQueryV1Tests : TestBase
         var services = new ServiceCollection();
 
         // Register handler dependencies
-        services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockPaymentMethodReadRepository.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetPaymentMethodQueryHandlerV1>());
 
         // Set up MediatR

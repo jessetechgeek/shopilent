@@ -1,5 +1,8 @@
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;
+using Shopilent.Domain.Payments.Repositories.Read;
+using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -9,6 +12,9 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class PaymentMethodReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
+    private IPaymentMethodWriteRepository _paymentMethodWriteRepository = null!;
+    private IPaymentMethodReadRepository _paymentMethodReadRepository = null!;
 
     public PaymentMethodReadRepositoryTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -18,6 +24,9 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
+        _paymentMethodWriteRepository = GetService<IPaymentMethodWriteRepository>();
+        _paymentMethodReadRepository = GetService<IPaymentMethodReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -33,12 +42,12 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
             .WithCreditCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
+        await _userWriteRepository.AddAsync(user);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetByIdAsync(paymentMethod.Id);
+        var result = await _paymentMethodReadRepository.GetByIdAsync(paymentMethod.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -64,7 +73,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetByIdAsync(nonExistentId);
+        var result = await _paymentMethodReadRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -92,15 +101,15 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
             .WithCreditCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod1);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod2);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod3);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod1);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod2);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod3);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetByUserIdAsync(user1.Id);
+        var result = await _paymentMethodReadRepository.GetByUserIdAsync(user1.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -119,7 +128,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         var nonExistentUserId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetByUserIdAsync(nonExistentUserId);
+        var result = await _paymentMethodReadRepository.GetByUserIdAsync(nonExistentUserId);
 
         // Assert
         result.Should().NotBeNull();
@@ -143,13 +152,13 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
             .WithPayPal()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(defaultPaymentMethod);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(nonDefaultPaymentMethod);
+        await _userWriteRepository.AddAsync(user);
+        await _paymentMethodWriteRepository.AddAsync(defaultPaymentMethod);
+        await _paymentMethodWriteRepository.AddAsync(nonDefaultPaymentMethod);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetDefaultForUserAsync(user.Id);
+        var result = await _paymentMethodReadRepository.GetDefaultForUserAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -169,12 +178,12 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
             .WithCreditCard()
             .Build(); // Not default
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
+        await _userWriteRepository.AddAsync(user);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetDefaultForUserAsync(user.Id);
+        var result = await _paymentMethodReadRepository.GetDefaultForUserAsync(user.Id);
 
         // Assert
         result.Should().BeNull();
@@ -188,7 +197,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         var nonExistentUserId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetDefaultForUserAsync(nonExistentUserId);
+        var result = await _paymentMethodReadRepository.GetDefaultForUserAsync(nonExistentUserId);
 
         // Assert
         result.Should().BeNull();
@@ -214,15 +223,16 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
             .WithPayPal()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(creditCardMethod1);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(creditCardMethod2);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(payPalMethod);
+        await _userWriteRepository.AddAsync(user);
+        await _paymentMethodWriteRepository.AddAsync(creditCardMethod1);
+        await _paymentMethodWriteRepository.AddAsync(creditCardMethod2);
+        await _paymentMethodWriteRepository.AddAsync(payPalMethod);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var creditCardResults = await _unitOfWork.PaymentMethodReader.GetByTypeAsync(user.Id, PaymentMethodType.CreditCard);
-        var payPalResults = await _unitOfWork.PaymentMethodReader.GetByTypeAsync(user.Id, PaymentMethodType.PayPal);
+        var creditCardResults =
+            await _paymentMethodReadRepository.GetByTypeAsync(user.Id, PaymentMethodType.CreditCard);
+        var payPalResults = await _paymentMethodReadRepository.GetByTypeAsync(user.Id, PaymentMethodType.PayPal);
 
         // Assert
         creditCardResults.Should().NotBeNull();
@@ -249,12 +259,12 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
             .WithCreditCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(creditCardMethod);
+        await _userWriteRepository.AddAsync(user);
+        await _paymentMethodWriteRepository.AddAsync(creditCardMethod);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetByTypeAsync(user.Id, PaymentMethodType.PayPal);
+        var result = await _paymentMethodReadRepository.GetByTypeAsync(user.Id, PaymentMethodType.PayPal);
 
         // Assert
         result.Should().NotBeNull();
@@ -275,12 +285,12 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
             .WithCreditCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
+        await _userWriteRepository.AddAsync(user);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetByTokenAsync(token);
+        var result = await _paymentMethodReadRepository.GetByTokenAsync(token);
 
         // Assert
         result.Should().NotBeNull();
@@ -296,7 +306,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         var nonExistentToken = "pm_nonexistent";
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetByTokenAsync(nonExistentToken);
+        var result = await _paymentMethodReadRepository.GetByTokenAsync(nonExistentToken);
 
         // Assert
         result.Should().BeNull();
@@ -316,12 +326,12 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
             .WithCreditCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
+        await _userWriteRepository.AddAsync(user);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.TokenExistsAsync(token);
+        var result = await _paymentMethodReadRepository.TokenExistsAsync(token);
 
         // Assert
         result.Should().BeTrue();
@@ -335,7 +345,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         var nonExistentToken = "pm_nonexistent";
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.TokenExistsAsync(nonExistentToken);
+        var result = await _paymentMethodReadRepository.TokenExistsAsync(nonExistentToken);
 
         // Assert
         result.Should().BeFalse();
@@ -348,7 +358,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.TokenExistsAsync(null);
+        var result = await _paymentMethodReadRepository.TokenExistsAsync(null);
 
         // Assert
         result.Should().BeFalse();
@@ -361,7 +371,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.TokenExistsAsync("");
+        var result = await _paymentMethodReadRepository.TokenExistsAsync("");
 
         // Assert
         result.Should().BeFalse();
@@ -380,15 +390,15 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         var paymentMethod2 = PaymentMethodBuilder.Random().WithUser(user1).WithPayPal().Build();
         var paymentMethod3 = PaymentMethodBuilder.Random().WithUser(user2).WithCreditCard().Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod1);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod2);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod3);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod1);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod2);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod3);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.ListAllAsync();
+        var result = await _paymentMethodReadRepository.ListAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -405,7 +415,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.ListAllAsync();
+        var result = await _paymentMethodReadRepository.ListAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -430,13 +440,13 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
 
         inactivePaymentMethod.Deactivate();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(activePaymentMethod);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(inactivePaymentMethod);
+        await _userWriteRepository.AddAsync(user);
+        await _paymentMethodWriteRepository.AddAsync(activePaymentMethod);
+        await _paymentMethodWriteRepository.AddAsync(inactivePaymentMethod);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentMethodReader.GetByUserIdAsync(user.Id);
+        var result = await _paymentMethodReadRepository.GetByUserIdAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();

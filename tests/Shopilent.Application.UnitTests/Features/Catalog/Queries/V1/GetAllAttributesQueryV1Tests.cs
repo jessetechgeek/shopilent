@@ -14,7 +14,7 @@ public class GetAllAttributesQueryV1Tests : TestBase
     public GetAllAttributesQueryV1Tests()
     {
         _handler = new GetAllAttributesQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockAttributeReadRepository.Object,
             Fixture.GetLogger<GetAllAttributesQueryHandlerV1>());
     }
 
@@ -43,7 +43,7 @@ public class GetAllAttributesQueryV1Tests : TestBase
             {
                 Id = Guid.NewGuid(),
                 Name = "Size",
-                DisplayName = "Product Size", 
+                DisplayName = "Product Size",
                 Type = AttributeType.Select,
                 Filterable = true,
                 Searchable = true,
@@ -118,13 +118,13 @@ public class GetAllAttributesQueryV1Tests : TestBase
         result.Error.Code.Should().Be("Attributes.GetAllFailed");
         result.Error.Message.Should().Contain("Test exception");
     }
-    
+
     [Fact]
     public async Task Handle_VerifiesCacheKeyAndExpirationAreSet()
     {
         // Arrange
         var query = new GetAllAttributesQueryV1();
-        
+
         Fixture.MockAttributeReadRepository
             .Setup(repo => repo.ListAllAsync(CancellationToken))
             .ReturnsAsync(new List<AttributeDto>());
@@ -137,13 +137,13 @@ public class GetAllAttributesQueryV1Tests : TestBase
         query.Expiration.Should().NotBeNull();
         query.Expiration.Should().Be(TimeSpan.FromMinutes(30));
     }
-    
+
     [Fact]
     public async Task Handle_VerifiesNoFilteringIsApplied()
     {
         // Arrange
         var query = new GetAllAttributesQueryV1();
-        
+
         var allAttributes = new List<AttributeDto>
         {
             new AttributeDto
@@ -163,7 +163,7 @@ public class GetAllAttributesQueryV1Tests : TestBase
             {
                 Id = Guid.NewGuid(),
                 Name = "Inactive Attribute",
-                DisplayName = "Inactive Attribute", 
+                DisplayName = "Inactive Attribute",
                 Type = AttributeType.Text,
                 Filterable = false,
                 Searchable = false,
@@ -186,7 +186,7 @@ public class GetAllAttributesQueryV1Tests : TestBase
         result.Value.Count.Should().Be(2);
         result.Value.Should().Contain(a => a.Name == "Active Attribute");
         result.Value.Should().Contain(a => a.Name == "Inactive Attribute");
-        
+
         Fixture.MockAttributeReadRepository.Verify(
             repo => repo.ListAllAsync(CancellationToken),
             Times.Once);

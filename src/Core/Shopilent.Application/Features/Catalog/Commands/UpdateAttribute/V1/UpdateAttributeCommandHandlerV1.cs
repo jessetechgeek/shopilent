@@ -3,6 +3,7 @@ using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -12,15 +13,18 @@ internal sealed class
     UpdateAttributeCommandHandlerV1 : ICommandHandler<UpdateAttributeCommandV1, UpdateAttributeResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAttributeWriteRepository _attributeWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<UpdateAttributeCommandHandlerV1> _logger;
 
     public UpdateAttributeCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<UpdateAttributeCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _attributeWriteRepository = attributeWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -31,7 +35,7 @@ internal sealed class
         try
         {
             // Get attribute by ID
-            var attribute = await _unitOfWork.AttributeWriter.GetByIdAsync(request.Id, cancellationToken);
+            var attribute = await _attributeWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (attribute == null)
             {
                 return Result.Failure<UpdateAttributeResponseV1>(AttributeErrors.NotFound(request.Id));
@@ -79,7 +83,7 @@ internal sealed class
                 attribute.SetAuditInfo(_currentUserContext.UserId);
             }
 
-            await _unitOfWork.AttributeWriter.UpdateAsync(attribute, cancellationToken);
+            await _attributeWriteRepository.UpdateAsync(attribute, cancellationToken);
 
 
             // Save changes

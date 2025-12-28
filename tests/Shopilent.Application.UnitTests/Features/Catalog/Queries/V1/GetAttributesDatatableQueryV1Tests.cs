@@ -15,7 +15,7 @@ public class GetAttributesDatatableQueryV1Tests : TestBase
     public GetAttributesDatatableQueryV1Tests()
     {
         _handler = new GetAttributesDatatableQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockAttributeReadRepository.Object,
             Fixture.GetLogger<GetAttributesDatatableQueryHandlerV1>());
     }
 
@@ -194,10 +194,10 @@ public class GetAttributesDatatableQueryV1Tests : TestBase
             Filterable = false,
             Searchable = true,
             IsVariant = false,
-            Configuration = new Dictionary<string, object> 
-            { 
-                { "unit", "kg" }, 
-                { "precision", 2 } 
+            Configuration = new Dictionary<string, object>
+            {
+                { "unit", "kg" },
+                { "precision", 2 }
             },
             CreatedAt = DateTime.UtcNow.AddDays(-30),
             UpdatedAt = DateTime.UtcNow.AddDays(-2)
@@ -218,7 +218,7 @@ public class GetAttributesDatatableQueryV1Tests : TestBase
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        
+
         var mappedAttribute = result.Value.Data.First();
         mappedAttribute.Id.Should().Be(sourceAttribute.Id);
         mappedAttribute.Name.Should().Be(sourceAttribute.Name);

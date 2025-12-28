@@ -13,7 +13,7 @@ public class GetVariantBySkuQueryV1Tests : TestBase
     public GetVariantBySkuQueryV1Tests()
     {
         _handler = new GetVariantBySkuQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockProductVariantReadRepository.Object,
             Fixture.GetLogger<GetVariantBySkuQueryHandlerV1>());
     }
 
@@ -24,7 +24,7 @@ public class GetVariantBySkuQueryV1Tests : TestBase
         var sku = "LAPTOP-001-16GB";
         var variantId = Guid.NewGuid();
         var productId = Guid.NewGuid();
-        
+
         var variantDto = new ProductVariantDto
         {
             Id = variantId,
@@ -95,7 +95,7 @@ public class GetVariantBySkuQueryV1Tests : TestBase
         result.IsSuccess.Should().BeFalse();
         result.Error.Type.ToString().Should().Be("Validation");
         result.Error.Message.Should().Be("SKU cannot be empty");
-        
+
         // Verify repository was not called
         Fixture.MockProductVariantReadRepository.Verify(
             repo => repo.GetBySkuAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
@@ -167,7 +167,7 @@ public class GetVariantBySkuQueryV1Tests : TestBase
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Sku.Should().Be(sku);
-        
+
         // Verify the exact SKU (with original casing) was passed to repository
         Fixture.MockProductVariantReadRepository.Verify(
             repo => repo.GetBySkuAsync(sku, CancellationToken),
@@ -192,7 +192,7 @@ public class GetVariantBySkuQueryV1Tests : TestBase
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        
+
         Fixture.MockProductVariantReadRepository.Verify(
             repo => repo.GetBySkuAsync(sku, CancellationToken),
             Times.Once);

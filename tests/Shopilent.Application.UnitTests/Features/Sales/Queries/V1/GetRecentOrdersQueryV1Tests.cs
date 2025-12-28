@@ -19,7 +19,7 @@ public class GetRecentOrdersQueryV1Tests : TestBase
         var services = new ServiceCollection();
 
         // Register handler dependencies
-        services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockOrderReadRepository.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetRecentOrdersQueryHandlerV1>());
 
         // Set up MediatR

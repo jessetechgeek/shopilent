@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Events;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Identity.Events;
+using Shopilent.Domain.Outbox.Repositories.Read;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Events;
 using Shopilent.Infrastructure.IntegrationTests.Common;
@@ -13,6 +14,7 @@ public class DomainEventServiceTests : IntegrationTestBase
 {
     private IDomainEventService _domainEventService = null!;
     private IUnitOfWork _unitOfWork = null!;
+    private IOutboxMessageReadRepository _outboxMessageReadRepository = null!;
     private ILogger<IDomainEventService> _logger = null!;
 
     public DomainEventServiceTests(IntegrationTestFixture integrationTestFixture)
@@ -24,6 +26,7 @@ public class DomainEventServiceTests : IntegrationTestBase
     {
         _domainEventService = GetService<IDomainEventService>();
         _unitOfWork = GetService<IUnitOfWork>();
+        _outboxMessageReadRepository = GetService<IOutboxMessageReadRepository>();
         _logger = GetService<ILogger<IDomainEventService>>();
         return Task.CompletedTask;
     }
@@ -69,7 +72,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert - Verify outbox message was created
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().HaveCount(1);
 
         var outboxMessage = outboxMessages.First();
@@ -95,7 +98,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().HaveCount(2);
 
         var userOutboxMessage = outboxMessages.FirstOrDefault(m => m.Type.Contains("UserCreatedEvent"));
@@ -153,7 +156,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().HaveCount(3);
 
         // Each should have unique IDs
@@ -178,7 +181,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert - Should create separate outbox messages for each call
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().HaveCount(2);
 
         // Each should have unique IDs even though the event data is the same
@@ -202,7 +205,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().HaveCount(1);
 
         var outboxMessage = outboxMessages.First();
@@ -227,7 +230,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         // Intentionally NOT calling SaveChangesAsync()
 
         // Assert - Should not be persisted to database yet
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().BeEmpty();
     }
 
@@ -246,7 +249,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         // Assert - Only the processed event should be in outbox
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().HaveCount(1);
 
         var outboxMessage = outboxMessages.First();

@@ -5,28 +5,33 @@ using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Shipping.Enums;
 using Shopilent.Domain.Shipping.Events;
+using Shopilent.Domain.Shipping.Repositories.Read;
 
 namespace Shopilent.Application.Features.Shipping.EventHandlers;
 
 internal sealed class
     DefaultAddressChangedEventHandler : INotificationHandler<DomainEventNotification<DefaultAddressChangedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
+    private readonly IAddressReadRepository _addressReadRepository;
     private readonly ILogger<DefaultAddressChangedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
     private readonly IEmailService _emailService;
 
     public DefaultAddressChangedEventHandler(
-        IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
+        IAddressReadRepository addressReadRepository,
         ILogger<DefaultAddressChangedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
-        _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
+        _addressReadRepository = addressReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -64,12 +69,12 @@ internal sealed class
                 cancellationToken);
 
             // Get user details
-            var user = await _unitOfWork.UserReader.GetByIdAsync(domainEvent.UserId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(domainEvent.UserId, cancellationToken);
 
             if (user != null)
             {
                 // Get the address details
-                var address = await _unitOfWork.AddressReader.GetByIdAsync(domainEvent.AddressId, cancellationToken);
+                var address = await _addressReadRepository.GetByIdAsync(domainEvent.AddressId, cancellationToken);
 
                 if (address != null)
                 {

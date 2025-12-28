@@ -6,6 +6,8 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.S3Storage;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Read;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
@@ -17,6 +19,10 @@ internal sealed class
     AddProductVariantCommandHandlerV1 : ICommandHandler<AddProductVariantCommandV1, AddProductVariantResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductWriteRepository _productWriteRepository;
+    private readonly IProductVariantWriteRepository _productVariantWriteRepository;
+    private readonly IAttributeWriteRepository _attributeWriteRepository;
+    private readonly IAttributeReadRepository _attributeReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IS3StorageService _s3StorageService;
     private readonly IImageService _imageService;
@@ -24,12 +30,20 @@ internal sealed class
 
     public AddProductVariantCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductWriteRepository productWriteRepository,
+        IProductVariantWriteRepository productVariantWriteRepository,
+        IAttributeReadRepository attributeReadRepository,
+        IAttributeWriteRepository attributeWriteRepository,
         ICurrentUserContext currentUserContext,
         IS3StorageService s3StorageService,
         IImageService imageService,
         ILogger<AddProductVariantCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productWriteRepository = productWriteRepository;
+        _productVariantWriteRepository = productVariantWriteRepository;
+        _attributeWriteRepository = attributeWriteRepository;
+        _attributeReadRepository = attributeReadRepository;
         _currentUserContext = currentUserContext;
         _s3StorageService = s3StorageService;
         _imageService = imageService;
@@ -42,7 +56,7 @@ internal sealed class
         try
         {
             // Get product
-            var product = await _unitOfWork.ProductWriter.GetByIdAsync(request.ProductId, cancellationToken);
+            var product = await _productWriteRepository.GetByIdAsync(request.ProductId, cancellationToken);
             if (product == null)
             {
                 return Result.Failure<AddProductVariantResponseV1>(ProductErrors.NotFound(request.ProductId));
@@ -50,7 +64,7 @@ internal sealed class
 
             // Check if SKU already exists
             if (!string.IsNullOrEmpty(request.Sku) &&
-                await _unitOfWork.ProductVariantWriter.SkuExistsAsync(request.Sku, null, cancellationToken))
+                await _productVariantWriteRepository.SkuExistsAsync(request.Sku, null, cancellationToken))
             {
                 return Result.Failure<AddProductVariantResponseV1>(ProductVariantErrors.DuplicateSku(request.Sku));
             }
@@ -62,7 +76,7 @@ internal sealed class
             foreach (var attributeEntry in request.Attributes)
             {
                 var attribute =
-                    await _unitOfWork.AttributeReader.GetByIdAsync(attributeEntry.AttributeId, cancellationToken);
+                    await _attributeReadRepository.GetByIdAsync(attributeEntry.AttributeId, cancellationToken);
                 if (attribute == null)
                 {
                     return Result.Failure<AddProductVariantResponseV1>(
@@ -129,7 +143,7 @@ internal sealed class
             // Add attribute values
             foreach (var attributeEntry in attributeValues)
             {
-                var attribute = await _unitOfWork.AttributeWriter.GetByIdAsync(attributeEntry.Key, cancellationToken);
+                var attribute = await _attributeWriteRepository.GetByIdAsync(attributeEntry.Key, cancellationToken);
                 var attributeValueResult = variant.AddAttribute(attribute, attributeEntry.Value);
                 if (attributeValueResult.IsFailure)
                 {
@@ -195,7 +209,7 @@ internal sealed class
             }
 
             // Add to repository
-            await _unitOfWork.ProductVariantWriter.AddAsync(variant, cancellationToken);
+            await _productVariantWriteRepository.AddAsync(variant, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -240,7 +254,7 @@ internal sealed class
             return Result.Failure<AddProductVariantResponseV1>(
                 Error.Failure(
                     "ProductVariant.CreateFailed",
-                    Domain.Common.Errors.ErrorType.Failure.ToString()
+                    ErrorType.Failure.ToString()
                 ));
         }
     }

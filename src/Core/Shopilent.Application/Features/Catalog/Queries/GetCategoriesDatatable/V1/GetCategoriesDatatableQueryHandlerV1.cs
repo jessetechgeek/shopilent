@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Domain.Common.Results;
@@ -10,14 +11,14 @@ namespace Shopilent.Application.Features.Catalog.Queries.GetCategoriesDatatable.
 internal sealed class GetCategoriesDatatableQueryHandlerV1 :
     IQueryHandler<GetCategoriesDatatableQueryV1, DataTableResult<CategoryDatatableDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICategoryReadRepository _categoryReadRepository;
     private readonly ILogger<GetCategoriesDatatableQueryHandlerV1> _logger;
 
     public GetCategoriesDatatableQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        ICategoryReadRepository categoryReadRepository,
         ILogger<GetCategoriesDatatableQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _categoryReadRepository = categoryReadRepository;
         _logger = logger;
     }
 
@@ -34,7 +35,7 @@ internal sealed class GetCategoriesDatatableQueryHandlerV1 :
         try
         {
             // Get datatable results from repository
-            var result = await _unitOfWork.CategoryReader.GetCategoryDetailDataTableAsync(
+            var result = await _categoryReadRepository.GetCategoryDetailDataTableAsync(
                 request.Request,
                 cancellationToken);
 

@@ -1,5 +1,10 @@
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Identity.Repositories.Write;
+using Shopilent.Domain.Payments;
 using Shopilent.Domain.Payments.Enums;
+using Shopilent.Domain.Payments.Repositories.Read;
+using Shopilent.Domain.Payments.Repositories.Write;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
@@ -10,6 +15,11 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class PaymentReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
+    private IOrderWriteRepository _orderWriteRepository = null!;
+    private IPaymentWriteRepository _paymentWriteRepository = null!;
+    private IPaymentReadRepository _paymentReadRepository = null!;
+    private IPaymentMethodWriteRepository _paymentMethodWriteRepository = null!;
 
     public PaymentReadRepositoryTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -19,6 +29,11 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
+        _orderWriteRepository = GetService<IOrderWriteRepository>();
+        _paymentWriteRepository = GetService<IPaymentWriteRepository>();
+        _paymentReadRepository = GetService<IPaymentReadRepository>();
+        _paymentMethodWriteRepository = GetService<IPaymentMethodWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -37,13 +52,13 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
             .WithStripeCard()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
-        await _unitOfWork.PaymentWriter.AddAsync(payment);
+        await _userWriteRepository.AddAsync(user);
+        await _orderWriteRepository.AddAsync(order);
+        await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByIdAsync(payment.Id);
+        var result = await _paymentReadRepository.GetByIdAsync(payment.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -68,7 +83,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByIdAsync(nonExistentId);
+        var result = await _paymentReadRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -91,13 +106,13 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         var transactionId = "txn_12345";
         payment.MarkAsSucceeded(transactionId);
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
-        await _unitOfWork.PaymentWriter.AddAsync(payment);
+        await _userWriteRepository.AddAsync(user);
+        await _orderWriteRepository.AddAsync(order);
+        await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByTransactionIdAsync(transactionId);
+        var result = await _paymentReadRepository.GetByTransactionIdAsync(transactionId);
 
         // Assert
         result.Should().NotBeNull();
@@ -114,7 +129,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         var nonExistentTransactionId = "txn_nonexistent";
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByTransactionIdAsync(nonExistentTransactionId);
+        var result = await _paymentReadRepository.GetByTransactionIdAsync(nonExistentTransactionId);
 
         // Assert
         result.Should().BeNull();
@@ -135,13 +150,13 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
             .WithExternalReference(externalReference)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
-        await _unitOfWork.PaymentWriter.AddAsync(payment);
+        await _userWriteRepository.AddAsync(user);
+        await _orderWriteRepository.AddAsync(order);
+        await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByExternalReferenceAsync(externalReference);
+        var result = await _paymentReadRepository.GetByExternalReferenceAsync(externalReference);
 
         // Assert
         result.Should().NotBeNull();
@@ -157,7 +172,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         var nonExistentReference = "ext_ref_nonexistent";
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByExternalReferenceAsync(nonExistentReference);
+        var result = await _paymentReadRepository.GetByExternalReferenceAsync(nonExistentReference);
 
         // Assert
         result.Should().BeNull();
@@ -184,14 +199,14 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
             .WithPayPal()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
-        await _unitOfWork.PaymentWriter.AddAsync(payment1);
-        await _unitOfWork.PaymentWriter.AddAsync(payment2);
+        await _userWriteRepository.AddAsync(user);
+        await _orderWriteRepository.AddAsync(order);
+        await _paymentWriteRepository.AddAsync(payment1);
+        await _paymentWriteRepository.AddAsync(payment2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByOrderIdAsync(order.Id);
+        var result = await _paymentReadRepository.GetByOrderIdAsync(order.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -209,7 +224,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         var nonExistentOrderId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByOrderIdAsync(nonExistentOrderId);
+        var result = await _paymentReadRepository.GetByOrderIdAsync(nonExistentOrderId);
 
         // Assert
         result.Should().NotBeNull();
@@ -234,27 +249,27 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         succeededPayment.MarkAsSucceeded("txn_success");
         failedPayment.MarkAsFailed("Payment declined");
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order1);
-        await _unitOfWork.OrderWriter.AddAsync(order2);
-        await _unitOfWork.OrderWriter.AddAsync(order3);
-        await _unitOfWork.PaymentWriter.AddAsync(pendingPayment);
-        await _unitOfWork.PaymentWriter.AddAsync(succeededPayment);
-        await _unitOfWork.PaymentWriter.AddAsync(failedPayment);
+        await _userWriteRepository.AddAsync(user);
+        await _orderWriteRepository.AddAsync(order1);
+        await _orderWriteRepository.AddAsync(order2);
+        await _orderWriteRepository.AddAsync(order3);
+        await _paymentWriteRepository.AddAsync(pendingPayment);
+        await _paymentWriteRepository.AddAsync(succeededPayment);
+        await _paymentWriteRepository.AddAsync(failedPayment);
         await _unitOfWork.SaveChangesAsync();
 
         // Act & Assert - Test Pending payments
-        var pendingResults = await _unitOfWork.PaymentReader.GetByStatusAsync(PaymentStatus.Pending);
+        var pendingResults = await _paymentReadRepository.GetByStatusAsync(PaymentStatus.Pending);
         pendingResults.Should().HaveCount(1);
         pendingResults.First().Id.Should().Be(pendingPayment.Id);
 
         // Act & Assert - Test Succeeded payments
-        var succeededResults = await _unitOfWork.PaymentReader.GetByStatusAsync(PaymentStatus.Succeeded);
+        var succeededResults = await _paymentReadRepository.GetByStatusAsync(PaymentStatus.Succeeded);
         succeededResults.Should().HaveCount(1);
         succeededResults.First().Id.Should().Be(succeededPayment.Id);
 
         // Act & Assert - Test Failed payments
-        var failedResults = await _unitOfWork.PaymentReader.GetByStatusAsync(PaymentStatus.Failed);
+        var failedResults = await _paymentReadRepository.GetByStatusAsync(PaymentStatus.Failed);
         failedResults.Should().HaveCount(1);
         failedResults.First().Id.Should().Be(failedPayment.Id);
     }
@@ -266,7 +281,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByStatusAsync(PaymentStatus.Refunded);
+        var result = await _paymentReadRepository.GetByStatusAsync(PaymentStatus.Refunded);
 
         // Assert
         result.Should().NotBeNull();
@@ -280,7 +295,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var payments = new List<Domain.Payments.Payment>();
+        var payments = new List<Payment>();
 
         // Create 5 payments with slight time differences
         for (int i = 0; i < 5; i++)
@@ -293,24 +308,25 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
                 .Build();
 
             payments.Add(payment);
-            await _unitOfWork.OrderWriter.AddAsync(order);
+            await _orderWriteRepository.AddAsync(order);
             await Task.Delay(10); // Small delay to ensure different timestamps
         }
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         foreach (var payment in payments)
         {
-            await _unitOfWork.PaymentWriter.AddAsync(payment);
+            await _paymentWriteRepository.AddAsync(payment);
         }
+
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetRecentPaymentsAsync(3);
+        var result = await _paymentReadRepository.GetRecentPaymentsAsync(3);
 
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(3);
-        
+
         // Should be ordered by CreatedAt descending (most recent first)
         var orderedResult = result.ToList();
         for (int i = 0; i < orderedResult.Count - 1; i++)
@@ -329,13 +345,13 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         var order = OrderBuilder.Random().WithUser(user).Build();
         var payment = PaymentBuilder.Random().WithOrder(order).WithUser(user).Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order);
-        await _unitOfWork.PaymentWriter.AddAsync(payment);
+        await _userWriteRepository.AddAsync(user);
+        await _orderWriteRepository.AddAsync(order);
+        await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetRecentPaymentsAsync(10);
+        var result = await _paymentReadRepository.GetRecentPaymentsAsync(10);
 
         // Assert
         result.Should().NotBeNull();
@@ -369,16 +385,16 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
             .WithPaymentMethod(paymentMethod)
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.PaymentMethodWriter.AddAsync(paymentMethod);
-        await _unitOfWork.OrderWriter.AddAsync(order1);
-        await _unitOfWork.OrderWriter.AddAsync(order2);
-        await _unitOfWork.PaymentWriter.AddAsync(payment1);
-        await _unitOfWork.PaymentWriter.AddAsync(payment2);
+        await _userWriteRepository.AddAsync(user);
+        await _paymentMethodWriteRepository.AddAsync(paymentMethod);
+        await _orderWriteRepository.AddAsync(order1);
+        await _orderWriteRepository.AddAsync(order2);
+        await _paymentWriteRepository.AddAsync(payment1);
+        await _paymentWriteRepository.AddAsync(payment2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByPaymentMethodIdAsync(paymentMethod.Id);
+        var result = await _paymentReadRepository.GetByPaymentMethodIdAsync(paymentMethod.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -396,7 +412,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         var nonExistentPaymentMethodId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.GetByPaymentMethodIdAsync(nonExistentPaymentMethodId);
+        var result = await _paymentReadRepository.GetByPaymentMethodIdAsync(nonExistentPaymentMethodId);
 
         // Assert
         result.Should().NotBeNull();
@@ -416,15 +432,15 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         var payment1 = PaymentBuilder.Random().WithOrder(order1).WithUser(user).Build();
         var payment2 = PaymentBuilder.Random().WithOrder(order2).WithUser(user).Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
-        await _unitOfWork.OrderWriter.AddAsync(order1);
-        await _unitOfWork.OrderWriter.AddAsync(order2);
-        await _unitOfWork.PaymentWriter.AddAsync(payment1);
-        await _unitOfWork.PaymentWriter.AddAsync(payment2);
+        await _userWriteRepository.AddAsync(user);
+        await _orderWriteRepository.AddAsync(order1);
+        await _orderWriteRepository.AddAsync(order2);
+        await _paymentWriteRepository.AddAsync(payment1);
+        await _paymentWriteRepository.AddAsync(payment2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.ListAllAsync();
+        var result = await _paymentReadRepository.ListAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -440,7 +456,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.PaymentReader.ListAllAsync();
+        var result = await _paymentReadRepository.ListAllAsync();
 
         // Assert
         result.Should().NotBeNull();

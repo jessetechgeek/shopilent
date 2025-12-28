@@ -35,6 +35,7 @@ public class DeleteProductCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockProductWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<DeleteProductCommandHandlerV1>());
 

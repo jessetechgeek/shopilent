@@ -1,25 +1,25 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Sales.DTOs;
+using Shopilent.Domain.Sales.Repositories.Read;
 
 namespace Shopilent.Application.Features.Sales.Queries.GetCart.V1;
 
 internal sealed class GetCartQueryHandlerV1 : IQueryHandler<GetCartQueryV1, CartDto?>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICartReadRepository _cartReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<GetCartQueryHandlerV1> _logger;
 
     public GetCartQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        ICartReadRepository cartReadRepository,
         ICurrentUserContext currentUserContext,
         ILogger<GetCartQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _cartReadRepository = cartReadRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -33,7 +33,7 @@ internal sealed class GetCartQueryHandlerV1 : IQueryHandler<GetCartQueryV1, Cart
             // If a specific cart ID is provided, try to get that cart
             if (request.CartId.HasValue)
             {
-                cart = await _unitOfWork.CartReader.GetByIdAsync(request.CartId.Value, cancellationToken);
+                cart = await _cartReadRepository.GetByIdAsync(request.CartId.Value, cancellationToken);
 
                 // For authenticated users, verify the cart belongs to them
                 if (cart != null && _currentUserContext.UserId.HasValue &&
@@ -48,7 +48,7 @@ internal sealed class GetCartQueryHandlerV1 : IQueryHandler<GetCartQueryV1, Cart
             // For authenticated users, get their cart
             else if (_currentUserContext.UserId.HasValue)
             {
-                cart = await _unitOfWork.CartReader.GetByUserIdAsync(_currentUserContext.UserId.Value,
+                cart = await _cartReadRepository.GetByUserIdAsync(_currentUserContext.UserId.Value,
                     cancellationToken);
             }
 

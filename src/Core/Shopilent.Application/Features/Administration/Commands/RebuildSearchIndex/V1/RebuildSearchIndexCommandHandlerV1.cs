@@ -1,25 +1,27 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.Search;
+using Shopilent.Domain.Catalog.Repositories.Read;
+using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
 namespace Shopilent.Application.Features.Administration.Commands.RebuildSearchIndex.V1;
 
-internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<RebuildSearchIndexCommandV1, RebuildSearchIndexResponseV1>
+internal sealed class
+    RebuildSearchIndexCommandHandlerV1 : ICommandHandler<RebuildSearchIndexCommandV1, RebuildSearchIndexResponseV1>
 {
+    private readonly IProductReadRepository _productReadRepository;
     private readonly ISearchService _searchService;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<RebuildSearchIndexCommandHandlerV1> _logger;
 
     public RebuildSearchIndexCommandHandlerV1(
+        IProductReadRepository productReadRepository,
         ISearchService searchService,
-        IUnitOfWork unitOfWork,
         ILogger<RebuildSearchIndexCommandHandlerV1> logger)
     {
+        _productReadRepository = productReadRepository;
         _searchService = searchService;
-        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -32,7 +34,8 @@ internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<Rebui
 
         try
         {
-            _logger.LogInformation("Starting search index rebuild - Initialize: {Initialize}, Index: {Index}, Force: {Force}",
+            _logger.LogInformation(
+                "Starting search index rebuild - Initialize: {Initialize}, Index: {Index}, Force: {Force}",
                 request.InitializeIndexes, request.IndexProducts, request.ForceReindex);
 
             if (request.InitializeIndexes)
@@ -47,7 +50,7 @@ internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<Rebui
             {
                 _logger.LogInformation("Starting product indexing...");
 
-                var productDtos = await _unitOfWork.ProductReader.ListAllAsync(cancellationToken);
+                var productDtos = await _productReadRepository.ListAllAsync(cancellationToken);
                 var productDtoList = productDtos.ToList();
                 var indexedIds = new HashSet<Guid>();
 
@@ -61,7 +64,7 @@ internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<Rebui
                     var searchDocuments = new List<ProductSearchDocument>();
                     foreach (var productDto in productDtoList)
                     {
-                        var product = await _unitOfWork.ProductReader.GetDetailByIdAsync(productDto.Id, cancellationToken);
+                        var product = await _productReadRepository.GetDetailByIdAsync(productDto.Id, cancellationToken);
                         if (product != null)
                         {
                             searchDocuments.Add(ProductSearchDocument.FromProductDto(product));
@@ -76,7 +79,8 @@ internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<Rebui
                         stopwatch.Stop();
 
                         response.IsSuccess = false;
-                        response.Message = $"Search index rebuild partially completed. Index initialization: {(response.IndexesInitialized ? "Success" : "Skipped")}. Product indexing failed: {indexResult.Error.Message}";
+                        response.Message =
+                            $"Search index rebuild partially completed. Index initialization: {(response.IndexesInitialized ? "Success" : "Skipped")}. Product indexing failed: {indexResult.Error.Message}";
                         response.Duration = stopwatch.Elapsed;
 
                         return Result.Failure<RebuildSearchIndexResponseV1>(indexResult.Error);
@@ -97,7 +101,8 @@ internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<Rebui
                     if (orphanedIds.Any())
                     {
                         _logger.LogInformation("Found {Count} orphaned products to delete", orphanedIds.Count);
-                        var deleteResult = await _searchService.DeleteProductsByIdsAsync(orphanedIds, cancellationToken);
+                        var deleteResult =
+                            await _searchService.DeleteProductsByIdsAsync(orphanedIds, cancellationToken);
 
                         if (deleteResult.IsSuccess)
                         {
@@ -106,7 +111,8 @@ internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<Rebui
                         }
                         else
                         {
-                            _logger.LogWarning("Failed to delete orphaned products: {Error}", deleteResult.Error.Message);
+                            _logger.LogWarning("Failed to delete orphaned products: {Error}",
+                                deleteResult.Error.Message);
                         }
                     }
                     else
@@ -117,7 +123,8 @@ internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<Rebui
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to fetch product IDs from search index for cleanup: {Error}", allMeilisearchIdsResult.Error.Message);
+                    _logger.LogWarning("Failed to fetch product IDs from search index for cleanup: {Error}",
+                        allMeilisearchIdsResult.Error.Message);
                 }
             }
 
@@ -135,8 +142,10 @@ internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<Rebui
             response.Message = $"Search index rebuild completed successfully: {string.Join(", ", messageParts)}";
             response.Duration = stopwatch.Elapsed;
 
-            _logger.LogInformation("Search index rebuild completed successfully in {Duration}ms - Indexes: {Indexes}, Products: {Products}, Deleted: {Deleted}",
-                stopwatch.ElapsedMilliseconds, response.IndexesInitialized, response.ProductsIndexed, response.ProductsDeleted);
+            _logger.LogInformation(
+                "Search index rebuild completed successfully in {Duration}ms - Indexes: {Indexes}, Products: {Products}, Deleted: {Deleted}",
+                stopwatch.ElapsedMilliseconds, response.IndexesInitialized, response.ProductsIndexed,
+                response.ProductsDeleted);
 
             return Result.Success(response);
         }
@@ -150,7 +159,7 @@ internal sealed class RebuildSearchIndexCommandHandlerV1 : ICommandHandler<Rebui
             response.Duration = stopwatch.Elapsed;
 
             return Result.Failure<RebuildSearchIndexResponseV1>(
-                Domain.Common.Errors.Error.Failure("Search.RebuildFailed", response.Message));
+                Error.Failure("Search.RebuildFailed", response.Message));
         }
     }
 }

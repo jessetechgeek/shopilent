@@ -19,13 +19,14 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var services = new ServiceCollection();
 
         // Register handler dependencies
-        services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockProductReadRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.MockSearchService.Object);
         services.AddTransient(sp => Fixture.GetLogger<RebuildSearchIndexCommandHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<RebuildSearchIndexCommandV1>();
         });
 
@@ -40,9 +41,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = true,
-            IndexProducts = true,
-            ForceReindex = false
+            InitializeIndexes = true, IndexProducts = true, ForceReindex = false
         };
 
         var productDtos = new List<ProductDto>
@@ -54,10 +53,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         // Create detail DTOs for both products
         var productDetailDtos = productDtos.Select(p => new ProductDetailDto
         {
-            Id = p.Id,
-            Name = p.Name,
-            Slug = p.Slug,
-            Description = $"Test {p.Name}"
+            Id = p.Id, Name = p.Name, Slug = p.Slug, Description = $"Test {p.Name}"
         }).ToDictionary(p => p.Id);
 
         // Setup authenticated admin user
@@ -69,7 +65,8 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
             .Returns(Task.CompletedTask);
 
         Fixture.MockSearchService
-            .Setup(service => service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
+            .Setup(service =>
+                service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
             .ReturnsAsync(Result.Success());
 
         Fixture.MockSearchService
@@ -77,11 +74,11 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
             .ReturnsAsync(Result.Success<IEnumerable<Guid>>(productDtos.Select(p => p.Id)));
 
         // Mock product repository
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.ListAllAsync(CancellationToken))
+        Fixture.MockProductReadRepository.Setup(repo => repo.ListAllAsync(CancellationToken))
             .ReturnsAsync(productDtos);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.ProductReader.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
             .ReturnsAsync((Guid id, CancellationToken ct) => productDetailDtos.GetValueOrDefault(id));
 
         // Act
@@ -113,9 +110,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = true,
-            IndexProducts = false,
-            ForceReindex = false
+            InitializeIndexes = true, IndexProducts = false, ForceReindex = false
         };
 
         // Setup authenticated admin user
@@ -154,9 +149,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = false,
-            IndexProducts = true,
-            ForceReindex = true
+            InitializeIndexes = false, IndexProducts = true, ForceReindex = true
         };
 
         var productDtos = new List<ProductDto>
@@ -177,7 +170,8 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
 
         // Mock search service
         Fixture.MockSearchService
-            .Setup(service => service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
+            .Setup(service =>
+                service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
             .ReturnsAsync(Result.Success());
 
         Fixture.MockSearchService
@@ -185,10 +179,12 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
             .ReturnsAsync(Result.Success<IEnumerable<Guid>>(productDtos.Select(p => p.Id)));
 
         // Mock product repository
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.ListAllAsync(CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.ListAllAsync(CancellationToken))
             .ReturnsAsync(productDtos);
 
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
             .ReturnsAsync(productDetailDto);
 
         // Act
@@ -220,16 +216,15 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = false,
-            IndexProducts = true,
-            ForceReindex = false
+            InitializeIndexes = false, IndexProducts = true, ForceReindex = false
         };
 
         // Setup authenticated admin user
         Fixture.SetAuthenticatedUser(adminUserId, isAdmin: true);
 
         // Mock empty product list
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.ListAllAsync(CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.ListAllAsync(CancellationToken))
             .ReturnsAsync(new List<ProductDto>());
 
         // Mock GetAllProductIdsAsync to return empty list (for orphan cleanup)
@@ -271,9 +266,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = true,
-            IndexProducts = false,
-            ForceReindex = false
+            InitializeIndexes = true, IndexProducts = false, ForceReindex = false
         };
 
         // Setup authenticated admin user
@@ -304,9 +297,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = true,
-            IndexProducts = true,
-            ForceReindex = false
+            InitializeIndexes = true, IndexProducts = true, ForceReindex = false
         };
 
         var productDtos = new List<ProductDto>
@@ -333,14 +324,17 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
             .Returns(Task.CompletedTask);
 
         Fixture.MockSearchService
-            .Setup(service => service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
+            .Setup(service =>
+                service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
             .ReturnsAsync(Result.Failure(indexingError));
 
         // Mock product repository
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.ListAllAsync(CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.ListAllAsync(CancellationToken))
             .ReturnsAsync(productDtos);
 
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
             .ReturnsAsync(productDetailDto);
 
         // Act
@@ -367,16 +361,15 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = false,
-            IndexProducts = true,
-            ForceReindex = false
+            InitializeIndexes = false, IndexProducts = true, ForceReindex = false
         };
 
         // Setup authenticated admin user
         Fixture.SetAuthenticatedUser(adminUserId, isAdmin: true);
 
         // Mock product repository to throw exception
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.ListAllAsync(CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.ListAllAsync(CancellationToken))
             .ThrowsAsync(new InvalidOperationException("Database connection failed"));
 
         // Act
@@ -387,9 +380,9 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         result.Error.Message.Should().Contain("Database connection failed");
 
         // Verify service calls
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.ProductReader.ListAllAsync(CancellationToken),
-            Times.Once);
+        Fixture.MockProductReadRepository
+            .Verify(repo => repo.ListAllAsync(CancellationToken),
+                Times.Once);
     }
 
     [Fact]
@@ -399,9 +392,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = true,
-            IndexProducts = true,
-            ForceReindex = false
+            InitializeIndexes = true, IndexProducts = true, ForceReindex = false
         };
 
         var productDtos = new List<ProductDto>
@@ -426,7 +417,8 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
             .Returns(Task.CompletedTask);
 
         Fixture.MockSearchService
-            .Setup(service => service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
+            .Setup(service =>
+                service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
             .ReturnsAsync(Result.Success());
 
         Fixture.MockSearchService
@@ -434,10 +426,12 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
             .ReturnsAsync(Result.Success<IEnumerable<Guid>>(productDtos.Select(p => p.Id)));
 
         // Mock product repository
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.ListAllAsync(CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.ListAllAsync(CancellationToken))
             .ReturnsAsync(productDtos);
 
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
             .ReturnsAsync(productDetailDto);
 
         // Act
@@ -461,9 +455,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = false,
-            IndexProducts = true,
-            ForceReindex = false
+            InitializeIndexes = false, IndexProducts = true, ForceReindex = false
         };
 
         var productDtos = new List<ProductDto>
@@ -475,10 +467,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         // Create detail DTOs for both products
         var productDetailDtos = productDtos.Select(p => new ProductDetailDto
         {
-            Id = p.Id,
-            Name = p.Name,
-            Slug = p.Slug,
-            Description = $"Test {p.Name}"
+            Id = p.Id, Name = p.Name, Slug = p.Slug, Description = $"Test {p.Name}"
         }).ToDictionary(p => p.Id);
 
         // IDs in Meilisearch include orphaned products
@@ -491,7 +480,8 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
 
         // Mock search service
         Fixture.MockSearchService
-            .Setup(service => service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
+            .Setup(service =>
+                service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
             .ReturnsAsync(Result.Success());
 
         Fixture.MockSearchService
@@ -503,11 +493,12 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
             .ReturnsAsync(Result.Success());
 
         // Mock product repository
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.ListAllAsync(CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.ListAllAsync(CancellationToken))
             .ReturnsAsync(productDtos);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.ProductReader.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
             .ReturnsAsync((Guid id, CancellationToken ct) => productDetailDtos.GetValueOrDefault(id));
 
         // Act
@@ -532,7 +523,8 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
 
         Fixture.MockSearchService.Verify(
             service => service.DeleteProductsByIdsAsync(
-                It.Is<IEnumerable<Guid>>(ids => ids.Count() == 2 && ids.Contains(orphanedId1) && ids.Contains(orphanedId2)),
+                It.Is<IEnumerable<Guid>>(ids =>
+                    ids.Count() == 2 && ids.Contains(orphanedId1) && ids.Contains(orphanedId2)),
                 CancellationToken),
             Times.Once);
     }
@@ -544,9 +536,7 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
         var adminUserId = Guid.NewGuid();
         var command = new RebuildSearchIndexCommandV1
         {
-            InitializeIndexes = false,
-            IndexProducts = true,
-            ForceReindex = false
+            InitializeIndexes = false, IndexProducts = true, ForceReindex = false
         };
 
         var productDtos = new List<ProductDto>
@@ -569,7 +559,8 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
 
         // Mock search service
         Fixture.MockSearchService
-            .Setup(service => service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
+            .Setup(service =>
+                service.IndexProductsAsync(It.IsAny<IEnumerable<ProductSearchDocument>>(), CancellationToken))
             .ReturnsAsync(Result.Success());
 
         Fixture.MockSearchService
@@ -577,10 +568,12 @@ public class RebuildSearchIndexCommandV1Tests : TestBase
             .ReturnsAsync(Result.Failure<IEnumerable<Guid>>(getIdsError));
 
         // Mock product repository
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.ListAllAsync(CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.ListAllAsync(CancellationToken))
             .ReturnsAsync(productDtos);
 
-        Fixture.MockUnitOfWork.Setup(uow => uow.ProductReader.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
+        Fixture.MockProductReadRepository
+            .Setup(repo => repo.GetDetailByIdAsync(It.IsAny<Guid>(), CancellationToken))
             .ReturnsAsync(productDetailDto);
 
         // Act

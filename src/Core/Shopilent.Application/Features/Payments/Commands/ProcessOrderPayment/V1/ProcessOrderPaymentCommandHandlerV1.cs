@@ -6,12 +6,16 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments;
 using Shopilent.Domain.Payments.DTOs;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Errors;
+using Shopilent.Domain.Payments.Repositories.Read;
+using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Errors;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Application.Features.Payments.Commands.ProcessOrderPayment.V1;
@@ -20,17 +24,29 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
     : ICommandHandler<ProcessOrderPaymentCommandV1, ProcessOrderPaymentResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IOrderWriteRepository _orderWriteRepository;
+    private readonly IPaymentWriteRepository _paymentWriteRepository;
+    private readonly IPaymentMethodReadRepository _paymentMethodReadRepository;
     private readonly IPaymentService _paymentService;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<ProcessOrderPaymentCommandHandlerV1> _logger;
 
     public ProcessOrderPaymentCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
+        IOrderWriteRepository orderWriteRepository,
+        IPaymentWriteRepository paymentWriteRepository,
+        IPaymentMethodReadRepository paymentMethodReadRepository,
         IPaymentService paymentService,
         ICurrentUserContext currentUserContext,
         ILogger<ProcessOrderPaymentCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
+        _orderWriteRepository = orderWriteRepository;
+        _paymentWriteRepository = paymentWriteRepository;
+        _paymentMethodReadRepository = paymentMethodReadRepository;
         _paymentService = paymentService;
         _currentUserContext = currentUserContext;
         _logger = logger;
@@ -43,7 +59,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
         try
         {
             // Get the order
-            var order = await _unitOfWork.OrderWriter.GetByIdAsync(request.OrderId, cancellationToken);
+            var order = await _orderWriteRepository.GetByIdAsync(request.OrderId, cancellationToken);
             if (order == null)
             {
                 _logger.LogWarning("Order not found. OrderId: {OrderId}", request.OrderId);
@@ -81,14 +97,14 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
             User user = null;
             if (order.UserId.HasValue)
             {
-                user = await _unitOfWork.UserWriter.GetByIdAsync(order.UserId.Value, cancellationToken);
+                user = await _userWriteRepository.GetByIdAsync(order.UserId.Value, cancellationToken);
             }
 
             // Validate payment method if provided and get token
             PaymentMethodDto paymentMethod = null;
             if (request.PaymentMethodId.HasValue)
             {
-                paymentMethod = await _unitOfWork.PaymentMethodReader.GetByIdAsync(
+                paymentMethod = await _paymentMethodReadRepository.GetByIdAsync(
                     request.PaymentMethodId.Value, cancellationToken);
 
                 if (paymentMethod == null)
@@ -140,7 +156,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
                 }
             }
 
-           
+
             // Add off-session metadata for proper payment processing
             var paymentMetadata = new Dictionary<string, object>(request.Metadata ?? new Dictionary<string, object>());
 
@@ -174,7 +190,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
                         var markFailedResult = failedPayment.Value.MarkAsFailed(paymentResult.Error.Message);
                         if (markFailedResult.IsSuccess)
                         {
-                            await _unitOfWork.PaymentWriter.AddAsync(failedPayment.Value, cancellationToken);
+                            await _paymentWriteRepository.AddAsync(failedPayment.Value, cancellationToken);
                             await _unitOfWork.SaveChangesAsync(cancellationToken);
                         }
                     }
@@ -265,10 +281,10 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
             }
 
             // Save changes
-            await _unitOfWork.PaymentWriter.AddAsync(payment.Value, cancellationToken);
+            await _paymentWriteRepository.AddAsync(payment.Value, cancellationToken);
             if (paymentProcessingResult.Status == PaymentStatus.Succeeded)
             {
-                await _unitOfWork.OrderWriter.UpdateAsync(order, cancellationToken);
+                await _orderWriteRepository.UpdateAsync(order, cancellationToken);
             }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);

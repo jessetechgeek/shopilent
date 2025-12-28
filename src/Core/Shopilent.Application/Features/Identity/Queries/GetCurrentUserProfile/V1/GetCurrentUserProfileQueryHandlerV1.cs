@@ -5,19 +5,20 @@ using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.DTOs;
 using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Read;
 
 namespace Shopilent.Application.Features.Identity.Queries.GetCurrentUserProfile.V1;
 
 internal sealed class GetCurrentUserProfileQueryHandlerV1 : IQueryHandler<GetCurrentUserProfileQueryV1, UserDetailDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<GetCurrentUserProfileQueryHandlerV1> _logger;
 
     public GetCurrentUserProfileQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<GetCurrentUserProfileQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
     }
 
@@ -27,7 +28,7 @@ internal sealed class GetCurrentUserProfileQueryHandlerV1 : IQueryHandler<GetCur
     {
         try
         {
-            var userProfile = await _unitOfWork.UserReader.GetDetailByIdAsync(request.UserId, cancellationToken);
+            var userProfile = await _userReadRepository.GetDetailByIdAsync(request.UserId, cancellationToken);
 
             if (userProfile == null)
             {

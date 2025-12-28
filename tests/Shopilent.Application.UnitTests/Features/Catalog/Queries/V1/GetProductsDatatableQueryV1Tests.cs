@@ -15,7 +15,7 @@ public class GetProductsDatatableQueryV1Tests : TestBase
     public GetProductsDatatableQueryV1Tests()
     {
         _handler = new GetProductsDatatableQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockProductReadRepository.Object,
             Fixture.GetLogger<GetProductsDatatableQueryHandlerV1>(),
             Fixture.MockS3StorageService.Object);
 

@@ -6,12 +6,18 @@ using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Events;
+using Shopilent.Domain.Identity.Repositories.Read;
+using Shopilent.Domain.Identity.Repositories.Write;
 
 namespace Shopilent.Application.Features.Identity.EventHandlers;
 
-internal sealed  class UserStatusChangedEventHandler : INotificationHandler<DomainEventNotification<UserStatusChangedEvent>>
+internal sealed class
+    UserStatusChangedEventHandler : INotificationHandler<DomainEventNotification<UserStatusChangedEvent>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
+    private readonly IRefreshTokenWriteRepository _refreshTokenWriteRepository;
+    private readonly IRefreshTokenReadRepository _refreshTokenReadRepository;
     private readonly ILogger<UserStatusChangedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
@@ -19,19 +25,26 @@ internal sealed  class UserStatusChangedEventHandler : INotificationHandler<Doma
 
     public UserStatusChangedEventHandler(
         IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
+        IRefreshTokenWriteRepository refreshTokenWriteRepository,
+        IRefreshTokenReadRepository refreshTokenReadRepository,
         ILogger<UserStatusChangedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
+        _refreshTokenWriteRepository = refreshTokenWriteRepository;
+        _refreshTokenReadRepository = refreshTokenReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
         _emailService = emailService;
     }
 
-    public async Task Handle(DomainEventNotification<UserStatusChangedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<UserStatusChangedEvent> notification,
+        CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
@@ -46,7 +59,7 @@ internal sealed  class UserStatusChangedEventHandler : INotificationHandler<Doma
             await _cacheService.RemoveByPatternAsync("users-*", cancellationToken);
 
             // Get user details
-            var user = await _unitOfWork.UserReader.GetByIdAsync(domainEvent.UserId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(domainEvent.UserId, cancellationToken);
 
             if (user != null)
             {
@@ -74,17 +87,19 @@ internal sealed  class UserStatusChangedEventHandler : INotificationHandler<Doma
                     await _emailService.SendEmailAsync(user.Email, subject, message);
 
                     // Revoke all active refresh tokens for this user
-                    var refreshTokens = await _unitOfWork.RefreshTokenReader.GetActiveTokensAsync(domainEvent.UserId, cancellationToken);
+                    var refreshTokens =
+                        await _refreshTokenReadRepository.GetActiveTokensAsync(domainEvent.UserId, cancellationToken);
                     if (refreshTokens != null && refreshTokens.Count > 0)
                     {
                         foreach (var token in refreshTokens)
                         {
                             // Get the token from the write repository to revoke it
-                            var refreshToken = await _unitOfWork.RefreshTokenWriter.GetByIdAsync(token.Id, cancellationToken);
+                            var refreshToken =
+                                await _refreshTokenWriteRepository.GetByIdAsync(token.Id, cancellationToken);
                             if (refreshToken != null)
                             {
                                 refreshToken.Revoke("Account deactivated");
-                                await _unitOfWork.RefreshTokenWriter.UpdateAsync(refreshToken, cancellationToken);
+                                await _refreshTokenWriteRepository.UpdateAsync(refreshToken, cancellationToken);
                             }
                         }
 

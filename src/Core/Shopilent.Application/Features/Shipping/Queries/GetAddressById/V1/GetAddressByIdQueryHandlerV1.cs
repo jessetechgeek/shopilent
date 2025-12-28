@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Shipping.DTOs;
@@ -12,16 +11,16 @@ namespace Shopilent.Application.Features.Shipping.Queries.GetAddressById.V1;
 
 internal sealed class GetAddressByIdQueryHandlerV1 : IQueryHandler<GetAddressByIdQueryV1, AddressDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAddressReadRepository _addressReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<GetAddressByIdQueryHandlerV1> _logger;
 
     public GetAddressByIdQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        IAddressReadRepository addressReadRepository,
         ICurrentUserContext currentUserContext,
         ILogger<GetAddressByIdQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _addressReadRepository = addressReadRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -33,7 +32,7 @@ internal sealed class GetAddressByIdQueryHandlerV1 : IQueryHandler<GetAddressByI
             _logger.LogInformation("Getting address with ID: {AddressId} for user: {UserId}",
                 request.AddressId, _currentUserContext.UserId);
 
-            var address = await _unitOfWork.AddressReader.GetByIdAsync(request.AddressId, cancellationToken);
+            var address = await _addressReadRepository.GetByIdAsync(request.AddressId, cancellationToken);
 
             if (address == null)
             {

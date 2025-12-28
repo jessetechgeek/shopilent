@@ -6,6 +6,7 @@ using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 
 namespace Shopilent.Application.Features.Identity.Commands.UpdateUserProfile.V1;
@@ -14,15 +15,18 @@ internal sealed class
     UpdateUserProfileCommandHandlerV1 : ICommandHandler<UpdateUserProfileCommandV1, UpdateUserProfileResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<UpdateUserProfileCommandHandlerV1> _logger;
 
     public UpdateUserProfileCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<UpdateUserProfileCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -33,7 +37,7 @@ internal sealed class
         try
         {
             // Get user by ID
-            var user = await _unitOfWork.UserWriter.GetByIdAsync(request.UserId, cancellationToken);
+            var user = await _userWriteRepository.GetByIdAsync(request.UserId, cancellationToken);
             if (user == null)
             {
                 return Result.Failure<UpdateUserProfileResponseV1>(UserErrors.NotFound(request.UserId));
@@ -91,7 +95,8 @@ internal sealed class
         }
         catch (ConcurrencyConflictException ex)
         {
-            _logger.LogWarning(ex, "Concurrency conflict while updating user profile. UserId: {UserId}", request.UserId);
+            _logger.LogWarning(ex, "Concurrency conflict while updating user profile. UserId: {UserId}",
+                request.UserId);
 
             return Result.Failure<UpdateUserProfileResponseV1>(ex.Error);
         }

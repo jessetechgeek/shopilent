@@ -5,26 +5,28 @@ using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Payments.Events;
 
 namespace Shopilent.Application.Features.Payments.EventHandlers;
 
-internal sealed  class PaymentMethodRemovedEventHandler : INotificationHandler<DomainEventNotification<PaymentMethodRemovedEvent>>
+internal sealed class
+    PaymentMethodRemovedEventHandler : INotificationHandler<DomainEventNotification<PaymentMethodRemovedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly ILogger<PaymentMethodRemovedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
     private readonly IEmailService _emailService;
 
     public PaymentMethodRemovedEventHandler(
-        IUnitOfWork unitOfWork,
+        IUserReadRepository userReadRepository,
         ILogger<PaymentMethodRemovedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService,
         IEmailService emailService)
     {
-        _unitOfWork = unitOfWork;
+        _userReadRepository = userReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -48,7 +50,7 @@ internal sealed  class PaymentMethodRemovedEventHandler : INotificationHandler<D
             await _cacheService.RemoveByPatternAsync($"payment-methods-user-{domainEvent.UserId}", cancellationToken);
 
             // Get user details
-            var user = await _unitOfWork.UserReader.GetByIdAsync(domainEvent.UserId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(domainEvent.UserId, cancellationToken);
 
             if (user != null)
             {
@@ -62,7 +64,8 @@ internal sealed  class PaymentMethodRemovedEventHandler : INotificationHandler<D
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing PaymentMethodRemovedEvent for PaymentMethodId: {PaymentMethodId}, UserId: {UserId}",
+            _logger.LogError(ex,
+                "Error processing PaymentMethodRemovedEvent for PaymentMethodId: {PaymentMethodId}, UserId: {UserId}",
                 domainEvent.PaymentMethodId, domainEvent.UserId);
         }
     }

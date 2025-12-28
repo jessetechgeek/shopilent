@@ -19,6 +19,7 @@ public class UpdateUserCommandV1Tests : TestBase
     {
         var services = new ServiceCollection();
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockUserWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<UpdateUserCommandHandlerV1>());
 
@@ -48,12 +49,12 @@ public class UpdateUserCommandV1Tests : TestBase
         var originalFullName = FullName.Create("Original", "Name").Value;
         var existingUser = User.Create(email, "hashedPassword", originalFullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(existingUser);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.UpdateAsync(It.IsAny<User>(), CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.UpdateAsync(It.IsAny<User>(), CancellationToken))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -67,12 +68,12 @@ public class UpdateUserCommandV1Tests : TestBase
         result.Value.User.FullName.MiddleName.Should().Be("Michael");
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.GetByIdAsync(userId, CancellationToken),
             Times.Once);
 
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.UpdateAsync(It.IsAny<User>(), CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.UpdateAsync(It.IsAny<User>(), CancellationToken),
             Times.Once);
     }
 
@@ -88,8 +89,8 @@ public class UpdateUserCommandV1Tests : TestBase
             LastName = "Doe"
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync((User)null);
 
         // Act
@@ -100,12 +101,12 @@ public class UpdateUserCommandV1Tests : TestBase
         result.Error.Code.Should().Be(UserErrors.NotFound(userId).Code);
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.GetByIdAsync(userId, CancellationToken),
             Times.Once);
 
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.UpdateAsync(It.IsAny<User>(), CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.UpdateAsync(It.IsAny<User>(), CancellationToken),
             Times.Never);
     }
 
@@ -125,8 +126,8 @@ public class UpdateUserCommandV1Tests : TestBase
         var fullName = FullName.Create("Original", "Name").Value;
         var existingUser = User.Create(email, "hashedPassword", fullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(existingUser);
 
         // Act
@@ -138,8 +139,8 @@ public class UpdateUserCommandV1Tests : TestBase
         result.Error.Message.Should().Contain("First name cannot be empty");
 
         // Verify that update was not called
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.UpdateAsync(It.IsAny<User>(), CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.UpdateAsync(It.IsAny<User>(), CancellationToken),
             Times.Never);
     }
 
@@ -159,8 +160,8 @@ public class UpdateUserCommandV1Tests : TestBase
         var fullName = FullName.Create("Original", "Name").Value;
         var existingUser = User.Create(email, "hashedPassword", fullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(existingUser);
 
         // Act
@@ -172,8 +173,8 @@ public class UpdateUserCommandV1Tests : TestBase
         result.Error.Message.Should().Contain("Last name cannot be empty");
 
         // Verify that update was not called
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.UpdateAsync(It.IsAny<User>(), CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.UpdateAsync(It.IsAny<User>(), CancellationToken),
             Times.Never);
     }
 
@@ -194,8 +195,8 @@ public class UpdateUserCommandV1Tests : TestBase
         var fullName = FullName.Create("Original", "Name").Value;
         var existingUser = User.Create(email, "hashedPassword", fullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(existingUser);
 
         // Act
@@ -206,8 +207,8 @@ public class UpdateUserCommandV1Tests : TestBase
         result.Error.Code.Should().Be("User.InvalidPhoneFormat");
 
         // Verify that update was not called
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.UpdateAsync(It.IsAny<User>(), CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.UpdateAsync(It.IsAny<User>(), CancellationToken),
             Times.Never);
     }
 
@@ -228,12 +229,12 @@ public class UpdateUserCommandV1Tests : TestBase
         var originalFullName = FullName.Create("Original", "Name").Value;
         var existingUser = User.Create(email, "hashedPassword", originalFullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(existingUser);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.UpdateAsync(It.IsAny<User>(), CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.UpdateAsync(It.IsAny<User>(), CancellationToken))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -264,12 +265,12 @@ public class UpdateUserCommandV1Tests : TestBase
         var originalFullName = FullName.Create("Original", "Name").Value;
         var existingUser = User.Create(email, "hashedPassword", originalFullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(existingUser);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.UpdateAsync(It.IsAny<User>(), CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.UpdateAsync(It.IsAny<User>(), CancellationToken))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -294,8 +295,8 @@ public class UpdateUserCommandV1Tests : TestBase
             LastName = "Doe"
         };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ThrowsAsync(new Exception("Database error"));
 
         // Act
@@ -330,12 +331,12 @@ public class UpdateUserCommandV1Tests : TestBase
         var originalFullName = FullName.Create("Original", "Name").Value;
         var existingUser = User.Create(email, "hashedPassword", originalFullName).Value;
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(existingUser);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.UpdateAsync(It.IsAny<User>(), CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.UpdateAsync(It.IsAny<User>(), CancellationToken))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -346,7 +347,7 @@ public class UpdateUserCommandV1Tests : TestBase
         result.Value.User.Should().NotBeNull();
         result.Value.User.FullName.FirstName.Should().Be(firstName);
         result.Value.User.FullName.LastName.Should().Be(lastName);
-        
+
         if (string.IsNullOrEmpty(middleName))
         {
             // FullName.Create stores empty strings as-is, not as null

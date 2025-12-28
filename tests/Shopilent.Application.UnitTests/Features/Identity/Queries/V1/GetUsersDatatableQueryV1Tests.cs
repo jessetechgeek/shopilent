@@ -19,7 +19,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public GetUsersDatatableQueryV1Tests()
     {
         var services = new ServiceCollection();
-        services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockUserReadRepository.Object);
+        services.AddTransient(sp => Fixture.MockAddressReadRepository.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetUsersDatatableQueryHandlerV1>());
 
         services.AddMediatRWithValidation();
@@ -32,17 +33,9 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public async Task Handle_ValidRequest_ReturnsDatatableResult()
     {
         // Arrange
-        var datatableRequest = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var datatableRequest = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetUsersDatatableQueryV1
-        {
-            Request = datatableRequest
-        };
+        var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
         var users = new List<UserDto>
         {
@@ -80,25 +73,21 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var addresses1 = new List<AddressDto>
         {
-            new AddressDto { Id = Guid.NewGuid() },
-            new AddressDto { Id = Guid.NewGuid() }
+            new AddressDto { Id = Guid.NewGuid() }, new AddressDto { Id = Guid.NewGuid() }
         };
 
-        var addresses2 = new List<AddressDto>
-        {
-            new AddressDto { Id = Guid.NewGuid() }
-        };
+        var addresses2 = new List<AddressDto> { new AddressDto { Id = Guid.NewGuid() } };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.AddressReader.GetByUserIdAsync(users[0].Id, CancellationToken))
+        Fixture.MockAddressReadRepository
+            .Setup(repo => repo.GetByUserIdAsync(users[0].Id, CancellationToken))
             .ReturnsAsync(addresses1);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.AddressReader.GetByUserIdAsync(users[1].Id, CancellationToken))
+        Fixture.MockAddressReadRepository
+            .Setup(repo => repo.GetByUserIdAsync(users[1].Id, CancellationToken))
             .ReturnsAsync(addresses2);
 
         // Act
@@ -137,12 +126,12 @@ public class GetUsersDatatableQueryV1Tests : TestBase
         secondUser.AddressCount.Should().Be(1);
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken),
+        Fixture.MockUserReadRepository.Verify(
+            repo => repo.GetDataTableAsync(datatableRequest, CancellationToken),
             Times.Once);
 
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.AddressReader.GetByUserIdAsync(It.IsAny<Guid>(), CancellationToken),
+        Fixture.MockAddressReadRepository.Verify(
+            repo => repo.GetByUserIdAsync(It.IsAny<Guid>(), CancellationToken),
             Times.Exactly(2));
     }
 
@@ -150,17 +139,9 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public async Task Handle_UserWithNoAddresses_ReturnsZeroAddressCount()
     {
         // Arrange
-        var datatableRequest = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var datatableRequest = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetUsersDatatableQueryV1
-        {
-            Request = datatableRequest
-        };
+        var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
         var users = new List<UserDto>
         {
@@ -180,12 +161,12 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.AddressReader.GetByUserIdAsync(users[0].Id, CancellationToken))
+        Fixture.MockAddressReadRepository
+            .Setup(repo => repo.GetByUserIdAsync(users[0].Id, CancellationToken))
             .ReturnsAsync((List<AddressDto>)null); // No addresses
 
         // Act
@@ -201,23 +182,15 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public async Task Handle_EmptyResults_ReturnsEmptyDataTable()
     {
         // Arrange
-        var datatableRequest = new DataTableRequest
-        {
-            Draw = 2,
-            Start = 10,
-            Length = 10
-        };
+        var datatableRequest = new DataTableRequest { Draw = 2, Start = 10, Length = 10 };
 
-        var query = new GetUsersDatatableQueryV1
-        {
-            Request = datatableRequest
-        };
+        var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
         var emptyUsers = new List<UserDto>();
         var datatableResult = new DataTableResult<UserDto>(2, 5, 0, emptyUsers);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         // Act
@@ -232,8 +205,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
         result.Value.Data.Should().BeEmpty();
 
         // Verify no address queries were made
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.AddressReader.GetByUserIdAsync(It.IsAny<Guid>(), CancellationToken),
+        Fixture.MockAddressReadRepository.Verify(
+            repo => repo.GetByUserIdAsync(It.IsAny<Guid>(), CancellationToken),
             Times.Never);
     }
 
@@ -244,17 +217,9 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public async Task Handle_DifferentUserRoles_ReturnsCorrectRoleNames(UserRole role, string expectedRoleName)
     {
         // Arrange
-        var datatableRequest = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var datatableRequest = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetUsersDatatableQueryV1
-        {
-            Request = datatableRequest
-        };
+        var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
         var users = new List<UserDto>
         {
@@ -274,12 +239,12 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.AddressReader.GetByUserIdAsync(users[0].Id, CancellationToken))
+        Fixture.MockAddressReadRepository
+            .Setup(repo => repo.GetByUserIdAsync(users[0].Id, CancellationToken))
             .ReturnsAsync(new List<AddressDto>());
 
         // Act
@@ -294,17 +259,9 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public async Task Handle_UserWithMiddleNameInFullName_TrimsCorrectly()
     {
         // Arrange
-        var datatableRequest = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var datatableRequest = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetUsersDatatableQueryV1
-        {
-            Request = datatableRequest
-        };
+        var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
         var users = new List<UserDto>
         {
@@ -324,12 +281,12 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.AddressReader.GetByUserIdAsync(users[0].Id, CancellationToken))
+        Fixture.MockAddressReadRepository
+            .Setup(repo => repo.GetByUserIdAsync(users[0].Id, CancellationToken))
             .ReturnsAsync(new List<AddressDto>());
 
         // Act
@@ -344,20 +301,12 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public async Task Handle_WhenExceptionOccurs_ReturnsFailureResult()
     {
         // Arrange
-        var datatableRequest = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var datatableRequest = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetUsersDatatableQueryV1
-        {
-            Request = datatableRequest
-        };
+        var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ThrowsAsync(new Exception("Database connection failed"));
 
         // Act
@@ -374,17 +323,9 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public async Task Handle_WhenAddressRepositoryThrows_ReturnsFailureResult()
     {
         // Arrange
-        var datatableRequest = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var datatableRequest = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetUsersDatatableQueryV1
-        {
-            Request = datatableRequest
-        };
+        var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
         var users = new List<UserDto>
         {
@@ -404,12 +345,12 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.AddressReader.GetByUserIdAsync(users[0].Id, CancellationToken))
+        Fixture.MockAddressReadRepository
+            .Setup(repo => repo.GetByUserIdAsync(users[0].Id, CancellationToken))
             .ThrowsAsync(new Exception("Address fetch failed"));
 
         // Act
@@ -425,17 +366,9 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public async Task Handle_InactiveUsers_ReturnsCorrectStatus()
     {
         // Arrange
-        var datatableRequest = new DataTableRequest
-        {
-            Draw = 1,
-            Start = 0,
-            Length = 10
-        };
+        var datatableRequest = new DataTableRequest { Draw = 1, Start = 0, Length = 10 };
 
-        var query = new GetUsersDatatableQueryV1
-        {
-            Request = datatableRequest
-        };
+        var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
         var users = new List<UserDto>
         {
@@ -456,12 +389,12 @@ public class GetUsersDatatableQueryV1Tests : TestBase
 
         var datatableResult = new DataTableResult<UserDto>(1, 1, 1, users);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.AddressReader.GetByUserIdAsync(users[0].Id, CancellationToken))
+        Fixture.MockAddressReadRepository
+            .Setup(repo => repo.GetByUserIdAsync(users[0].Id, CancellationToken))
             .ReturnsAsync(new List<AddressDto>());
 
         // Act
@@ -479,23 +412,15 @@ public class GetUsersDatatableQueryV1Tests : TestBase
     public async Task Handle_PaginationRequest_PassesCorrectParameters()
     {
         // Arrange
-        var datatableRequest = new DataTableRequest
-        {
-            Draw = 3,
-            Start = 20,
-            Length = 10
-        };
+        var datatableRequest = new DataTableRequest { Draw = 3, Start = 20, Length = 10 };
 
-        var query = new GetUsersDatatableQueryV1
-        {
-            Request = datatableRequest
-        };
+        var query = new GetUsersDatatableQueryV1 { Request = datatableRequest };
 
         var emptyUsers = new List<UserDto>();
         var datatableResult = new DataTableResult<UserDto>(3, 100, 0, emptyUsers);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserReader.GetDataTableAsync(datatableRequest, CancellationToken))
+        Fixture.MockUserReadRepository
+            .Setup(repo => repo.GetDataTableAsync(datatableRequest, CancellationToken))
             .ReturnsAsync(datatableResult);
 
         // Act
@@ -507,8 +432,8 @@ public class GetUsersDatatableQueryV1Tests : TestBase
         result.Value.RecordsTotal.Should().Be(100);
 
         // Verify the exact request was passed to the repository
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserReader.GetDataTableAsync(
+        Fixture.MockUserReadRepository.Verify(
+            repo => repo.GetDataTableAsync(
                 It.Is<DataTableRequest>(r => r.Draw == 3 && r.Start == 20 && r.Length == 10),
                 CancellationToken),
             Times.Once);

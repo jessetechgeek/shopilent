@@ -13,7 +13,7 @@ public class GetVariantQueryV1Tests : TestBase
     public GetVariantQueryV1Tests()
     {
         _handler = new GetVariantQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockProductVariantReadRepository.Object,
             Fixture.GetLogger<GetVariantQueryHandlerV1>());
     }
 
@@ -136,7 +136,7 @@ public class GetVariantQueryV1Tests : TestBase
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        
+
         Fixture.MockProductVariantReadRepository.Verify(
             repo => repo.GetByIdAsync(variantId, CancellationToken),
             Times.Once);

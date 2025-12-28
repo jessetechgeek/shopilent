@@ -1,5 +1,7 @@
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Shipping.Enums;
+using Shopilent.Domain.Shipping.Repositories.Read;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -9,12 +11,16 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class AddressReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private IUserWriteRepository _userWriteRepository = null!;
+    private IAddressReadRepository _addressReadRepository;
 
     public AddressReadRepositoryTests(IntegrationTestFixture fixture) : base(fixture) { }
 
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _userWriteRepository = GetService<IUserWriteRepository>();
+        _addressReadRepository = GetService<IAddressReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -30,11 +36,11 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .WithUniqueData()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetByIdAsync(address.Id);
+        var result = await _addressReadRepository.GetByIdAsync(address.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -61,7 +67,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetByIdAsync(nonExistentId);
+        var result = await _addressReadRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -74,7 +80,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.ListAllAsync();
+        var result = await _addressReadRepository.ListAllAsync();
 
         // Assert
         result.Should().BeEmpty();
@@ -101,12 +107,12 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBilling()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.ListAllAsync();
+        var result = await _addressReadRepository.ListAllAsync();
 
         // Assert
         result.Should().HaveCount(2);
@@ -139,12 +145,12 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .WithUniqueData()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user1);
-        await _unitOfWork.UserWriter.AddAsync(user2);
+        await _userWriteRepository.AddAsync(user1);
+        await _userWriteRepository.AddAsync(user2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetByUserIdAsync(user1.Id);
+        var result = await _addressReadRepository.GetByUserIdAsync(user1.Id);
 
         // Assert
         result.Should().HaveCount(2);
@@ -164,7 +170,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
         var nonExistentUserId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetByUserIdAsync(nonExistentUserId);
+        var result = await _addressReadRepository.GetByUserIdAsync(nonExistentUserId);
 
         // Assert
         result.Should().BeEmpty();
@@ -191,11 +197,11 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsNotDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
 
         // Assert
         result.Should().NotBeNull();
@@ -218,11 +224,11 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetDefaultAddressAsync(user.Id, AddressType.Billing);
+        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Billing);
 
         // Assert
         result.Should().NotBeNull();
@@ -245,14 +251,14 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Should return the "Both" address for shipping requests
-        var shippingResult = await _unitOfWork.AddressReader.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        var shippingResult = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
 
         // Act - Should return the "Both" address for billing requests
-        var billingResult = await _unitOfWork.AddressReader.GetDefaultAddressAsync(user.Id, AddressType.Billing);
+        var billingResult = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Billing);
 
         // Assert
         shippingResult.Should().NotBeNull();
@@ -278,11 +284,11 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsNotDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
 
         // Assert
         result.Should().BeNull();
@@ -312,19 +318,19 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsDefault()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Request default address for shipping
-        var result = await _unitOfWork.AddressReader.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
 
         // Assert - Should return the latest default address (Shipping), not the Both address
         result.Should().NotBeNull();
         result!.AddressType.Should().Be(AddressType.Shipping);
         result.Id.Should().Be(defaultShippingAddress.Id);
-        
+
         // Verify only one default address exists
-        var allAddresses = await _unitOfWork.AddressReader.GetByUserIdAsync(user.Id);
+        var allAddresses = await _addressReadRepository.GetByUserIdAsync(user.Id);
         allAddresses.Count(a => a.IsDefault).Should().Be(1);
         allAddresses.First(a => a.Id == defaultBothAddress.Id).IsDefault.Should().BeFalse();
         allAddresses.First(a => a.Id == defaultShippingAddress.Id).IsDefault.Should().BeTrue();
@@ -357,11 +363,11 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBoth()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetByAddressTypeAsync(user.Id, AddressType.Shipping);
+        var result = await _addressReadRepository.GetByAddressTypeAsync(user.Id, AddressType.Shipping);
 
         // Assert
         result.Should().HaveCount(2);
@@ -401,11 +407,11 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBoth()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetByAddressTypeAsync(user.Id, AddressType.Billing);
+        var result = await _addressReadRepository.GetByAddressTypeAsync(user.Id, AddressType.Billing);
 
         // Assert
         result.Should().HaveCount(2);
@@ -444,11 +450,11 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBoth()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetByAddressTypeAsync(user.Id, AddressType.Both);
+        var result = await _addressReadRepository.GetByAddressTypeAsync(user.Id, AddressType.Both);
 
         // Assert
         result.Should().HaveCount(1);
@@ -470,11 +476,11 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .AsBilling()
             .Build();
 
-        await _unitOfWork.UserWriter.AddAsync(user);
+        await _userWriteRepository.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - Request shipping addresses when only billing exists
-        var result = await _unitOfWork.AddressReader.GetByAddressTypeAsync(user.Id, AddressType.Shipping);
+        var result = await _addressReadRepository.GetByAddressTypeAsync(user.Id, AddressType.Shipping);
 
         // Assert
         result.Should().BeEmpty();
@@ -488,7 +494,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
         var nonExistentUserId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.AddressReader.GetByAddressTypeAsync(nonExistentUserId, AddressType.Shipping);
+        var result = await _addressReadRepository.GetByAddressTypeAsync(nonExistentUserId, AddressType.Shipping);
 
         // Assert
         result.Should().BeEmpty();

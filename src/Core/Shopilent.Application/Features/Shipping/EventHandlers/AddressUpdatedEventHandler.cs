@@ -2,26 +2,26 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Outbox;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Shipping.Events;
+using Shopilent.Domain.Shipping.Repositories.Read;
 
 namespace Shopilent.Application.Features.Shipping.EventHandlers;
 
 internal sealed class AddressUpdatedEventHandler : INotificationHandler<DomainEventNotification<AddressUpdatedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAddressReadRepository _addressReadRepository;
     private readonly ILogger<AddressUpdatedEventHandler> _logger;
     private readonly ICacheService _cacheService;
     private readonly IOutboxService _outboxService;
 
     public AddressUpdatedEventHandler(
-        IUnitOfWork unitOfWork,
+        IAddressReadRepository addressReadRepository,
         ILogger<AddressUpdatedEventHandler> logger,
         ICacheService cacheService,
         IOutboxService outboxService)
     {
-        _unitOfWork = unitOfWork;
+        _addressReadRepository = addressReadRepository;
         _logger = logger;
         _cacheService = cacheService;
         _outboxService = outboxService;
@@ -37,7 +37,7 @@ internal sealed class AddressUpdatedEventHandler : INotificationHandler<DomainEv
         try
         {
             // Get address details
-            var address = await _unitOfWork.AddressReader.GetByIdAsync(domainEvent.AddressId, cancellationToken);
+            var address = await _addressReadRepository.GetByIdAsync(domainEvent.AddressId, cancellationToken);
 
             if (address != null)
             {

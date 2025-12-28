@@ -21,6 +21,7 @@ public class CreateCategoryCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockCategoryWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         // services.AddTransient(sp => Fixture.GetLogger<CreateCategoryCommandV1>());
         services.AddTransient(sp => Fixture.GetLogger<CreateCategoryCommandHandlerV1>());

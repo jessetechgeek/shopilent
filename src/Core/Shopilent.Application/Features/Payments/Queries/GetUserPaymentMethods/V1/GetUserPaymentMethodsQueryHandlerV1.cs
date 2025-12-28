@@ -1,23 +1,23 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Payments.DTOs;
+using Shopilent.Domain.Payments.Repositories.Read;
 
 namespace Shopilent.Application.Features.Payments.Queries.GetUserPaymentMethods.V1;
 
 internal sealed class
     GetUserPaymentMethodsQueryHandlerV1 : IQueryHandler<GetUserPaymentMethodsQueryV1, IReadOnlyList<PaymentMethodDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentMethodReadRepository _paymentMethodReadRepository;
     private readonly ILogger<GetUserPaymentMethodsQueryHandlerV1> _logger;
 
     public GetUserPaymentMethodsQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        IPaymentMethodReadRepository paymentMethodReadRepository,
         ILogger<GetUserPaymentMethodsQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _paymentMethodReadRepository = paymentMethodReadRepository;
         _logger = logger;
     }
 
@@ -27,7 +27,7 @@ internal sealed class
     {
         try
         {
-            var paymentMethods = await _unitOfWork.PaymentMethodReader
+            var paymentMethods = await _paymentMethodReadRepository
                 .GetByUserIdAsync(request.UserId, cancellationToken);
 
             _logger.LogInformation("Retrieved {Count} payment methods for user {UserId}",

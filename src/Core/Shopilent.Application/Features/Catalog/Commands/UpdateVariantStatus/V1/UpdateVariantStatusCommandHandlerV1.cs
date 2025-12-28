@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -10,15 +11,18 @@ namespace Shopilent.Application.Features.Catalog.Commands.UpdateVariantStatus.V1
 internal sealed class UpdateVariantStatusCommandHandlerV1 : ICommandHandler<UpdateVariantStatusCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<UpdateVariantStatusCommandHandlerV1> _logger;
 
     public UpdateVariantStatusCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IProductVariantWriteRepository productVariantWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<UpdateVariantStatusCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _productVariantWriteRepository = productVariantWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -28,7 +32,7 @@ internal sealed class UpdateVariantStatusCommandHandlerV1 : ICommandHandler<Upda
         try
         {
             // Get variant by ID
-            var variant = await _unitOfWork.ProductVariantWriter.GetByIdAsync(request.Id, cancellationToken);
+            var variant = await _productVariantWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (variant == null)
             {
                 return Result.Failure(
@@ -62,14 +66,14 @@ internal sealed class UpdateVariantStatusCommandHandlerV1 : ICommandHandler<Upda
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Variant status updated successfully. ID: {VariantId}, IsActive: {IsActive}", 
+            _logger.LogInformation("Variant status updated successfully. ID: {VariantId}, IsActive: {IsActive}",
                 variant.Id, request.IsActive);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating variant status. ID: {VariantId}, IsActive: {IsActive}", 
+            _logger.LogError(ex, "Error updating variant status. ID: {VariantId}, IsActive: {IsActive}",
                 request.Id, request.IsActive);
 
             return Result.Failure(

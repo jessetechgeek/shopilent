@@ -1,36 +1,38 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
-using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Sales.DTOs;
 using Shopilent.Domain.Sales.Errors;
+using Shopilent.Domain.Sales.Repositories.Read;
 
 namespace Shopilent.Application.Features.Sales.Queries.GetOrderDetails.V1;
 
 internal sealed class GetOrderDetailsQueryHandlerV1 : IQueryHandler<GetOrderDetailsQueryV1, OrderDetailDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IOrderReadRepository _orderReadRepository;
     private readonly ILogger<GetOrderDetailsQueryHandlerV1> _logger;
 
     public GetOrderDetailsQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        IOrderReadRepository orderReadRepository,
         ILogger<GetOrderDetailsQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _orderReadRepository = orderReadRepository;
         _logger = logger;
     }
 
-    public async Task<Result<OrderDetailDto>> Handle(GetOrderDetailsQueryV1 request, CancellationToken cancellationToken)
+    public async Task<Result<OrderDetailDto>> Handle(GetOrderDetailsQueryV1 request,
+        CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("Retrieving order details for OrderId: {OrderId}, UserId: {UserId}, IsAdmin: {IsAdmin}, IsManager: {IsManager}", 
+            _logger.LogInformation(
+                "Retrieving order details for OrderId: {OrderId}, UserId: {UserId}, IsAdmin: {IsAdmin}, IsManager: {IsManager}",
                 request.OrderId, request.CurrentUserId, request.IsAdmin, request.IsManager);
 
             // Get the order details
-            var orderDetails = await _unitOfWork.OrderReader.GetDetailByIdAsync(request.OrderId, cancellationToken);
-            
+            var orderDetails = await _orderReadRepository.GetDetailByIdAsync(request.OrderId, cancellationToken);
+
             if (orderDetails == null)
             {
                 _logger.LogWarning("Order with ID {OrderId} was not found", request.OrderId);
@@ -42,7 +44,7 @@ internal sealed class GetOrderDetailsQueryHandlerV1 : IQueryHandler<GetOrderDeta
             {
                 _logger.LogWarning("User {UserId} attempted to access order {OrderId} belonging to user {OrderUserId}",
                     request.CurrentUserId, request.OrderId, orderDetails.UserId);
-                
+
                 return Result.Failure<OrderDetailDto>(
                     Error.Forbidden("Order.AccessDenied", "You are not authorized to view this order"));
             }
@@ -53,10 +55,10 @@ internal sealed class GetOrderDetailsQueryHandlerV1 : IQueryHandler<GetOrderDeta
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving order details for OrderId: {OrderId}", request.OrderId);
-            
+
             return Result.Failure<OrderDetailDto>(
                 Error.Failure(
-                    code: "Order.GetDetailsFailed", 
+                    code: "Order.GetDetailsFailed",
                     message: $"Failed to retrieve order details: {ex.Message}"));
         }
     }

@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
+using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 
 namespace Shopilent.Application.Features.Identity.Commands.UpdateUser.V1;
@@ -12,15 +13,18 @@ namespace Shopilent.Application.Features.Identity.Commands.UpdateUser.V1;
 internal sealed class UpdateUserCommandHandlerV1 : ICommandHandler<UpdateUserCommandV1, UpdateUserResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserWriteRepository _userWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<UpdateUserCommandHandlerV1> _logger;
 
     public UpdateUserCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        IUserWriteRepository userWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<UpdateUserCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _userWriteRepository = userWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -33,7 +37,7 @@ internal sealed class UpdateUserCommandHandlerV1 : ICommandHandler<UpdateUserCom
             _logger.LogInformation("Attempting to update user {UserId}", request.UserId);
 
             // Get the user to update
-            var user = await _unitOfWork.UserWriter.GetByIdAsync(request.UserId, cancellationToken);
+            var user = await _userWriteRepository.GetByIdAsync(request.UserId, cancellationToken);
             if (user == null)
             {
                 _logger.LogWarning("User {UserId} not found", request.UserId);
@@ -69,7 +73,7 @@ internal sealed class UpdateUserCommandHandlerV1 : ICommandHandler<UpdateUserCom
             }
 
             // Save changes
-            await _unitOfWork.UserWriter.UpdateAsync(user, cancellationToken);
+            await _userWriteRepository.UpdateAsync(user, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("Successfully updated user {UserId}", request.UserId);
@@ -80,7 +84,7 @@ internal sealed class UpdateUserCommandHandlerV1 : ICommandHandler<UpdateUserCom
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating user {UserId}", request.UserId);
-            
+
             return Result.Failure<UpdateUserResponseV1>(
                 Error.Failure(
                     code: "UpdateUser.Failed",

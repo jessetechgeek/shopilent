@@ -14,7 +14,7 @@ public class GetPaginatedCategoriesQueryV1Tests : TestBase
     public GetPaginatedCategoriesQueryV1Tests()
     {
         _handler = new GetPaginatedCategoriesQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockCategoryReadRepository.Object,
             Fixture.GetLogger<GetPaginatedCategoriesQueryHandlerV1>());
     }
 
@@ -129,7 +129,7 @@ public class GetPaginatedCategoriesQueryV1Tests : TestBase
         result.Value.TotalCount.Should().Be(10);
         result.Value.TotalPages.Should().Be(2);
         result.Value.Items.Count.Should().Be(2);
-        
+
         // Verify parameters were passed correctly
         Fixture.MockCategoryReadRepository.Verify(
             repo => repo.GetPaginatedAsync(
@@ -192,7 +192,7 @@ public class GetPaginatedCategoriesQueryV1Tests : TestBase
         result.Error.Code.Should().Be("Categories.GetPaginatedFailed");
         result.Error.Message.Should().Contain("Test exception");
     }
-    
+
     [Fact]
     public async Task Handle_VerifiesCacheKeyAndExpirationAreSet()
     {
@@ -204,7 +204,7 @@ public class GetPaginatedCategoriesQueryV1Tests : TestBase
             SortColumn = "CreatedAt",
             SortDescending = true
         };
-        
+
         // Create paginated result
         var paginatedResult = new PaginatedResult<CategoryDto>(
             items: new List<CategoryDto>(),
@@ -212,7 +212,7 @@ public class GetPaginatedCategoriesQueryV1Tests : TestBase
             pageNumber: 2,
             pageSize: 15
         );
-        
+
         // Mock successful repository call
         Fixture.MockCategoryReadRepository
             .Setup(repo => repo.GetPaginatedAsync(

@@ -1,29 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Shopilent.Application.Abstractions.Persistence;
-using Shopilent.Domain.Audit.Repositories;
-using Shopilent.Domain.Audit.Repositories.Read;
-using Shopilent.Domain.Audit.Repositories.Write;
-using Shopilent.Domain.Catalog.Repositories;
-using Shopilent.Domain.Catalog.Repositories.Read;
-using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
-using Shopilent.Domain.Common.Repositories;
-using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Identity.Repositories;
-using Shopilent.Domain.Identity.Repositories.Read;
-using Shopilent.Domain.Identity.Repositories.Write;
-using Shopilent.Domain.Outbox.Repositories.Read;
-using Shopilent.Domain.Outbox.Repositories.Write;
-using Shopilent.Domain.Payments.Repositories;
-using Shopilent.Domain.Payments.Repositories.Read;
-using Shopilent.Domain.Payments.Repositories.Write;
-using Shopilent.Domain.Sales.Repositories;
-using Shopilent.Domain.Sales.Repositories.Read;
-using Shopilent.Domain.Sales.Repositories.Write;
-using Shopilent.Domain.Shipping.Repositories;
-using Shopilent.Domain.Shipping.Repositories.Read;
-using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Context;
 
 namespace Shopilent.Infrastructure.Persistence.PostgreSQL;
@@ -34,101 +12,9 @@ public class UnitOfWork : IUnitOfWork
     private IDbContextTransaction _transaction;
     private bool _disposed;
 
-    public ICategoryReadRepository CategoryReader { get; }
-    public ICategoryWriteRepository CategoryWriter { get; }
-
-    public IProductReadRepository ProductReader { get; }
-    public IProductWriteRepository ProductWriter { get; }
-
-    public IAttributeReadRepository AttributeReader { get; }
-    public IAttributeWriteRepository AttributeWriter { get; }
-
-    public IProductVariantReadRepository ProductVariantReader { get; }
-    public IProductVariantWriteRepository ProductVariantWriter { get; }
-
-    public IUserReadRepository UserReader { get; }
-    public IUserWriteRepository UserWriter { get; }
-
-    public IRefreshTokenReadRepository RefreshTokenReader { get; }
-    public IRefreshTokenWriteRepository RefreshTokenWriter { get; }
-
-    public ICartReadRepository CartReader { get; }
-    public ICartWriteRepository CartWriter { get; }
-
-    public IOrderReadRepository OrderReader { get; }
-    public IOrderWriteRepository OrderWriter { get; }
-
-    public IPaymentReadRepository PaymentReader { get; }
-    public IPaymentWriteRepository PaymentWriter { get; }
-
-    public IPaymentMethodReadRepository PaymentMethodReader { get; }
-    public IPaymentMethodWriteRepository PaymentMethodWriter { get; }
-
-    public IAddressReadRepository AddressReader { get; }
-    public IAddressWriteRepository AddressWriter { get; }
-
-    public IAuditLogReadRepository AuditLogReader { get; }
-    public IAuditLogWriteRepository AuditLogWriter { get; }
-    
-    public IOutboxMessageReadRepository OutboxMessageReader { get; }
-    public IOutboxMessageWriteRepository OutboxMessageWriter { get; }
-
-    public UnitOfWork(
-        ApplicationDbContext dbContext,
-        ICategoryReadRepository categoryRepository,
-        ICategoryWriteRepository categoryWriter,
-        IProductReadRepository productRepository,
-        IProductWriteRepository productWriter,
-        IAttributeReadRepository attributeRepository,
-        IAttributeWriteRepository attributeWriter,
-        IProductVariantReadRepository productVariantRepository,
-        IProductVariantWriteRepository productVariantWriter,
-        IUserReadRepository userRepository,
-        IUserWriteRepository userWriter,
-        IRefreshTokenReadRepository refreshTokenRepository,
-        IRefreshTokenWriteRepository refreshTokenWriter,
-        ICartReadRepository cartRepository,
-        ICartWriteRepository cartWriter,
-        IOrderReadRepository orderRepository,
-        IOrderWriteRepository orderWriter,
-        IPaymentReadRepository paymentRepository,
-        IPaymentWriteRepository paymentWriter,
-        IPaymentMethodReadRepository paymentMethodRepository,
-        IPaymentMethodWriteRepository paymentMethodWriter,
-        IAddressReadRepository addressRepository,
-        IAddressWriteRepository addressWriter,
-        IAuditLogReadRepository auditLogRepository,
-        IAuditLogWriteRepository auditLogWriter,
-        IOutboxMessageReadRepository outboxMessageReader,
-        IOutboxMessageWriteRepository outboxMessageWriteWriter)
+    public UnitOfWork(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
-        CategoryReader = categoryRepository;
-        CategoryWriter = categoryWriter;
-        ProductReader = productRepository;
-        ProductWriter = productWriter;
-        AttributeReader = attributeRepository;
-        AttributeWriter = attributeWriter;
-        ProductVariantReader = productVariantRepository;
-        ProductVariantWriter = productVariantWriter;
-        UserReader = userRepository;
-        UserWriter = userWriter;
-        RefreshTokenReader = refreshTokenRepository;
-        RefreshTokenWriter = refreshTokenWriter;
-        CartReader = cartRepository;
-        CartWriter = cartWriter;
-        OrderReader = orderRepository;
-        OrderWriter = orderWriter;
-        PaymentReader = paymentRepository;
-        PaymentWriter = paymentWriter;
-        PaymentMethodReader = paymentMethodRepository;
-        PaymentMethodWriter = paymentMethodWriter;
-        AddressReader = addressRepository;
-        AddressWriter = addressWriter;
-        AuditLogReader = auditLogRepository;
-        AuditLogWriter = auditLogWriter;
-        OutboxMessageReader = outboxMessageReader;
-        OutboxMessageWriter = outboxMessageWriteWriter;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

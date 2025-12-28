@@ -19,6 +19,7 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         var services = new ServiceCollection();
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockUserWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<UpdateUserStatusCommandHandlerV1>());
 
@@ -33,11 +34,7 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = true
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = true };
 
         var email = Email.Create("test@example.com").Value;
         var fullName = FullName.Create("John", "Doe").Value;
@@ -47,8 +44,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         var currentUserId = Guid.NewGuid();
         Fixture.SetAuthenticatedUser(currentUserId);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -63,8 +60,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         user.IsActive.Should().BeTrue();
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.GetByIdAsync(userId, CancellationToken),
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
@@ -77,11 +74,7 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = false
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = false };
 
         var email = Email.Create("test@example.com").Value;
         var fullName = FullName.Create("John", "Doe").Value;
@@ -91,8 +84,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         var currentUserId = Guid.NewGuid();
         Fixture.SetAuthenticatedUser(currentUserId);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -107,8 +100,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         user.IsActive.Should().BeFalse();
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.GetByIdAsync(userId, CancellationToken),
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
@@ -121,14 +114,10 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = true
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = true };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync((User)null);
 
         // Act
@@ -139,8 +128,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         result.Error.Code.Should().Be(UserErrors.NotFound(userId).Code);
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.GetByIdAsync(userId, CancellationToken),
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
@@ -153,11 +142,7 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = false
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = false };
 
         var email = Email.Create("test@example.com").Value;
         var fullName = FullName.Create("John", "Doe").Value;
@@ -166,8 +151,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         // Set the current user context to the same user being deactivated
         Fixture.SetAuthenticatedUser(userId);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         // Act
@@ -178,8 +163,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         result.Error.Code.Should().Be(UserErrors.CannotDeactivateSelf.Code);
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.GetByIdAsync(userId, CancellationToken),
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
@@ -192,11 +177,7 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = true
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = true };
 
         var email = Email.Create("test@example.com").Value;
         var fullName = FullName.Create("John", "Doe").Value;
@@ -206,8 +187,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         // Set the current user context to the same user being activated
         Fixture.SetAuthenticatedUser(userId);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -222,8 +203,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         user.IsActive.Should().BeTrue();
 
         // Verify repository interactions
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken),
+        Fixture.MockUserWriteRepository.Verify(
+            repo => repo.GetByIdAsync(userId, CancellationToken),
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
@@ -236,11 +217,7 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = true
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = true };
 
         var email = Email.Create("test@example.com").Value;
         var fullName = FullName.Create("John", "Doe").Value;
@@ -250,8 +227,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         // Don't set authenticated user (no current user context)
         Fixture.MockCurrentUserContext.Setup(ctx => ctx.UserId).Returns((Guid?)null);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -271,11 +248,7 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = false
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = false };
 
         var email = Email.Create("test@example.com").Value;
         var fullName = FullName.Create("John", "Doe").Value;
@@ -284,8 +257,8 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         // Don't set authenticated user (no current user context)
         Fixture.MockCurrentUserContext.Setup(ctx => ctx.UserId).Returns((Guid?)null);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
@@ -305,14 +278,10 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = true
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = true };
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ThrowsAsync(new Exception("Database error"));
 
         // Act
@@ -329,19 +298,15 @@ public class UpdateUserStatusCommandV1Tests : TestBase
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = true
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = true };
 
         var email = Email.Create("test@example.com").Value;
         var fullName = FullName.Create("John", "Doe").Value;
         var user = User.Create(email, "hashedPassword", fullName).Value;
         user.Deactivate();
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         // SaveChangesAsync returns false, but this is still considered success
@@ -364,24 +329,20 @@ public class UpdateUserStatusCommandV1Tests : TestBase
         // Arrange
         var userId = Guid.NewGuid();
         var currentUserId = Guid.NewGuid();
-        var command = new UpdateUserStatusCommandV1
-        {
-            Id = userId,
-            IsActive = isActive
-        };
+        var command = new UpdateUserStatusCommandV1 { Id = userId, IsActive = isActive };
 
         var email = Email.Create("test@example.com").Value;
         var fullName = FullName.Create("John", "Doe").Value;
         var user = User.Create(email, "hashedPassword", fullName).Value;
-        
+
         if (isActive)
             user.Deactivate(); // Start deactivated to test activation
         // else user is active by default for deactivation test
 
         Fixture.SetAuthenticatedUser(currentUserId);
 
-        Fixture.MockUnitOfWork
-            .Setup(uow => uow.UserWriter.GetByIdAsync(userId, CancellationToken))
+        Fixture.MockUserWriteRepository
+            .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
