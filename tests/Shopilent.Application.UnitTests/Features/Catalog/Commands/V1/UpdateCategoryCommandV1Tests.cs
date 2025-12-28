@@ -21,6 +21,8 @@ public class UpdateCategoryCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
+        services.AddTransient(sp => Fixture.MockCategoryWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockCategoryReadRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<UpdateCategoryCommandHandlerV1>());
 

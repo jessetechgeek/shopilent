@@ -4,6 +4,7 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
@@ -14,15 +15,18 @@ internal sealed class
     CreateCategoryCommandHandlerV1 : ICommandHandler<CreateCategoryCommandV1, CreateCategoryResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICategoryWriteRepository _categoryWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<CreateCategoryCommandHandlerV1> _logger;
 
     public CreateCategoryCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        ICategoryWriteRepository categoryWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<CreateCategoryCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _categoryWriteRepository = categoryWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -33,7 +37,7 @@ internal sealed class
         try
         {
             // Check if slug already exists
-            var slugExists = await _unitOfWork.CategoryWriter.SlugExistsAsync(request.Slug, null, cancellationToken);
+            var slugExists = await _categoryWriteRepository.SlugExistsAsync(request.Slug, null, cancellationToken);
             if (slugExists)
             {
                 return Result.Failure<CreateCategoryResponseV1>(CategoryErrors.DuplicateSlug(request.Slug));
@@ -51,7 +55,7 @@ internal sealed class
             if (request.ParentId.HasValue)
             {
                 parentCategory =
-                    await _unitOfWork.CategoryWriter.GetByIdAsync(request.ParentId.Value, cancellationToken);
+                    await _categoryWriteRepository.GetByIdAsync(request.ParentId.Value, cancellationToken);
                 if (parentCategory == null)
                 {
                     return Result.Failure<CreateCategoryResponseV1>(CategoryErrors.NotFound(request.ParentId.Value));
@@ -80,7 +84,7 @@ internal sealed class
             }
 
             // Add to repository
-            await _unitOfWork.CategoryWriter.AddAsync(category, cancellationToken);
+            await _categoryWriteRepository.AddAsync(category, cancellationToken);
 
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);

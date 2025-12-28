@@ -34,9 +34,6 @@ public class UnitOfWork : IUnitOfWork
     private IDbContextTransaction _transaction;
     private bool _disposed;
 
-    public ICategoryReadRepository CategoryReader { get; }
-    public ICategoryWriteRepository CategoryWriter { get; }
-
     public IProductReadRepository ProductReader { get; }
     public IProductWriteRepository ProductWriter { get; }
 
@@ -67,16 +64,8 @@ public class UnitOfWork : IUnitOfWork
     public IAddressReadRepository AddressReader { get; }
     public IAddressWriteRepository AddressWriter { get; }
 
-    public IAuditLogReadRepository AuditLogReader { get; }
-    public IAuditLogWriteRepository AuditLogWriter { get; }
-    
-    public IOutboxMessageReadRepository OutboxMessageReader { get; }
-    public IOutboxMessageWriteRepository OutboxMessageWriter { get; }
-
     public UnitOfWork(
         ApplicationDbContext dbContext,
-        ICategoryReadRepository categoryRepository,
-        ICategoryWriteRepository categoryWriter,
         IProductReadRepository productRepository,
         IProductWriteRepository productWriter,
         IAttributeReadRepository attributeRepository,
@@ -96,15 +85,9 @@ public class UnitOfWork : IUnitOfWork
         IPaymentMethodReadRepository paymentMethodRepository,
         IPaymentMethodWriteRepository paymentMethodWriter,
         IAddressReadRepository addressRepository,
-        IAddressWriteRepository addressWriter,
-        IAuditLogReadRepository auditLogRepository,
-        IAuditLogWriteRepository auditLogWriter,
-        IOutboxMessageReadRepository outboxMessageReader,
-        IOutboxMessageWriteRepository outboxMessageWriteWriter)
+        IAddressWriteRepository addressWriter)
     {
         _dbContext = dbContext;
-        CategoryReader = categoryRepository;
-        CategoryWriter = categoryWriter;
         ProductReader = productRepository;
         ProductWriter = productWriter;
         AttributeReader = attributeRepository;
@@ -125,10 +108,6 @@ public class UnitOfWork : IUnitOfWork
         PaymentMethodWriter = paymentMethodWriter;
         AddressReader = addressRepository;
         AddressWriter = addressWriter;
-        AuditLogReader = auditLogRepository;
-        AuditLogWriter = auditLogWriter;
-        OutboxMessageReader = outboxMessageReader;
-        OutboxMessageWriter = outboxMessageWriteWriter;
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

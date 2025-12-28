@@ -13,7 +13,7 @@ public class GetRootCategoriesQueryV1Tests : TestBase
     public GetRootCategoriesQueryV1Tests()
     {
         _handler = new GetRootCategoriesQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockCategoryReadRepository.Object,
             Fixture.GetLogger<GetRootCategoriesQueryHandlerV1>());
     }
 
@@ -60,7 +60,7 @@ public class GetRootCategoriesQueryV1Tests : TestBase
         result.Value.Count.Should().Be(2);
         result.Value.Should().Contain(c => c.Name == "Root Category 1");
         result.Value.Should().Contain(c => c.Name == "Root Category 2");
-        
+
         // Verify all categories are actually root categories (level 0, null parent)
         result.Value.Should().OnlyContain(c => c.Level == 0 && c.ParentId == null);
     }
@@ -103,13 +103,13 @@ public class GetRootCategoriesQueryV1Tests : TestBase
         result.Error.Code.Should().Be("Categories.GetRootCategoriesFailed");
         result.Error.Message.Should().Contain("Test exception");
     }
-    
+
     [Fact]
     public async Task Handle_VerifiesCacheKeyAndExpirationAreSet()
     {
         // Arrange
         var query = new GetRootCategoriesQueryV1();
-        
+
         // Mock successful repository call
         Fixture.MockCategoryReadRepository
             .Setup(repo => repo.GetRootCategoriesAsync(CancellationToken))

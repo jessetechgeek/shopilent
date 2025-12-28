@@ -3,6 +3,8 @@ using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Read;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -11,15 +13,21 @@ namespace Shopilent.Application.Features.Catalog.Commands.UpdateCategoryParent.V
 internal sealed class UpdateCategoryParentCommandHandlerV1 : ICommandHandler<UpdateCategoryParentCommandV1, UpdateCategoryParentResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICategoryWriteRepository _categoryWriteRepository;
+    private readonly ICategoryReadRepository _categoryReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<UpdateCategoryParentCommandHandlerV1> _logger;
 
     public UpdateCategoryParentCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        ICategoryWriteRepository categoryWriteRepository,
+        ICategoryReadRepository categoryReadRepository,
         ICurrentUserContext currentUserContext,
         ILogger<UpdateCategoryParentCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _categoryWriteRepository = categoryWriteRepository;
+        _categoryReadRepository = categoryReadRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -29,7 +37,7 @@ internal sealed class UpdateCategoryParentCommandHandlerV1 : ICommandHandler<Upd
         try
         {
             // Get category by ID
-            var category = await _unitOfWork.CategoryWriter.GetByIdAsync(request.Id, cancellationToken);
+            var category = await _categoryWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (category == null)
             {
                 return Result.Failure<UpdateCategoryParentResponseV1>(CategoryErrors.NotFound(request.Id));
@@ -38,7 +46,7 @@ internal sealed class UpdateCategoryParentCommandHandlerV1 : ICommandHandler<Upd
             // Get parent category if provided
             if (request.ParentId.HasValue)
             {
-                var parentCategory = await _unitOfWork.CategoryWriter.GetByIdAsync(request.ParentId.Value, cancellationToken);
+                var parentCategory = await _categoryWriteRepository.GetByIdAsync(request.ParentId.Value, cancellationToken);
                 if (parentCategory == null)
                 {
                     return Result.Failure<UpdateCategoryParentResponseV1>(CategoryErrors.NotFound(request.ParentId.Value));
@@ -74,7 +82,7 @@ internal sealed class UpdateCategoryParentCommandHandlerV1 : ICommandHandler<Upd
             string parentName = null;
             if (category.ParentId.HasValue)
             {
-                var parentCategory = await _unitOfWork.CategoryReader.GetByIdAsync(category.ParentId.Value, cancellationToken);
+                var parentCategory = await _categoryReadRepository.GetByIdAsync(category.ParentId.Value, cancellationToken);
                 parentName = parentCategory?.Name;
             }
 

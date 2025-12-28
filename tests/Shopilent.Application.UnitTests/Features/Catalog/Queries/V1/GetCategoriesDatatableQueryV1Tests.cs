@@ -14,7 +14,7 @@ public class GetCategoriesDatatableQueryV1Tests : TestBase
     public GetCategoriesDatatableQueryV1Tests()
     {
         _handler = new GetCategoriesDatatableQueryHandlerV1(
-            Fixture.MockUnitOfWork.Object,
+            Fixture.MockCategoryReadRepository.Object,
             Fixture.GetLogger<GetCategoriesDatatableQueryHandlerV1>());
     }
 

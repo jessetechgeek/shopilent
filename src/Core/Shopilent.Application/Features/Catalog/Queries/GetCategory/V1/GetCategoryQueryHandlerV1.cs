@@ -3,6 +3,7 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.DTOs;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -10,14 +11,14 @@ namespace Shopilent.Application.Features.Catalog.Queries.GetCategory.V1;
 
 internal sealed class GetCategoryQueryHandlerV1 : IQueryHandler<GetCategoryQueryV1, CategoryDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICategoryReadRepository _categoryReadRepository;
     private readonly ILogger<GetCategoryQueryHandlerV1> _logger;
 
     public GetCategoryQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        ICategoryReadRepository categoryReadRepository,
         ILogger<GetCategoryQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _categoryReadRepository = categoryReadRepository;
         _logger = logger;
     }
 
@@ -25,8 +26,8 @@ internal sealed class GetCategoryQueryHandlerV1 : IQueryHandler<GetCategoryQuery
     {
         try
         {
-            var category = await _unitOfWork.CategoryReader.GetByIdAsync(request.Id, cancellationToken);
-            
+            var category = await _categoryReadRepository.GetByIdAsync(request.Id, cancellationToken);
+
             if (category == null)
             {
                 _logger.LogWarning("Category with ID {CategoryId} was not found", request.Id);
@@ -39,10 +40,10 @@ internal sealed class GetCategoryQueryHandlerV1 : IQueryHandler<GetCategoryQuery
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving category with ID {CategoryId}", request.Id);
-            
+
             return Result.Failure<CategoryDto>(
                 Error.Failure(
-                    code: "Category.GetFailed", 
+                    code: "Category.GetFailed",
                     message: $"Failed to retrieve category: {ex.Message}"));
         }
     }

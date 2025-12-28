@@ -1,4 +1,5 @@
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
@@ -9,6 +10,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class ProductReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private ICategoryWriteRepository _categoryWriteRepository = null!;
 
     public ProductReadRepositoryTests(IntegrationTestFixture integrationTestFixture) : base(integrationTestFixture)
     {
@@ -17,6 +19,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -262,10 +265,10 @@ public class ProductReadRepositoryTests : IntegrationTestBase
     {
         // Arrange
         await ResetDatabaseAsync();
-        
+
         // Create category first
         var category = CategoryBuilder.Random().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Create products and assign to category
@@ -291,9 +294,9 @@ public class ProductReadRepositoryTests : IntegrationTestBase
     {
         // Arrange
         await ResetDatabaseAsync();
-        
+
         var category = CategoryBuilder.Random().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Act

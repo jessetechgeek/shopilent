@@ -6,6 +6,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.S3Storage;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
@@ -16,6 +17,7 @@ namespace Shopilent.Application.Features.Catalog.Commands.CreateProduct.V1;
 internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProductCommandV1, CreateProductResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICategoryWriteRepository _categoryWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IS3StorageService _s3StorageService;
     private readonly IImageService _imageService;
@@ -23,12 +25,14 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
 
     public CreateProductCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        ICategoryWriteRepository categoryWriteRepository,
         ICurrentUserContext currentUserContext,
         IS3StorageService s3StorageService,
         IImageService imageService,
         ILogger<CreateProductCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _categoryWriteRepository = categoryWriteRepository;
         _currentUserContext = currentUserContext;
         _s3StorageService = s3StorageService;
         _imageService = imageService;
@@ -106,7 +110,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
             {
                 foreach (var categoryId in request.CategoryIds)
                 {
-                    var category = await _unitOfWork.CategoryWriter.GetByIdAsync(categoryId, cancellationToken);
+                    var category = await _categoryWriteRepository.GetByIdAsync(categoryId, cancellationToken);
                     if (category != null)
                     {
                         product.AddCategory(category);

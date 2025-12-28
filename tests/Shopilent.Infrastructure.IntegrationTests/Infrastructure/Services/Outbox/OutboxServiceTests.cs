@@ -2,6 +2,7 @@ using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Events;
+using Shopilent.Domain.Outbox.Repositories.Read;
 using Shopilent.Domain.Shipping.Events;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 
@@ -12,6 +13,7 @@ public class OutboxServiceTests : IntegrationTestBase
 {
     private IOutboxService _outboxService = null!;
     private IUnitOfWork _unitOfWork = null!;
+    private IOutboxMessageReadRepository _outboxMessageReadRepository = null!;
 
     public OutboxServiceTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -22,6 +24,7 @@ public class OutboxServiceTests : IntegrationTestBase
     {
         _outboxService = GetService<IOutboxService>();
         _unitOfWork = GetService<IUnitOfWork>();
+        _outboxMessageReadRepository = GetService<IOutboxMessageReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -37,7 +40,7 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.PublishAsync(testMessage);
 
         // Assert
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().HaveCount(1);
 
         var outboxMessage = outboxMessages.First();
@@ -62,7 +65,7 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.PublishAsync(testMessage, scheduledTime);
 
         // Assert
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().HaveCount(1);
 
         var outboxMessage = outboxMessages.First();
@@ -115,7 +118,7 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.PublishAsync(message3);
 
         // Assert
-        var outboxMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
         outboxMessages.Should().HaveCount(3);
 
         // Each should have unique IDs
@@ -136,14 +139,14 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.PublishAsync(testMessage);
 
         // Verify message is unprocessed
-        var unprocessedMessages = await _unitOfWork.OutboxMessageReader.GetUnprocessedMessagesAsync(10);
+        var unprocessedMessages = await _outboxMessageReadRepository.GetUnprocessedMessagesAsync(10);
         unprocessedMessages.Should().HaveCount(1);
 
         // Act
         await _outboxService.ProcessMessagesAsync();
 
         // Assert
-        var processedMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var processedMessages = await _outboxMessageReadRepository.GetAllAsync();
         processedMessages.Should().HaveCount(1);
 
         var processedMessage = processedMessages.First();
@@ -194,7 +197,7 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.ProcessMessagesAsync();
 
         // Get the processed message
-        var messagesAfterFirstProcess = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var messagesAfterFirstProcess = await _outboxMessageReadRepository.GetAllAsync();
         messagesAfterFirstProcess.Should().HaveCount(1);
         messagesAfterFirstProcess.First().ProcessedAt.Should().NotBeNull();
 
@@ -202,7 +205,7 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.ProcessMessagesAsync();
 
         // Assert - Should still have only one message, still processed
-        var messagesAfterSecondProcess = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var messagesAfterSecondProcess = await _outboxMessageReadRepository.GetAllAsync();
         messagesAfterSecondProcess.Should().HaveCount(1);
         messagesAfterSecondProcess.First().ProcessedAt.Should().NotBeNull();
     }
@@ -217,13 +220,13 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.PublishAsync(testMessage);
 
         // Verify message was created and is unprocessed initially
-        var unprocessedMessages = await _unitOfWork.OutboxMessageReader.GetUnprocessedMessagesAsync(10);
+        var unprocessedMessages = await _outboxMessageReadRepository.GetUnprocessedMessagesAsync(10);
         unprocessedMessages.Should().HaveCount(1);
 
         await _outboxService.ProcessMessagesAsync();
 
         // Verify message exists and is processed
-        var messagesBeforeCleanup = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var messagesBeforeCleanup = await _outboxMessageReadRepository.GetAllAsync();
         messagesBeforeCleanup.Should().HaveCount(1);
         messagesBeforeCleanup.First().ProcessedAt.Should().NotBeNull();
 
@@ -231,7 +234,7 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.CleanupOldMessagesAsync(daysToKeep: 0);
 
         // Assert - Message should be deleted
-        var messagesAfterCleanup = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var messagesAfterCleanup = await _outboxMessageReadRepository.GetAllAsync();
         messagesAfterCleanup.Should().BeEmpty();
     }
 
@@ -249,7 +252,7 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.CleanupOldMessagesAsync(daysToKeep: 7);
 
         // Assert - Message should still exist
-        var messagesAfterCleanup = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var messagesAfterCleanup = await _outboxMessageReadRepository.GetAllAsync();
         messagesAfterCleanup.Should().HaveCount(1);
     }
 
@@ -267,7 +270,7 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.CleanupOldMessagesAsync(daysToKeep: 0);
 
         // Assert - Unprocessed message should still exist
-        var messagesAfterCleanup = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var messagesAfterCleanup = await _outboxMessageReadRepository.GetAllAsync();
         messagesAfterCleanup.Should().HaveCount(1);
         messagesAfterCleanup.First().ProcessedAt.Should().BeNull();
     }
@@ -304,21 +307,21 @@ public class OutboxServiceTests : IntegrationTestBase
         await _outboxService.PublishAsync(message1);
         await _outboxService.PublishAsync(message2);
 
-        var messagesAfterPublish = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var messagesAfterPublish = await _outboxMessageReadRepository.GetAllAsync();
         messagesAfterPublish.Should().HaveCount(2);
         messagesAfterPublish.Should().AllSatisfy(m => m.ProcessedAt.Should().BeNull());
 
         // 2. Process messages
         await _outboxService.ProcessMessagesAsync();
 
-        var messagesAfterProcess = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var messagesAfterProcess = await _outboxMessageReadRepository.GetAllAsync();
         messagesAfterProcess.Should().HaveCount(2);
         messagesAfterProcess.Should().AllSatisfy(m => m.ProcessedAt.Should().NotBeNull());
 
         // 3. Cleanup old messages
         await _outboxService.CleanupOldMessagesAsync(daysToKeep: 0);
 
-        var messagesAfterCleanup = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var messagesAfterCleanup = await _outboxMessageReadRepository.GetAllAsync();
         messagesAfterCleanup.Should().BeEmpty();
     }
 

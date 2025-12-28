@@ -6,6 +6,8 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.S3Storage;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Read;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
@@ -16,6 +18,7 @@ namespace Shopilent.Application.Features.Catalog.Commands.UpdateProduct.V1;
 internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProductCommandV1, UpdateProductResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICategoryWriteRepository _categoryWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly IS3StorageService _s3StorageService;
     private readonly IImageService _imageService;
@@ -23,12 +26,14 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
 
     public UpdateProductCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        ICategoryWriteRepository categoryWriteRepository,
         ICurrentUserContext currentUserContext,
         IS3StorageService s3StorageService,
         IImageService imageService,
         ILogger<UpdateProductCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _categoryWriteRepository = categoryWriteRepository;
         _currentUserContext = currentUserContext;
         _s3StorageService = s3StorageService;
         _imageService = imageService;
@@ -123,7 +128,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                 foreach (var categoryId in categoriesToRemove)
                 {
                     // Load the category to remove
-                    var categoryToRemove = await _unitOfWork.CategoryWriter.GetByIdAsync(categoryId, cancellationToken);
+                    var categoryToRemove = await _categoryWriteRepository.GetByIdAsync(categoryId, cancellationToken);
                     if (categoryToRemove != null)
                     {
                         product.RemoveCategory(categoryToRemove);
@@ -134,7 +139,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                 var categoriesToAdd = request.CategoryIds.Except(currentCategoryIds).ToList();
                 foreach (var categoryId in categoriesToAdd)
                 {
-                    var category = await _unitOfWork.CategoryWriter.GetByIdAsync(categoryId, cancellationToken);
+                    var category = await _categoryWriteRepository.GetByIdAsync(categoryId, cancellationToken);
                     if (category != null)
                     {
                         product.AddCategory(category);

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
@@ -11,6 +12,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class CartWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private ICategoryWriteRepository _categoryWriteRepository = null!;
 
     public CartWriteRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
     {
@@ -19,6 +21,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -86,7 +89,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.UserWriter.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
 
         var product1 = new ProductBuilder().WithCategory(category).Build();
         var product2 = new ProductBuilder().WithCategory(category).Build();
@@ -159,7 +162,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.UserWriter.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
 
         var product1 = new ProductBuilder().WithCategory(category).Build();
         var product2 = new ProductBuilder().WithCategory(category).Build();
@@ -299,7 +302,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.UserWriter.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
 
         var product = new ProductBuilder().WithCategory(category).Build();
         await _unitOfWork.ProductWriter.AddAsync(product);
@@ -393,7 +396,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.UserWriter.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
 
         var product1 = new ProductBuilder().WithCategory(category).Build();
         var product2 = new ProductBuilder().WithCategory(category).Build();
@@ -469,7 +472,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.UserWriter.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
 
         var product = new ProductBuilder().WithCategory(category).Build();
         await _unitOfWork.ProductWriter.AddAsync(product);
@@ -514,7 +517,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.UserWriter.AddAsync(user);
 
         var category = new CategoryBuilder().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
 
         var product1 = new ProductBuilder().WithCategory(category).Build();
         var product2 = new ProductBuilder().WithCategory(category).Build();

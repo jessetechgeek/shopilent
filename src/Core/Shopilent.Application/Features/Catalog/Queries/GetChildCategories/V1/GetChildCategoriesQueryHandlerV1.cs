@@ -3,6 +3,7 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.DTOs;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 
@@ -11,14 +12,14 @@ namespace Shopilent.Application.Features.Catalog.Queries.GetChildCategories.V1;
 internal sealed class
     GetChildCategoriesQueryHandlerV1 : IQueryHandler<GetChildCategoriesQueryV1, IReadOnlyList<CategoryDto>>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICategoryReadRepository _categoryReadRepository;
     private readonly ILogger<GetChildCategoriesQueryHandlerV1> _logger;
 
     public GetChildCategoriesQueryHandlerV1(
-        IUnitOfWork unitOfWork,
+        ICategoryReadRepository categoryReadRepository,
         ILogger<GetChildCategoriesQueryHandlerV1> logger)
     {
-        _unitOfWork = unitOfWork;
+        _categoryReadRepository = categoryReadRepository;
         _logger = logger;
     }
 
@@ -29,14 +30,14 @@ internal sealed class
         try
         {
             // Verify parent category exists
-            var parentCategory = await _unitOfWork.CategoryReader.GetByIdAsync(request.ParentId, cancellationToken);
+            var parentCategory = await _categoryReadRepository.GetByIdAsync(request.ParentId, cancellationToken);
             if (parentCategory == null)
             {
                 return Result.Failure<IReadOnlyList<CategoryDto>>(CategoryErrors.NotFound(request.ParentId));
             }
 
             var childCategories =
-                await _unitOfWork.CategoryReader.GetChildCategoriesAsync(request.ParentId, cancellationToken);
+                await _categoryReadRepository.GetChildCategoriesAsync(request.ParentId, cancellationToken);
 
             _logger.LogInformation("Retrieved {Count} child categories for parent ID: {ParentId}",
                 childCategories.Count, request.ParentId);

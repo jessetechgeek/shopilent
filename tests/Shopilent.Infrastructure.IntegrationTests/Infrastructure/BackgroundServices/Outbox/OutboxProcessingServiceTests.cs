@@ -6,6 +6,8 @@ using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Identity.Events;
+using Shopilent.Domain.Outbox.Repositories.Read;
+using Shopilent.Domain.Outbox.Repositories.Write;
 using Shopilent.Infrastructure.BackgroundServices.Outbox;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.Settings;
@@ -16,7 +18,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.BackgroundSer
 public class OutboxProcessingServiceTests : IntegrationTestBase
 {
     private IOutboxService _outboxService = null!;
-    private IUnitOfWork _unitOfWork = null!;
+    private IOutboxMessageReadRepository _outboxMessageReadRepository = null!;
     private IServiceScopeFactory _serviceScopeFactory = null!;
     private ILogger<OutboxProcessingService> _logger = null!;
 
@@ -28,7 +30,7 @@ public class OutboxProcessingServiceTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _outboxService = GetService<IOutboxService>();
-        _unitOfWork = GetService<IUnitOfWork>();
+        _outboxMessageReadRepository = GetService<IOutboxMessageReadRepository>();
         _serviceScopeFactory = GetService<IServiceScopeFactory>();
         _logger = GetService<ILogger<OutboxProcessingService>>();
         return Task.CompletedTask;
@@ -104,7 +106,7 @@ public class OutboxProcessingServiceTests : IntegrationTestBase
         await _outboxService.PublishAsync(testMessage);
 
         // Verify message is unprocessed
-        var unprocessedMessages = await _unitOfWork.OutboxMessageReader.GetUnprocessedMessagesAsync(10);
+        var unprocessedMessages = await _outboxMessageReadRepository.GetUnprocessedMessagesAsync(10);
         unprocessedMessages.Should().HaveCount(1);
 
         var settings = Options.Create(new OutboxSettings
@@ -131,7 +133,7 @@ public class OutboxProcessingServiceTests : IntegrationTestBase
         await stopTask;
 
         // Verify message was processed
-        var processedMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var processedMessages = await _outboxMessageReadRepository.GetAllAsync();
         processedMessages.Should().HaveCount(1);
         processedMessages.First().ProcessedAt.Should().NotBeNull();
 
@@ -243,7 +245,7 @@ public class OutboxProcessingServiceTests : IntegrationTestBase
         await _outboxService.PublishAsync(message3);
 
         // Verify messages are unprocessed
-        var unprocessedMessages = await _unitOfWork.OutboxMessageReader.GetUnprocessedMessagesAsync(10);
+        var unprocessedMessages = await _outboxMessageReadRepository.GetUnprocessedMessagesAsync(10);
         unprocessedMessages.Should().HaveCount(3);
 
         var settings = Options.Create(new OutboxSettings
@@ -270,7 +272,7 @@ public class OutboxProcessingServiceTests : IntegrationTestBase
         await stopTask;
 
         // Verify all messages were processed
-        var processedMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var processedMessages = await _outboxMessageReadRepository.GetAllAsync();
         processedMessages.Should().HaveCount(3);
         processedMessages.Should().AllSatisfy(m => m.ProcessedAt.Should().NotBeNull());
 
@@ -342,7 +344,7 @@ public class OutboxProcessingServiceTests : IntegrationTestBase
         await stopTask;
 
         // Both messages should have been processed
-        var processedMessages = await _unitOfWork.OutboxMessageReader.GetAllAsync();
+        var processedMessages = await _outboxMessageReadRepository.GetAllAsync();
         processedMessages.Should().HaveCount(2);
         processedMessages.Should().AllSatisfy(m => m.ProcessedAt.Should().NotBeNull());
 

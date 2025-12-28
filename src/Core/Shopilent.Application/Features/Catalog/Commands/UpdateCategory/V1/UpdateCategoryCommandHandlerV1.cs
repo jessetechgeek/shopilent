@@ -3,6 +3,7 @@ using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
@@ -12,15 +13,18 @@ namespace Shopilent.Application.Features.Catalog.Commands.UpdateCategory.V1;
 internal sealed class UpdateCategoryCommandHandlerV1 : ICommandHandler<UpdateCategoryCommandV1, UpdateCategoryResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICategoryWriteRepository _categoryWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<UpdateCategoryCommandHandlerV1> _logger;
 
     public UpdateCategoryCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        ICategoryWriteRepository categoryWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<UpdateCategoryCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _categoryWriteRepository = categoryWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -30,7 +34,7 @@ internal sealed class UpdateCategoryCommandHandlerV1 : ICommandHandler<UpdateCat
         try
         {
             // Get category by ID
-            var category = await _unitOfWork.CategoryWriter.GetByIdAsync(request.Id, cancellationToken);
+            var category = await _categoryWriteRepository.GetByIdAsync(request.Id, cancellationToken);
             if (category == null)
             {
                 return Result.Failure<UpdateCategoryResponseV1>(CategoryErrors.NotFound(request.Id));
@@ -39,7 +43,7 @@ internal sealed class UpdateCategoryCommandHandlerV1 : ICommandHandler<UpdateCat
             // Check if slug already exists (but exclude current category)
             if (category.Slug.Value != request.Slug)
             {
-                var slugExists = await _unitOfWork.CategoryWriter.SlugExistsAsync(request.Slug, request.Id, cancellationToken);
+                var slugExists = await _categoryWriteRepository.SlugExistsAsync(request.Slug, request.Id, cancellationToken);
                 if (slugExists)
                 {
                     return Result.Failure<UpdateCategoryResponseV1>(CategoryErrors.DuplicateSlug(request.Slug));

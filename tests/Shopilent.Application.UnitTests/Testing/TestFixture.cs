@@ -38,7 +38,7 @@ public class TestFixture
     public Mock<IPaymentService> MockPaymentService { get; private set; }
     public Mock<IS3StorageService> MockS3StorageService { get; private set; }
     public Mock<ISearchService> MockSearchService { get; private set; }
-    
+
     // Catalog repositories
     public Mock<ICategoryReadRepository> MockCategoryReadRepository { get; private set; }
     public Mock<ICategoryWriteRepository> MockCategoryWriteRepository { get; private set; }
@@ -48,29 +48,29 @@ public class TestFixture
     public Mock<IProductVariantWriteRepository> MockProductVariantWriteRepository { get; private set; }
     public Mock<IAttributeReadRepository> MockAttributeReadRepository { get; private set; }
     public Mock<IAttributeWriteRepository> MockAttributeWriteRepository { get; private set; }
-    
+
     // Identity repositories
     public Mock<IUserReadRepository> MockUserReadRepository { get; private set; }
     public Mock<IUserWriteRepository> MockUserWriteRepository { get; private set; }
     public Mock<IRefreshTokenReadRepository> MockRefreshTokenReadRepository { get; private set; }
     public Mock<IRefreshTokenWriteRepository> MockRefreshTokenWriteRepository { get; private set; }
-    
+
     // Sales repositories
     public Mock<ICartReadRepository> MockCartReadRepository { get; private set; }
     public Mock<ICartWriteRepository> MockCartWriteRepository { get; private set; }
     public Mock<IOrderReadRepository> MockOrderReadRepository { get; private set; }
     public Mock<IOrderWriteRepository> MockOrderWriteRepository { get; private set; }
-    
+
     // Payment repositories
     public Mock<IPaymentReadRepository> MockPaymentReadRepository { get; private set; }
     public Mock<IPaymentWriteRepository> MockPaymentWriteRepository { get; private set; }
     public Mock<IPaymentMethodReadRepository> MockPaymentMethodReadRepository { get; private set; }
     public Mock<IPaymentMethodWriteRepository> MockPaymentMethodWriteRepository { get; private set; }
-    
+
     // Shipping repositories
     public Mock<IAddressReadRepository> MockAddressReadRepository { get; private set; }
     public Mock<IAddressWriteRepository> MockAddressWriteRepository { get; private set; }
-    
+
     // Generic mocks for different logger types
     private readonly Dictionary<Type, object> _loggers = new();
 
@@ -92,7 +92,7 @@ public class TestFixture
         MockPaymentService = new Mock<IPaymentService>();
         MockS3StorageService = new Mock<IS3StorageService>();
         MockSearchService = new Mock<ISearchService>();
-        
+
         // Initialize catalog repository mocks
         MockCategoryReadRepository = new Mock<ICategoryReadRepository>();
         MockCategoryWriteRepository = new Mock<ICategoryWriteRepository>();
@@ -102,71 +102,71 @@ public class TestFixture
         MockProductVariantWriteRepository = new Mock<IProductVariantWriteRepository>();
         MockAttributeReadRepository = new Mock<IAttributeReadRepository>();
         MockAttributeWriteRepository = new Mock<IAttributeWriteRepository>();
-        
+
         // Initialize identity repository mocks
         MockUserReadRepository = new Mock<IUserReadRepository>();
         MockUserWriteRepository = new Mock<IUserWriteRepository>();
         MockRefreshTokenReadRepository = new Mock<IRefreshTokenReadRepository>();
         MockRefreshTokenWriteRepository = new Mock<IRefreshTokenWriteRepository>();
-        
+
         // Initialize sales repository mocks
         MockCartReadRepository = new Mock<ICartReadRepository>();
         MockCartWriteRepository = new Mock<ICartWriteRepository>();
         MockOrderReadRepository = new Mock<IOrderReadRepository>();
         MockOrderWriteRepository = new Mock<IOrderWriteRepository>();
-        
+
         // Initialize payment repository mocks
         MockPaymentReadRepository = new Mock<IPaymentReadRepository>();
         MockPaymentWriteRepository = new Mock<IPaymentWriteRepository>();
         MockPaymentMethodReadRepository = new Mock<IPaymentMethodReadRepository>();
         MockPaymentMethodWriteRepository = new Mock<IPaymentMethodWriteRepository>();
-        
+
         // Initialize shipping repository mocks
         MockAddressReadRepository = new Mock<IAddressReadRepository>();
         MockAddressWriteRepository = new Mock<IAddressWriteRepository>();
-        
+
         // Set up Unit of Work to return the repository mocks
         SetupUnitOfWorkRepositories();
-        
+
         // Setup default save changes to return success
         MockUnitOfWork.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
-            
+
         // Set up basic CurrentUserContext behaviors
         MockCurrentUserContext.Setup(ctx => ctx.UserId).Returns((Guid?)null);
         MockCurrentUserContext.Setup(ctx => ctx.IsAuthenticated).Returns(false);
     }
-    
+
     private void SetupUnitOfWorkRepositories()
     {
         // Catalog repositories
-        MockUnitOfWork.Setup(uow => uow.CategoryReader).Returns(MockCategoryReadRepository.Object);
-        MockUnitOfWork.Setup(uow => uow.CategoryWriter).Returns(MockCategoryWriteRepository.Object);
+        // MockUnitOfWork.Setup(uow => uow.CategoryReader).Returns(MockCategoryReadRepository.Object);
+        // MockUnitOfWork.Setup(uow => uow.CategoryWriter).Returns(MockCategoryWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.ProductReader).Returns(MockProductReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.ProductWriter).Returns(MockProductWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.ProductVariantReader).Returns(MockProductVariantReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.ProductVariantWriter).Returns(MockProductVariantWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.AttributeReader).Returns(MockAttributeReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.AttributeWriter).Returns(MockAttributeWriteRepository.Object);
-        
+
         // Identity repositories
         MockUnitOfWork.Setup(uow => uow.UserReader).Returns(MockUserReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.UserWriter).Returns(MockUserWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.RefreshTokenReader).Returns(MockRefreshTokenReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.RefreshTokenWriter).Returns(MockRefreshTokenWriteRepository.Object);
-        
+
         // Sales repositories
         MockUnitOfWork.Setup(uow => uow.CartReader).Returns(MockCartReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.CartWriter).Returns(MockCartWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.OrderReader).Returns(MockOrderReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.OrderWriter).Returns(MockOrderWriteRepository.Object);
-        
+
         // Payment repositories
         MockUnitOfWork.Setup(uow => uow.PaymentReader).Returns(MockPaymentReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.PaymentWriter).Returns(MockPaymentWriteRepository.Object);
         MockUnitOfWork.Setup(uow => uow.PaymentMethodReader).Returns(MockPaymentMethodReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.PaymentMethodWriter).Returns(MockPaymentMethodWriteRepository.Object);
-        
+
         // Shipping repositories
         MockUnitOfWork.Setup(uow => uow.AddressReader).Returns(MockAddressReadRepository.Object);
         MockUnitOfWork.Setup(uow => uow.AddressWriter).Returns(MockAddressWriteRepository.Object);
@@ -183,10 +183,10 @@ public class TestFixture
             // Create a NullLogger instead of a mocked logger
             _loggers[type] = Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance.CreateLogger<T>();
         }
-    
+
         return (ILogger<T>)_loggers[type];
     }
-    
+
     /// <summary>
     /// Set the current user context for tests requiring an authenticated user
     /// </summary>
@@ -197,7 +197,7 @@ public class TestFixture
         MockCurrentUserContext.Setup(ctx => ctx.IsAuthenticated).Returns(true);
         MockCurrentUserContext.Setup(ctx => ctx.IsInRole("Admin")).Returns(isAdmin);
     }
-    
+
     /// <summary>
     /// Reset all mocks to their initial state
     /// </summary>
@@ -214,7 +214,7 @@ public class TestFixture
         MockPaymentService.Reset();
         MockS3StorageService.Reset();
         MockSearchService.Reset();
-        
+
         // Reset all repository mocks
         MockCategoryReadRepository.Reset();
         MockCategoryWriteRepository.Reset();
@@ -238,7 +238,7 @@ public class TestFixture
         MockPaymentMethodWriteRepository.Reset();
         MockAddressReadRepository.Reset();
         MockAddressWriteRepository.Reset();
-        
+
         // Re-setup the mocks with default behavior
         SetUpMocks();
     }

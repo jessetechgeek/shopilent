@@ -24,9 +24,6 @@ namespace Shopilent.Application.Abstractions.Persistence;
 
 public interface IUnitOfWork : IDisposable
 {
-    ICategoryReadRepository CategoryReader { get; }
-    ICategoryWriteRepository CategoryWriter { get; }
-
     IProductReadRepository ProductReader { get; }
     IProductWriteRepository ProductWriter { get; }
 
@@ -56,13 +53,6 @@ public interface IUnitOfWork : IDisposable
 
     IAddressReadRepository AddressReader { get; }
     IAddressWriteRepository AddressWriter { get; }
-
-    IAuditLogReadRepository AuditLogReader { get; }
-    IAuditLogWriteRepository AuditLogWriter { get; }
-
-    IOutboxMessageReadRepository OutboxMessageReader { get; }
-    IOutboxMessageWriteRepository OutboxMessageWriter { get; }
-
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.ValueObjects;
@@ -13,6 +14,7 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class OrderWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private ICategoryWriteRepository _categoryWriteRepository = null!;
 
     public OrderWriteRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
     {
@@ -21,6 +23,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _categoryWriteRepository = GetService<ICategoryWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -103,7 +106,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
 
         var category = new CategoryBuilder().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
 
         var product1 = new ProductBuilder().WithCategory(category).Build();
         var product2 = new ProductBuilder().WithCategory(category).Build();
@@ -570,7 +573,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.AddressWriter.AddAsync(shippingAddress);
 
         var category = new CategoryBuilder().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
 
         var product = new ProductBuilder().WithCategory(category).Build();
         await _unitOfWork.ProductWriter.AddAsync(product);

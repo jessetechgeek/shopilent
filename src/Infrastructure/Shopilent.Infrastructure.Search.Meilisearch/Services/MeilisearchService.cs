@@ -7,6 +7,7 @@ using Shopilent.Domain.Catalog.DTOs;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Infrastructure.Search.Meilisearch.Settings;
 using System.Text.Json;
+using Shopilent.Domain.Catalog.Repositories.Read;
 using Index = Meilisearch.Index;
 
 namespace Shopilent.Infrastructure.Search.Meilisearch.Services;
@@ -16,16 +17,17 @@ public class MeilisearchService : ISearchService
     private readonly MeilisearchClient _client;
     private readonly MeilisearchSettings _settings;
     private readonly ILogger<MeilisearchService> _logger;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICategoryReadRepository _categoryReadRepository;
 
     public MeilisearchService(
         IOptions<MeilisearchSettings> settings,
         ILogger<MeilisearchService> logger,
-        IUnitOfWork unitOfWork)
+        ICategoryReadRepository categoryReadRepository
+        )
     {
         _settings = settings.Value;
         _logger = logger;
-        _unitOfWork = unitOfWork;
+        _categoryReadRepository = categoryReadRepository;
         _client = new MeilisearchClient(_settings.Url, _settings.ApiKey);
     }
 
@@ -544,7 +546,7 @@ public class MeilisearchService : ISearchService
             {
                 foreach (var slug in categorySlugs)
                 {
-                    var category = await _unitOfWork.CategoryReader.GetBySlugAsync(slug, cancellationToken);
+                    var category = await _categoryReadRepository.GetBySlugAsync(slug, cancellationToken);
                     if (category != null)
                     {
                         categoryLookup[slug] = (category.Id, category.Name);

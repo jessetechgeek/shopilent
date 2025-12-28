@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Repositories.Read;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
@@ -10,6 +12,9 @@ namespace Shopilent.Infrastructure.IntegrationTests.Infrastructure.Persistence.P
 public class CategoryWriteRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
+    private ICategoryWriteRepository _categoryWriteRepository = null!;
+    private ICategoryReadRepository _categoryReadRepository = null!;
+
 
     public CategoryWriteRepositoryTests(IntegrationTestFixture integrationTestFixture) : base(integrationTestFixture)
     {
@@ -18,6 +23,8 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
     protected override Task InitializeTestServices()
     {
         _unitOfWork = GetService<IUnitOfWork>();
+        _categoryWriteRepository = GetService<ICategoryWriteRepository>();
+        _categoryReadRepository = GetService<ICategoryReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -29,11 +36,11 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         var category = CategoryBuilder.Random().Build();
 
         // Act
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var persisted = await _unitOfWork.CategoryReader.GetByIdAsync(category.Id);
+        var persisted = await _categoryReadRepository.GetByIdAsync(category.Id);
         persisted.Should().NotBeNull();
         persisted!.Name.Should().Be(category.Name);
         persisted.Description.Should().Be(category.Description);
@@ -46,14 +53,14 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var existingCategory = CategoryBuilder.Random().WithSlug("duplicate-slug").Build();
-        await _unitOfWork.CategoryWriter.AddAsync(existingCategory);
+        await _categoryWriteRepository.AddAsync(existingCategory);
         await _unitOfWork.SaveChangesAsync();
 
         var duplicateCategory = CategoryBuilder.Random().WithSlug("duplicate-slug").Build();
 
         // Act & Assert
-        await _unitOfWork.CategoryWriter.AddAsync(duplicateCategory);
-        
+        await _categoryWriteRepository.AddAsync(duplicateCategory);
+
         // The constraint violation should occur when SaveChangesAsync is called
         var action = () => _unitOfWork.SaveChangesAsync();
         await action.Should().ThrowAsync<Exception>();
@@ -65,22 +72,22 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Detach to simulate a fresh load
         DbContext.Entry(category).State = EntityState.Detached;
-        
-        var updatedCategory = await _unitOfWork.CategoryWriter.GetByIdAsync(category.Id);
+
+        var updatedCategory = await _categoryWriteRepository.GetByIdAsync(category.Id);
         var updateSlug = Slug.Create("updated-name").Value;
         updatedCategory!.Update("Updated Name", updateSlug, "Updated Description");
 
         // Act
-        await _unitOfWork.CategoryWriter.UpdateAsync(updatedCategory);
+        await _categoryWriteRepository.UpdateAsync(updatedCategory);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var persisted = await _unitOfWork.CategoryReader.GetByIdAsync(category.Id);
+        var persisted = await _categoryReadRepository.GetByIdAsync(category.Id);
         persisted.Should().NotBeNull();
         persisted!.Name.Should().Be("Updated Name");
         persisted.Description.Should().Be("Updated Description");
@@ -92,15 +99,15 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        await _unitOfWork.CategoryWriter.DeleteAsync(category);
+        await _categoryWriteRepository.DeleteAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
-        var persisted = await _unitOfWork.CategoryReader.GetByIdAsync(category.Id);
+        var persisted = await _categoryReadRepository.GetByIdAsync(category.Id);
         persisted.Should().BeNull();
     }
 
@@ -110,11 +117,11 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.CategoryWriter.GetByIdAsync(category.Id);
+        var result = await _categoryWriteRepository.GetByIdAsync(category.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -131,7 +138,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.CategoryWriter.GetByIdAsync(nonExistentId);
+        var result = await _categoryWriteRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -143,11 +150,11 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().WithSlug("test-category").Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.CategoryWriter.GetBySlugAsync("test-category");
+        var result = await _categoryWriteRepository.GetBySlugAsync("test-category");
 
         // Assert
         result.Should().NotBeNull();
@@ -162,7 +169,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.CategoryWriter.GetBySlugAsync("non-existent-slug");
+        var result = await _categoryWriteRepository.GetBySlugAsync("non-existent-slug");
 
         // Assert
         result.Should().BeNull();
@@ -174,11 +181,11 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().WithSlug("existing-slug").Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var exists = await _unitOfWork.CategoryWriter.SlugExistsAsync("existing-slug");
+        var exists = await _categoryWriteRepository.SlugExistsAsync("existing-slug");
 
         // Assert
         exists.Should().BeTrue();
@@ -191,7 +198,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var exists = await _unitOfWork.CategoryWriter.SlugExistsAsync("non-existent-slug");
+        var exists = await _categoryWriteRepository.SlugExistsAsync("non-existent-slug");
 
         // Assert
         exists.Should().BeFalse();
@@ -203,11 +210,11 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         // Arrange
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().WithSlug("test-slug").Build();
-        await _unitOfWork.CategoryWriter.AddAsync(category);
+        await _categoryWriteRepository.AddAsync(category);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var exists = await _unitOfWork.CategoryWriter.SlugExistsAsync("test-slug", category.Id);
+        var exists = await _categoryWriteRepository.SlugExistsAsync("test-slug", category.Id);
 
         // Assert
         exists.Should().BeFalse();
@@ -218,10 +225,10 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
     {
         // Arrange
         await ResetDatabaseAsync();
-        
+
         // Create parent category first
         var parentCategory = CategoryBuilder.Random().WithName("Electronics").Build();
-        await _unitOfWork.CategoryWriter.AddAsync(parentCategory);
+        await _categoryWriteRepository.AddAsync(parentCategory);
         await _unitOfWork.SaveChangesAsync();
 
         // Create child category with proper parent relationship
@@ -231,7 +238,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.CategoryWriter.AddAsync(childCategory);
+        await _categoryWriteRepository.AddAsync(childCategory);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
@@ -242,7 +249,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         childCategory.Path.Should().Contain(childCategory.Slug.Value);
 
         // Verify persisted in database
-        var persisted = await _unitOfWork.CategoryReader.GetByIdAsync(childCategory.Id);
+        var persisted = await _categoryReadRepository.GetByIdAsync(childCategory.Id);
         persisted.Should().NotBeNull();
         persisted!.Id.Should().Be(childCategory.Id);
         persisted.Name.Should().Be("Computers");
@@ -253,17 +260,17 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
     {
         // Arrange
         await ResetDatabaseAsync();
-        
+
         // Create 3-level hierarchy: Electronics -> Computers -> Laptops
         var electronics = CategoryBuilder.Random().WithName("Electronics").Build();
-        await _unitOfWork.CategoryWriter.AddAsync(electronics);
+        await _categoryWriteRepository.AddAsync(electronics);
         await _unitOfWork.SaveChangesAsync();
 
         var computers = CategoryBuilder.Random()
             .WithName("Computers")
             .WithParentCategory(electronics)
             .Build();
-        await _unitOfWork.CategoryWriter.AddAsync(computers);
+        await _categoryWriteRepository.AddAsync(computers);
         await _unitOfWork.SaveChangesAsync();
 
         var laptops = CategoryBuilder.Random()
@@ -272,12 +279,12 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         // Act
-        await _unitOfWork.CategoryWriter.AddAsync(laptops);
+        await _categoryWriteRepository.AddAsync(laptops);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
         laptops.Should().NotBeNull();
-        
+
         // Check levels
         electronics.Level.Should().Be(0);
         computers.Level.Should().Be(1);
@@ -301,7 +308,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         var rootCategory = CategoryBuilder.Random().WithName("Root Category").WithoutParent().Build();
 
         // Act
-        await _unitOfWork.CategoryWriter.AddAsync(rootCategory);
+        await _categoryWriteRepository.AddAsync(rootCategory);
         await _unitOfWork.SaveChangesAsync();
 
         // Assert
