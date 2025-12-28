@@ -24,6 +24,7 @@ public class CreateOrderFromCartCommandV1Tests : TestBase
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
         services.AddTransient(sp => Fixture.MockUserWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockAddressWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockCartWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<CreateOrderFromCartCommandHandlerV1>());
 

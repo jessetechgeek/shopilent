@@ -11,6 +11,7 @@ using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.DTOs;
 using Shopilent.Domain.Sales.Errors;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Shipping.Errors;
@@ -24,6 +25,7 @@ internal sealed class
     private readonly IUnitOfWork _unitOfWork;
     private readonly IUserWriteRepository _userWriteRepository;
     private readonly IAddressWriteRepository _addressWriteRepository;
+    private readonly ICartWriteRepository _cartWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<CreateOrderFromCartCommandHandlerV1> _logger;
 
@@ -31,12 +33,14 @@ internal sealed class
         IUnitOfWork unitOfWork,
         IUserWriteRepository userWriteRepository,
         IAddressWriteRepository addressWriteRepository,
+        ICartWriteRepository cartWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<CreateOrderFromCartCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
         _userWriteRepository = userWriteRepository;
         _addressWriteRepository = addressWriteRepository;
+        _cartWriteRepository = cartWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -62,7 +66,7 @@ internal sealed class
             Cart cart;
             if (request.CartId.HasValue)
             {
-                cart = await _unitOfWork.CartWriter.GetByIdAsync(request.CartId.Value, cancellationToken);
+                cart = await _cartWriteRepository.GetByIdAsync(request.CartId.Value, cancellationToken);
                 if (cart == null)
                     return Result.Failure<CreateOrderFromCartResponseV1>(CartErrors.CartNotFound(request.CartId.Value));
 
@@ -72,7 +76,7 @@ internal sealed class
             }
             else
             {
-                cart = await _unitOfWork.CartWriter.GetByUserIdAsync(user.Id, cancellationToken);
+                cart = await _cartWriteRepository.GetByUserIdAsync(user.Id, cancellationToken);
                 if (cart == null)
                     return Result.Failure<CreateOrderFromCartResponseV1>(CartErrors.EmptyCart);
             }
@@ -183,7 +187,7 @@ internal sealed class
             var clearCartResult = cart.Clear();
             if (clearCartResult.IsSuccess)
             {
-                await _unitOfWork.CartWriter.UpdateAsync(cart, cancellationToken);
+                await _cartWriteRepository.UpdateAsync(cart, cancellationToken);
             }
 
             // **CRITICAL: Commit the transaction to save to database**

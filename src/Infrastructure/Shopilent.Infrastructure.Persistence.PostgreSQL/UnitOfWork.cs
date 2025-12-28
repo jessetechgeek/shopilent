@@ -22,9 +22,6 @@ public class UnitOfWork : IUnitOfWork
     public IProductVariantReadRepository ProductVariantReader { get; }
     public IProductVariantWriteRepository ProductVariantWriter { get; }
 
-    public ICartReadRepository CartReader { get; }
-    public ICartWriteRepository CartWriter { get; }
-
     public IOrderReadRepository OrderReader { get; }
     public IOrderWriteRepository OrderWriter { get; }
 
@@ -34,8 +31,6 @@ public class UnitOfWork : IUnitOfWork
         IProductWriteRepository productWriter,
         IProductVariantReadRepository productVariantRepository,
         IProductVariantWriteRepository productVariantWriter,
-        ICartReadRepository cartRepository,
-        ICartWriteRepository cartWriter,
         IOrderReadRepository orderRepository,
         IOrderWriteRepository orderWriter)
     {
@@ -44,8 +39,6 @@ public class UnitOfWork : IUnitOfWork
         ProductWriter = productWriter;
         ProductVariantReader = productVariantRepository;
         ProductVariantWriter = productVariantWriter;
-        CartReader = cartRepository;
-        CartWriter = cartWriter;
         OrderReader = orderRepository;
         OrderWriter = orderWriter;
     }

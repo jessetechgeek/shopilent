@@ -23,11 +23,13 @@ public class AddItemToCartCommandV1Tests : TestBase
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
         services.AddTransient(sp => Fixture.MockUserWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockCartWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<AddItemToCartCommandHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<AddItemToCartCommandV1>();
         });
 
@@ -46,12 +48,7 @@ public class AddItemToCartCommandV1Tests : TestBase
         var productId = Guid.NewGuid();
         var userId = Guid.NewGuid();
 
-        var command = new AddItemToCartCommandV1
-        {
-            CartId = cartId,
-            ProductId = productId,
-            Quantity = 2
-        };
+        var command = new AddItemToCartCommandV1 { CartId = cartId, ProductId = productId, Quantity = 2 };
 
         var user = new UserBuilder().WithId(userId).Build();
         var product = new ProductBuilder().WithId(productId).Build();
@@ -110,12 +107,7 @@ public class AddItemToCartCommandV1Tests : TestBase
         var productId = Guid.NewGuid();
         var userId = Guid.NewGuid();
 
-        var command = new AddItemToCartCommandV1
-        {
-            CartId = cartId,
-            ProductId = productId,
-            Quantity = 1
-        };
+        var command = new AddItemToCartCommandV1 { CartId = cartId, ProductId = productId, Quantity = 1 };
 
         var user = new UserBuilder().WithId(userId).Build();
         var cart = new CartBuilder().WithId(cartId).WithUser(user).Build();
@@ -158,12 +150,7 @@ public class AddItemToCartCommandV1Tests : TestBase
         var productId = Guid.NewGuid();
         var userId = Guid.NewGuid();
 
-        var command = new AddItemToCartCommandV1
-        {
-            CartId = cartId,
-            ProductId = productId,
-            Quantity = 1
-        };
+        var command = new AddItemToCartCommandV1 { CartId = cartId, ProductId = productId, Quantity = 1 };
 
         // Setup authenticated user
         Fixture.SetAuthenticatedUser(userId);
@@ -191,8 +178,7 @@ public class AddItemToCartCommandV1Tests : TestBase
         var command = new AddItemToCartCommandV1
         {
             // No cart ID - should create new cart
-            ProductId = productId,
-            Quantity = 1
+            ProductId = productId, Quantity = 1
         };
 
         var user = new UserBuilder().WithId(userId).Build();
@@ -261,10 +247,7 @@ public class AddItemToCartCommandV1Tests : TestBase
 
         var command = new AddItemToCartCommandV1
         {
-            CartId = cartId,
-            ProductId = productId,
-            VariantId = variantId,
-            Quantity = 1
+            CartId = cartId, ProductId = productId, VariantId = variantId, Quantity = 1
         };
 
         var user = new UserBuilder().WithId(userId).Build();
@@ -326,7 +309,8 @@ public class AddItemToCartCommandV1Tests : TestBase
     private static void SetPrivatePropertyValue(object obj, string propertyName, object value)
     {
         var propertyInfo = obj.GetType().GetProperty(propertyName,
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance);
         propertyInfo?.SetValue(obj, value);
     }
 }

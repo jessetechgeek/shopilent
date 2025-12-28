@@ -1,6 +1,8 @@
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Identity.Repositories.Write;
+using Shopilent.Domain.Sales.Repositories.Read;
+using Shopilent.Domain.Sales.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -12,6 +14,8 @@ public class CartReadRepositoryTests : IntegrationTestBase
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
     private ICategoryWriteRepository _categoryWriteRepository = null!;
+    private ICartWriteRepository _cartWriteRepository = null!;
+    private ICartReadRepository _cartReadRepository = null!;
 
     public CartReadRepositoryTests(IntegrationTestFixture fixture) : base(fixture)
     {
@@ -22,6 +26,8 @@ public class CartReadRepositoryTests : IntegrationTestBase
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
         _categoryWriteRepository = GetService<ICategoryWriteRepository>();
+        _cartWriteRepository = GetService<ICartWriteRepository>();
+        _cartReadRepository = GetService<ICartReadRepository>();
         return Task.CompletedTask;
     }
 
@@ -40,11 +46,11 @@ public class CartReadRepositoryTests : IntegrationTestBase
             .WithMetadata("source", "web")
             .Build();
 
-        await _unitOfWork.CartWriter.AddAsync(cart);
+        await _cartWriteRepository.AddAsync(cart);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.CartReader.GetByIdAsync(cart.Id);
+        var result = await _cartReadRepository.GetByIdAsync(cart.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -63,7 +69,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.CartReader.GetByIdAsync(nonExistentId);
+        var result = await _cartReadRepository.GetByIdAsync(nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -84,11 +90,11 @@ public class CartReadRepositoryTests : IntegrationTestBase
             .WithRandomMetadata()
             .Build();
 
-        await _unitOfWork.CartWriter.AddAsync(cart);
+        await _cartWriteRepository.AddAsync(cart);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.CartReader.GetByUserIdAsync(user.Id);
+        var result = await _cartReadRepository.GetByUserIdAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -106,7 +112,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
         var nonExistentUserId = Guid.NewGuid();
 
         // Act
-        var result = await _unitOfWork.CartReader.GetByUserIdAsync(nonExistentUserId);
+        var result = await _cartReadRepository.GetByUserIdAsync(nonExistentUserId);
 
         // Assert
         result.Should().BeNull();
@@ -122,11 +128,11 @@ public class CartReadRepositoryTests : IntegrationTestBase
             .AsAnonymousCart()
             .Build();
 
-        await _unitOfWork.CartWriter.AddAsync(anonymousCart);
+        await _cartWriteRepository.AddAsync(anonymousCart);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.CartReader.GetByUserIdAsync(Guid.NewGuid());
+        var result = await _cartReadRepository.GetByUserIdAsync(Guid.NewGuid());
 
         // Assert
         result.Should().BeNull();
@@ -139,7 +145,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.CartReader.ListAllAsync();
+        var result = await _cartReadRepository.ListAllAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -162,13 +168,13 @@ public class CartReadRepositoryTests : IntegrationTestBase
         var cart2 = new CartBuilder().WithUser(user2).Build();
         var anonymousCart = new CartBuilder().AsAnonymousCart().Build();
 
-        await _unitOfWork.CartWriter.AddAsync(cart1);
-        await _unitOfWork.CartWriter.AddAsync(cart2);
-        await _unitOfWork.CartWriter.AddAsync(anonymousCart);
+        await _cartWriteRepository.AddAsync(cart1);
+        await _cartWriteRepository.AddAsync(cart2);
+        await _cartWriteRepository.AddAsync(anonymousCart);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.CartReader.ListAllAsync();
+        var result = await _cartReadRepository.ListAllAsync();
 
         // Assert
         result.Should().HaveCount(3);
@@ -206,15 +212,15 @@ public class CartReadRepositoryTests : IntegrationTestBase
             .WithItem(product2, 2)
             .Build();
 
-        await _unitOfWork.CartWriter.AddAsync(oldCart);
-        await _unitOfWork.CartWriter.AddAsync(anotherOldCart);
+        await _cartWriteRepository.AddAsync(oldCart);
+        await _cartWriteRepository.AddAsync(anotherOldCart);
         await _unitOfWork.SaveChangesAsync();
 
         // Wait to ensure the carts are older than our threshold
         await Task.Delay(2000); // Wait 2 seconds to be safe
 
         // Act - looking for carts older than 1 second
-        var result = await _unitOfWork.CartReader.GetAbandonedCartsAsync(TimeSpan.FromSeconds(1));
+        var result = await _cartReadRepository.GetAbandonedCartsAsync(TimeSpan.FromSeconds(1));
 
         // Assert - Both carts should be considered "abandoned" since they're older than 1 second
         // and they both have items (which is required by the implementation)
@@ -233,11 +239,11 @@ public class CartReadRepositoryTests : IntegrationTestBase
         await _unitOfWork.SaveChangesAsync();
 
         var recentCart = new CartBuilder().WithUser(user).Build();
-        await _unitOfWork.CartWriter.AddAsync(recentCart);
+        await _cartWriteRepository.AddAsync(recentCart);
         await _unitOfWork.SaveChangesAsync();
 
         // Act - looking for carts older than 1 hour
-        var result = await _unitOfWork.CartReader.GetAbandonedCartsAsync(TimeSpan.FromHours(1));
+        var result = await _cartReadRepository.GetAbandonedCartsAsync(TimeSpan.FromHours(1));
 
         // Assert
         result.Should().BeEmpty();
@@ -250,7 +256,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.CartReader.GetAbandonedCartsAsync(TimeSpan.FromMinutes(30));
+        var result = await _cartReadRepository.GetAbandonedCartsAsync(TimeSpan.FromMinutes(30));
 
         // Assert
         result.Should().NotBeNull();
@@ -281,11 +287,11 @@ public class CartReadRepositoryTests : IntegrationTestBase
             .WithItem(product2, 1)
             .Build();
 
-        await _unitOfWork.CartWriter.AddAsync(cart);
+        await _cartWriteRepository.AddAsync(cart);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.CartReader.GetByIdAsync(cart.Id);
+        var result = await _cartReadRepository.GetByIdAsync(cart.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -308,18 +314,18 @@ public class CartReadRepositoryTests : IntegrationTestBase
 
         // Create multiple carts for the same user
         var cart1 = new CartBuilder().WithUser(user).Build();
-        await _unitOfWork.CartWriter.AddAsync(cart1);
+        await _cartWriteRepository.AddAsync(cart1);
         await _unitOfWork.SaveChangesAsync();
 
         // Wait a bit to ensure different timestamps
         await Task.Delay(100);
 
         var cart2 = new CartBuilder().WithUser(user).WithMetadata("version", "2").Build();
-        await _unitOfWork.CartWriter.AddAsync(cart2);
+        await _cartWriteRepository.AddAsync(cart2);
         await _unitOfWork.SaveChangesAsync();
 
         // Act
-        var result = await _unitOfWork.CartReader.GetByUserIdAsync(user.Id);
+        var result = await _cartReadRepository.GetByUserIdAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -337,7 +343,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         // Act
-        var result = await _unitOfWork.CartReader.GetByIdAsync(Guid.Empty);
+        var result = await _cartReadRepository.GetByIdAsync(Guid.Empty);
 
         // Assert
         result.Should().BeNull();

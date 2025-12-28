@@ -5,21 +5,25 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Sales.Errors;
+using Shopilent.Domain.Sales.Repositories.Write;
 
 namespace Shopilent.Application.Features.Sales.Commands.RemoveItemFromCart.V1;
 
 internal sealed class RemoveItemFromCartCommandHandlerV1 : ICommandHandler<RemoveItemFromCartCommandV1>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICartWriteRepository _cartWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<RemoveItemFromCartCommandHandlerV1> _logger;
 
     public RemoveItemFromCartCommandHandlerV1(
         IUnitOfWork unitOfWork,
+        ICartWriteRepository cartWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<RemoveItemFromCartCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
+        _cartWriteRepository = cartWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -29,8 +33,8 @@ internal sealed class RemoveItemFromCartCommandHandlerV1 : ICommandHandler<Remov
         try
         {
             // Find the cart by cart item ID (works for both authenticated and anonymous users)
-            var cart = await _unitOfWork.CartWriter.GetCartByItemIdAsync(request.ItemId, cancellationToken);
-            
+            var cart = await _cartWriteRepository.GetCartByItemIdAsync(request.ItemId, cancellationToken);
+
             if (cart == null)
             {
                 return Result.Failure(CartErrors.CartNotFound(Guid.Empty));
@@ -46,7 +50,7 @@ internal sealed class RemoveItemFromCartCommandHandlerV1 : ICommandHandler<Remov
             var removeResult = cart.RemoveItem(request.ItemId);
             if (removeResult.IsFailure)
             {
-                _logger.LogWarning("Failed to remove item {ItemId} from cart {CartId}: {Error}", 
+                _logger.LogWarning("Failed to remove item {ItemId} from cart {CartId}: {Error}",
                     request.ItemId, cart.Id, removeResult.Error.Message);
                 return removeResult;
             }
@@ -54,14 +58,14 @@ internal sealed class RemoveItemFromCartCommandHandlerV1 : ICommandHandler<Remov
             // Save changes
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Item {ItemId} successfully removed from cart {CartId} for user {UserId}", 
+            _logger.LogInformation("Item {ItemId} successfully removed from cart {CartId} for user {UserId}",
                 request.ItemId, cart.Id, cart.UserId ?? Guid.Empty);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing item {ItemId} from cart: {ErrorMessage}", 
+            _logger.LogError(ex, "Error removing item {ItemId} from cart: {ErrorMessage}",
                 request.ItemId, ex.Message);
 
             return Result.Failure(

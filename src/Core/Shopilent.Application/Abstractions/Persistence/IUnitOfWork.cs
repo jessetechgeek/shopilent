@@ -15,9 +15,6 @@ public interface IUnitOfWork : IDisposable
     IProductVariantReadRepository ProductVariantReader { get; }
     IProductVariantWriteRepository ProductVariantWriter { get; }
 
-    ICartReadRepository CartReader { get; }
-    ICartWriteRepository CartWriter { get; }
-
     IOrderReadRepository OrderReader { get; }
     IOrderWriteRepository OrderWriter { get; }
 
