@@ -94,7 +94,7 @@ public class DeleteAttributeCommandV1Tests : TestBase
 
         // Verify the changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -127,7 +127,7 @@ public class DeleteAttributeCommandV1Tests : TestBase
 
         // Verify the changes were not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -178,7 +178,7 @@ public class DeleteAttributeCommandV1Tests : TestBase
 
         // Verify the changes were not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -262,7 +262,7 @@ public class DeleteAttributeCommandV1Tests : TestBase
 
         // Verify the changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -310,7 +310,7 @@ public class DeleteAttributeCommandV1Tests : TestBase
 
         // Verify the changes were not saved due to exception
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 }

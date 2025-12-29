@@ -95,7 +95,7 @@ public class CreateAddressCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -123,7 +123,7 @@ public class CreateAddressCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -159,7 +159,7 @@ public class CreateAddressCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -210,7 +210,7 @@ public class CreateAddressCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -263,7 +263,7 @@ public class CreateAddressCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -314,7 +314,7 @@ public class CreateAddressCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -373,7 +373,7 @@ public class CreateAddressCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -421,7 +421,7 @@ public class CreateAddressCommandV1Tests : TestBase
 
         // Verify save was not called due to validation error
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 }

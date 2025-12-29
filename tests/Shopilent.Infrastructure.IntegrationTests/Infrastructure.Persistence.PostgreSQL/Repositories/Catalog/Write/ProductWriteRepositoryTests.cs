@@ -41,7 +41,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _productReadRepository.GetByIdAsync(product.Id);
@@ -68,7 +68,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _productWriteRepository.GetBySlugAsync(uniqueSlug);
@@ -95,11 +95,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _productWriteRepository.AddAsync(product1);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act & Assert
         await _productWriteRepository.AddAsync(product2);
-        var action = () => _unitOfWork.SaveChangesAsync();
+        var action = () => _unitOfWork.CommitAsync();
         await action.Should().ThrowAsync<Exception>();
     }
 
@@ -110,7 +110,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var originalProduct = ProductBuilder.Random().Build();
         await _productWriteRepository.AddAsync(originalProduct);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach original entity to simulate real-world scenario
         DbContext.Entry(originalProduct).State = EntityState.Detached;
@@ -124,7 +124,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
 
         existingProduct!.Update(newName, newSlug, newPrice, newDescription);
         await _productWriteRepository.UpdateAsync(existingProduct);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedProduct = await _productReadRepository.GetByIdAsync(originalProduct.Id);
@@ -142,7 +142,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().AsActive().Build();
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach entity
         DbContext.Entry(product).State = EntityState.Detached;
@@ -151,7 +151,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var existingProduct = await _productWriteRepository.GetByIdAsync(product.Id);
         existingProduct!.Deactivate();
         await _productWriteRepository.UpdateAsync(existingProduct);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _productReadRepository.GetByIdAsync(product.Id);
@@ -166,11 +166,11 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         await _productWriteRepository.DeleteAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _productReadRepository.GetByIdAsync(product.Id);
@@ -184,7 +184,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _productWriteRepository.GetByIdAsync(product.Id);
@@ -220,7 +220,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
             .WithSlug(uniqueSlug)
             .Build();
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _productWriteRepository.GetBySlugAsync(uniqueSlug);
@@ -253,7 +253,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var slug = $"slug-exists-test-{DateTime.Now.Ticks}";
         var product = ProductBuilder.Random().WithSlug(slug).Build();
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _productWriteRepository.SlugExistsAsync(slug);
@@ -284,7 +284,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var slug = $"exclude-test-{DateTime.Now.Ticks}";
         var product = ProductBuilder.Random().WithSlug(slug).Build();
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Exclude the current product ID
         var result = await _productWriteRepository.SlugExistsAsync(slug, product.Id);
@@ -302,7 +302,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random().Build();
         product.Update(product.Name, product.Slug, product.BasePrice, product.Description, sku);
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _productWriteRepository.SkuExistsAsync(sku);
@@ -334,7 +334,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random().Build();
         product.Update(product.Name, product.Slug, product.BasePrice, product.Description, sku);
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Exclude the current product ID
         var result = await _productWriteRepository.SkuExistsAsync(sku, product.Id);
@@ -351,7 +351,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
 
         var product = ProductBuilder.Random().Build();
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         var productId = product.Id;
 
         // Create separate service scopes to simulate true concurrent access
@@ -384,12 +384,12 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         // Act & Assert
         // First update should succeed
         await productWriteRepository1.UpdateAsync(product1);
-        await unitOfWork1.SaveChangesAsync();
+        await unitOfWork1.CommitAsync();
 
         // Second update should fail due to concurrency conflict
         await productWriteRepository2.UpdateAsync(product2);
 
-        var action = () => unitOfWork2.SaveChangesAsync();
+        var action = () => unitOfWork2.CommitAsync();
         await action.Should().ThrowAsync<ConcurrencyConflictException>();
     }
 
@@ -402,14 +402,14 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         // Create category first
         var category = CategoryBuilder.Random().Build();
         await _categoryWriteRepository.AddAsync(category);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Create product and add category
         var product = ProductBuilder.Random().Build();
         product.AddCategory(category);
 
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _productReadRepository.GetByIdAsync(product.Id);
@@ -427,7 +427,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var product = ProductBuilder.Random().Build();
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach entity
         DbContext.Entry(product).State = EntityState.Detached;
@@ -438,7 +438,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
         existingProduct.UpdateMetadata("color", "Blue");
 
         await _productWriteRepository.UpdateAsync(existingProduct);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _productWriteRepository.GetByIdAsync(product.Id);

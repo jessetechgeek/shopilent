@@ -120,7 +120,7 @@ public class CreateProductCommandV1Tests : TestBase
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -156,7 +156,7 @@ public class CreateProductCommandV1Tests : TestBase
             Times.Never);
 
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 

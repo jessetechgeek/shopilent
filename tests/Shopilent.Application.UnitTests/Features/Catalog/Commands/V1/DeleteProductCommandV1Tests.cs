@@ -88,7 +88,7 @@ public class DeleteProductCommandV1Tests : TestBase
 
         // Verify the changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -121,7 +121,7 @@ public class DeleteProductCommandV1Tests : TestBase
 
         // Verify the changes were not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -163,7 +163,7 @@ public class DeleteProductCommandV1Tests : TestBase
 
         // Verify the changes were not saved due to exception
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -192,7 +192,7 @@ public class DeleteProductCommandV1Tests : TestBase
 
         // Mock save operation throws exception
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ThrowsAsync(new InvalidOperationException("Database connection error"));
 
         // Act
@@ -210,7 +210,7 @@ public class DeleteProductCommandV1Tests : TestBase
 
         // Verify save was attempted
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -254,7 +254,7 @@ public class DeleteProductCommandV1Tests : TestBase
 
         // Verify the changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -297,7 +297,7 @@ public class DeleteProductCommandV1Tests : TestBase
 
         // Verify the changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 }

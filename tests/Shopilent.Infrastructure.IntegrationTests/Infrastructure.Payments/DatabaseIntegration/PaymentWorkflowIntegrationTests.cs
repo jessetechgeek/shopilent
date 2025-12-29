@@ -74,7 +74,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert - Verify all entities are persisted
         var persistedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -114,13 +114,13 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Mark payment as succeeded
         const string transactionId = "pi_test_succeeded";
         payment.MarkAsSucceeded(transactionId);
         await _paymentWriteRepository.UpdateAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedPayment = await _paymentReadRepository.GetByIdAsync(payment.Id);
@@ -153,13 +153,13 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Mark payment as failed
         const string failureReason = "Your card was declined";
         payment.MarkAsFailed(failureReason);
         await _paymentWriteRepository.UpdateAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedPayment = await _paymentReadRepository.GetByIdAsync(payment.Id);
@@ -202,7 +202,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment1);
         await _paymentWriteRepository.AddAsync(payment2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var paymentsForOrder = await _paymentReadRepository.GetByOrderIdAsync(order.Id);
@@ -245,7 +245,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var persistedPayment = await _paymentReadRepository.GetByIdAsync(payment.Id);
@@ -283,7 +283,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         await _paymentWriteRepository.AddAsync(pendingPayment);
         await _paymentWriteRepository.AddAsync(succeededPayment);
         await _paymentWriteRepository.AddAsync(failedPayment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act & Assert
         var pendingPayments = await _paymentReadRepository.GetByStatusAsync(PaymentStatus.Pending);
@@ -321,7 +321,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var paymentByReference = await _paymentReadRepository.GetByExternalReferenceAsync(externalRef);
@@ -339,7 +339,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var payments = new List<Domain.Payments.Payment>();
 
@@ -357,7 +357,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
             payments.Add(payment);
             await _orderWriteRepository.AddAsync(order);
             await _paymentWriteRepository.AddAsync(payment);
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.CommitAsync();
 
             // Add delay to ensure different creation timestamps
             await Task.Delay(50);
@@ -391,7 +391,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Create multiple payments concurrently
         var tasks = Enumerable.Range(1, 3).Select(async i =>
@@ -408,7 +408,7 @@ public class PaymentWorkflowIntegrationTests : IntegrationTestBase
                 .Build();
 
             await paymentWriteRepository.AddAsync(payment);
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.CommitAsync();
 
             return payment.Id;
         });

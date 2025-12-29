@@ -56,7 +56,7 @@ internal sealed class RemoveItemFromCartCommandHandlerV1 : ICommandHandler<Remov
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Item {ItemId} successfully removed from cart {CartId} for user {UserId}",
                 request.ItemId, cart.Id, cart.UserId ?? Guid.Empty);

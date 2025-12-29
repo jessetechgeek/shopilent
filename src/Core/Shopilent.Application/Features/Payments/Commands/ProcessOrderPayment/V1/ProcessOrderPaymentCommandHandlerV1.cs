@@ -191,7 +191,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
                         if (markFailedResult.IsSuccess)
                         {
                             await _paymentWriteRepository.AddAsync(failedPayment.Value, cancellationToken);
-                            await _unitOfWork.SaveChangesAsync(cancellationToken);
+                            await _unitOfWork.CommitAsync(cancellationToken);
                         }
                     }
 
@@ -287,7 +287,7 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
                 await _orderWriteRepository.UpdateAsync(order, cancellationToken);
             }
 
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation(
                 "Payment processed. OrderId: {OrderId}, PaymentId: {PaymentId}, TransactionId: {TransactionId}, Status: {Status}",

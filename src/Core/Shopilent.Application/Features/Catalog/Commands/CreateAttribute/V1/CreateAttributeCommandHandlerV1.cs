@@ -83,7 +83,7 @@ internal sealed class CreateAttributeCommandHandlerV1 : ICommandHandler<CreateAt
             await _attributeWriteRepository.AddAsync(attribute, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             // Create response
             var response = new CreateAttributeResponseV1

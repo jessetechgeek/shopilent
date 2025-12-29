@@ -205,7 +205,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
             await _productWriteRepository.AddAsync(product, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             // Create response with category IDs
             var categoryIds = product.Categories.Select(pc => pc.CategoryId).ToList();

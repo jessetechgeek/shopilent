@@ -35,7 +35,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _userReadRepository.GetByIdAsync(user.Id);
@@ -76,7 +76,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
             .WithVerifiedEmail()
             .Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _userReadRepository.GetDetailByIdAsync(user.Id);
@@ -119,7 +119,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
             .WithEmail("test@example.com")
             .Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _userReadRepository.GetByEmailAsync("test@example.com");
@@ -155,7 +155,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
             .WithEmail("Test@Example.com")
             .Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _userReadRepository.GetByEmailAsync("test@example.com");
@@ -176,7 +176,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
             .WithEmail("existing@example.com")
             .Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var exists = await _userReadRepository.EmailExistsAsync("existing@example.com");
@@ -208,7 +208,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
             .WithEmail("test@example.com")
             .Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var exists = await _userReadRepository.EmailExistsAsync("test@example.com", user.Id);
@@ -230,7 +230,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(adminUser1);
         await _userWriteRepository.AddAsync(adminUser2);
         await _userWriteRepository.AddAsync(customerUser);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var adminUsers = await _userReadRepository.GetByRoleAsync("Admin");
@@ -256,7 +256,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(adminUser);
         await _userWriteRepository.AddAsync(customerUser1);
         await _userWriteRepository.AddAsync(customerUser2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var customerUsers = await _userReadRepository.GetByRoleAsync("Customer");
@@ -277,7 +277,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CustomerUser().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var users = await _userReadRepository.GetByRoleAsync("SuperAdmin");
@@ -299,7 +299,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user1);
         await _userWriteRepository.AddAsync(user2);
         await _userWriteRepository.AddAsync(user3);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var idsToGet = new[] { user1.Id, user3.Id };
 
@@ -356,7 +356,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
             await _userWriteRepository.AddAsync(user);
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var allUsers = await _userReadRepository.ListAllAsync();
@@ -393,7 +393,7 @@ public class UserReadRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(activeUser);
         await _userWriteRepository.AddAsync(inactiveUser);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var allUsers = await _userReadRepository.ListAllAsync();

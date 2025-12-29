@@ -116,7 +116,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
                     await _cartWriteRepository.AddAsync(cart, cancellationToken);
 
                     // Save the new cart to database first
-                    var saveCartResult = await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    var saveCartResult = await _unitOfWork.CommitAsync(cancellationToken);
                     if (saveCartResult == 0)
                     {
                         _logger.LogError("Failed to save new cart to database");
@@ -160,7 +160,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
 
             // Save changes (final save for cart item addition)
             await _cartWriteRepository.UpdateAsync(cart, cancellationToken);
-            var finalSaveResult = await _unitOfWork.SaveChangesAsync(cancellationToken);
+            var finalSaveResult = await _unitOfWork.CommitAsync(cancellationToken);
 
             if (finalSaveResult == 0)
             {

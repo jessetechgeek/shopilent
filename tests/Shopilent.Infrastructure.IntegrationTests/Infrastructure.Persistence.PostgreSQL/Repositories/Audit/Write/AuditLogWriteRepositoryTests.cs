@@ -39,13 +39,13 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
 
         // Act
         await _auditLogWriteRepository.AddAsync(auditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _auditLogReadRepository.GetByIdAsync(auditLog.Id);
@@ -68,7 +68,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _auditLogWriteRepository.AddAsync(systemAuditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _auditLogReadRepository.GetByIdAsync(systemAuditLog.Id);
@@ -88,7 +88,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var oldValues = new Dictionary<string, object>
         {
@@ -119,7 +119,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _auditLogWriteRepository.AddAsync(auditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _auditLogReadRepository.GetByIdAsync(auditLog.Id);
@@ -141,11 +141,11 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
         await _auditLogWriteRepository.AddAsync(auditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real scenario
         DbContext.Entry(auditLog).State = EntityState.Detached;
@@ -156,7 +156,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         // Note: AuditLog is typically immutable, but let's test the repository update functionality
         await _auditLogWriteRepository.UpdateAsync(existingAuditLog!);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedResult = await _auditLogReadRepository.GetByIdAsync(auditLog.Id);
@@ -171,15 +171,15 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
         await _auditLogWriteRepository.AddAsync(auditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         await _auditLogWriteRepository.DeleteAsync(auditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _auditLogReadRepository.GetByIdAsync(auditLog.Id);
@@ -194,11 +194,11 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
         await _auditLogWriteRepository.AddAsync(auditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _auditLogWriteRepository.GetByIdAsync(auditLog.Id);
@@ -237,24 +237,24 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var entityType = "Product";
         var entityId = Guid.NewGuid();
 
         var auditLog1 = AuditLogBuilder.CreateCreateAuditLog(entityType, entityId, user);
         await _auditLogWriteRepository.AddAsync(auditLog1);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         await Task.Delay(100); // Ensure sufficient time gap
 
         var auditLog2 = AuditLogBuilder.CreateUpdateAuditLog(entityType, entityId, user);
         await _auditLogWriteRepository.AddAsync(auditLog2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         await Task.Delay(100); // Ensure sufficient time gap
 
         var auditLog3 = AuditLogBuilder.CreateForEntity("Category", Guid.NewGuid(), AuditAction.Create);
         await _auditLogWriteRepository.AddAsync(auditLog3);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var results = await _auditLogWriteRepository.GetByEntityAsync(entityType, entityId);
@@ -282,26 +282,26 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user1);
         await _userWriteRepository.AddAsync(user2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var user1AuditLog1 = AuditLogBuilder.CreateForUser(user1, "Product");
         await _auditLogWriteRepository.AddAsync(user1AuditLog1);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         await Task.Delay(100); // Ensure sufficient time gap
 
         var user1AuditLog2 = AuditLogBuilder.CreateForUser(user1, "Category");
         await _auditLogWriteRepository.AddAsync(user1AuditLog2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         await Task.Delay(100); // Ensure sufficient time gap
 
         var user2AuditLog = AuditLogBuilder.CreateForUser(user2, "Order");
         await _auditLogWriteRepository.AddAsync(user2AuditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         await Task.Delay(100); // Ensure sufficient time gap
 
         var systemAuditLog = AuditLogBuilder.CreateForEntity("System", Guid.NewGuid(), AuditAction.Create);
         await _auditLogWriteRepository.AddAsync(systemAuditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var results = await _auditLogWriteRepository.GetByUserAsync(user1.Id);
@@ -327,26 +327,26 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var createAuditLog1 = AuditLogBuilder.CreateCreateAuditLog("Product", Guid.NewGuid(), user);
         await _auditLogWriteRepository.AddAsync(createAuditLog1);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         await Task.Delay(100); // Ensure sufficient time gap
 
         var createAuditLog2 = AuditLogBuilder.CreateCreateAuditLog("Category", Guid.NewGuid(), user);
         await _auditLogWriteRepository.AddAsync(createAuditLog2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         await Task.Delay(100); // Ensure sufficient time gap
 
         var updateAuditLog = AuditLogBuilder.CreateUpdateAuditLog("Product", Guid.NewGuid(), user);
         await _auditLogWriteRepository.AddAsync(updateAuditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         await Task.Delay(100); // Ensure sufficient time gap
 
         var deleteAuditLog = AuditLogBuilder.CreateDeleteAuditLog("Product", Guid.NewGuid(), user);
         await _auditLogWriteRepository.AddAsync(deleteAuditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var results = await _auditLogWriteRepository.GetByActionAsync(AuditAction.Create);
@@ -373,7 +373,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var auditLogs = new List<Domain.Audit.AuditLog>
         {
@@ -389,7 +389,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         {
             await _auditLogWriteRepository.AddAsync(auditLog);
         }
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert - Verify all were persisted
         // Note: User creation by audit interceptor creates 1 audit log + our 5 test logs = 6 total
@@ -412,11 +412,11 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
         await _auditLogWriteRepository.AddAsync(auditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Simulate concurrent access with two UnitOfWork instances
         using var scope1 = ServiceProvider.CreateScope();
@@ -438,10 +438,10 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         // The UpdateAsync method exists in the interface but should not modify audit logs
         // Let's verify the entities remain unchanged after "update" operations
         await auditLogWriter1.UpdateAsync(auditLog1!);
-        await unitOfWork1.SaveChangesAsync();
+        await unitOfWork1.CommitAsync();
 
         await auditLogWriter2.UpdateAsync(auditLog2!);
-        await unitOfWork2.SaveChangesAsync(); // Should not throw since no actual changes are made
+        await unitOfWork2.CommitAsync(); // Should not throw since no actual changes are made
 
         // Verify the audit log remains unchanged
         var finalResult = await _auditLogReadRepository.GetByIdAsync(auditLog.Id);
@@ -459,13 +459,13 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var auditLog = AuditLogBuilder.CreateForUser(user, "Product");
 
         // Act - Add audit log
         await _auditLogWriteRepository.AddAsync(auditLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert - AuditLog entities are explicitly skipped by AuditSaveChangesInterceptor (line 86)
         // to prevent infinite recursion, so no audit trail should be created for AuditLog itself
@@ -487,7 +487,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CreateDefaultUser();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var entityType = "Product";
         var entityId = Guid.NewGuid();
@@ -498,7 +498,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         createResult.IsSuccess.Should().BeTrue();
 
         await _auditLogWriteRepository.AddAsync(createResult.Value);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var persistedCreate = await _auditLogReadRepository.GetByIdAsync(createResult.Value.Id);
         persistedCreate.Should().NotBeNull();
@@ -513,7 +513,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         updateResult.IsSuccess.Should().BeTrue();
 
         await _auditLogWriteRepository.AddAsync(updateResult.Value);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var persistedUpdate = await _auditLogReadRepository.GetByIdAsync(updateResult.Value.Id);
         persistedUpdate.Should().NotBeNull();
@@ -527,7 +527,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         deleteResult.IsSuccess.Should().BeTrue();
 
         await _auditLogWriteRepository.AddAsync(deleteResult.Value);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var persistedDelete = await _auditLogReadRepository.GetByIdAsync(deleteResult.Value.Id);
         persistedDelete.Should().NotBeNull();

@@ -84,7 +84,7 @@ public class UpdateVariantStatusCommandV1Tests : TestBase
 
         // Verify changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -120,7 +120,7 @@ public class UpdateVariantStatusCommandV1Tests : TestBase
 
         // Verify changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -150,7 +150,7 @@ public class UpdateVariantStatusCommandV1Tests : TestBase
 
         // Verify changes were not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -188,7 +188,7 @@ public class UpdateVariantStatusCommandV1Tests : TestBase
 
         // Verify changes were saved (even if status didn't change)
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -227,7 +227,7 @@ public class UpdateVariantStatusCommandV1Tests : TestBase
 
         // Verify changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -261,7 +261,7 @@ public class UpdateVariantStatusCommandV1Tests : TestBase
 
         // Verify changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -286,7 +286,7 @@ public class UpdateVariantStatusCommandV1Tests : TestBase
 
         // Mock save entities to throw exception
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ThrowsAsync(new Exception("Database connection failed"));
 
         // Act

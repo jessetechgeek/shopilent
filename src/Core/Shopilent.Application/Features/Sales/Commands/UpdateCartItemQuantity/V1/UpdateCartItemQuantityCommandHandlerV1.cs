@@ -58,7 +58,7 @@ internal sealed class
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation(
                 "Cart item quantity updated successfully. CartId: {CartId}, ItemId: {ItemId}, Quantity: {Quantity}, UserId: {UserId}",

@@ -46,7 +46,7 @@ internal sealed class DeleteProductVariantCommandHandlerV1 : ICommandHandler<Del
             await _productVariantWriteRepository.DeleteAsync(variant, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Product variant with ID {VariantId} deleted successfully", request.Id);
 

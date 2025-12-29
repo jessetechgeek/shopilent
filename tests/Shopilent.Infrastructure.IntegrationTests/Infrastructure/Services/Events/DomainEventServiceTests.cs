@@ -69,7 +69,7 @@ public class DomainEventServiceTests : IntegrationTestBase
 
         // Act
         await _domainEventService.ProcessEventAsync(domainEvent);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert - Verify outbox message was created
         var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
@@ -95,7 +95,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         // Act
         await _domainEventService.ProcessEventAsync(addressEvent);
         await _domainEventService.ProcessEventAsync(orderEvent);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
@@ -153,7 +153,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         await _domainEventService.ProcessEventAsync(event1);
         await _domainEventService.ProcessEventAsync(event2);
         await _domainEventService.ProcessEventAsync(event3);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
@@ -178,7 +178,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         // Act - Process the same event multiple times
         await _domainEventService.ProcessEventAsync(domainEvent);
         await _domainEventService.ProcessEventAsync(domainEvent);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert - Should create separate outbox messages for each call
         var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
@@ -202,7 +202,7 @@ public class DomainEventServiceTests : IntegrationTestBase
 
         // Act
         await _domainEventService.ProcessEventAsync(domainEvent);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();
@@ -246,7 +246,7 @@ public class DomainEventServiceTests : IntegrationTestBase
         // Act
         await _domainEventService.PublishAsync(publishEvent); // Direct publish through mediator
         await _domainEventService.ProcessEventAsync(processEvent); // Add to outbox
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert - Only the processed event should be in outbox
         var outboxMessages = await _outboxMessageReadRepository.GetAllAsync();

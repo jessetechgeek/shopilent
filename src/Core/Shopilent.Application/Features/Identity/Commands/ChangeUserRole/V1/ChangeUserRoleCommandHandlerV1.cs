@@ -53,7 +53,7 @@ internal sealed class ChangeUserRoleCommandHandlerV1 : ICommandHandler<ChangeUse
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Successfully changed role for user {UserId} to {NewRole}",
                 request.UserId, request.NewRole);

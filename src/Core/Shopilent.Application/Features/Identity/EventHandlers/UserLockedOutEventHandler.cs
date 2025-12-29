@@ -78,7 +78,7 @@ internal sealed class UserLockedOutEventHandler : INotificationHandler<DomainEve
                     }
 
                     // Save changes to persist token revocations
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _unitOfWork.CommitAsync(cancellationToken);
                 }
 
                 // Send lock notification email

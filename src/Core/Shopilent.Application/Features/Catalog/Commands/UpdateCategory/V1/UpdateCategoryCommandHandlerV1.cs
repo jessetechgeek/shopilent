@@ -84,7 +84,7 @@ internal sealed class UpdateCategoryCommandHandlerV1 : ICommandHandler<UpdateCat
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             // Create response
             var response = new UpdateCategoryResponseV1

@@ -81,7 +81,7 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -108,7 +108,7 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -143,7 +143,7 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -185,7 +185,7 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -228,7 +228,7 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -274,7 +274,7 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -320,7 +320,7 @@ public class DeleteAddressCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 

@@ -44,7 +44,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodReadRepository.GetByIdAsync(paymentMethod.Id);
@@ -106,7 +106,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         await _paymentMethodWriteRepository.AddAsync(paymentMethod1);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod2);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod3);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodReadRepository.GetByUserIdAsync(user1.Id);
@@ -155,7 +155,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(defaultPaymentMethod);
         await _paymentMethodWriteRepository.AddAsync(nonDefaultPaymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodReadRepository.GetDefaultForUserAsync(user.Id);
@@ -180,7 +180,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodReadRepository.GetDefaultForUserAsync(user.Id);
@@ -227,7 +227,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         await _paymentMethodWriteRepository.AddAsync(creditCardMethod1);
         await _paymentMethodWriteRepository.AddAsync(creditCardMethod2);
         await _paymentMethodWriteRepository.AddAsync(payPalMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var creditCardResults =
@@ -261,7 +261,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(creditCardMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodReadRepository.GetByTypeAsync(user.Id, PaymentMethodType.PayPal);
@@ -287,7 +287,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodReadRepository.GetByTokenAsync(token);
@@ -328,7 +328,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodReadRepository.TokenExistsAsync(token);
@@ -395,7 +395,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         await _paymentMethodWriteRepository.AddAsync(paymentMethod1);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod2);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod3);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodReadRepository.ListAllAsync();
@@ -443,7 +443,7 @@ public class PaymentMethodReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(activePaymentMethod);
         await _paymentMethodWriteRepository.AddAsync(inactivePaymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodReadRepository.GetByUserIdAsync(user.Id);

@@ -115,7 +115,7 @@ public class UpdateAttributeCommandV1Tests : TestBase
 
         // Verify the attribute was saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -145,7 +145,7 @@ public class UpdateAttributeCommandV1Tests : TestBase
 
         // Verify the attribute was not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 

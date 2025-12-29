@@ -201,7 +201,7 @@ internal sealed class
             }
 
             // **CRITICAL: Commit the transaction to save to database**
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Order {OrderId} created successfully from cart {CartId}", order.Id, cart.Id);
 

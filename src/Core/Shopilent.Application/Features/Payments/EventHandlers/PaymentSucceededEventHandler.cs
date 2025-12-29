@@ -71,7 +71,7 @@ internal sealed class
                         await _orderWriteRepository.UpdateAsync(order, cancellationToken);
 
                         // Save changes to persist the updates
-                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                        await _unitOfWork.CommitAsync(cancellationToken);
                     }
                     else
                     {

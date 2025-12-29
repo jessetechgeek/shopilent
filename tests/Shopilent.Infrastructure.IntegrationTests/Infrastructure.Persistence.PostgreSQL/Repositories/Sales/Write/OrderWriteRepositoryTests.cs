@@ -52,7 +52,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -65,7 +65,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _orderReadRepository.GetByIdAsync(order.Id);
@@ -90,7 +90,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -100,7 +100,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _orderReadRepository.GetByIdAsync(order.Id);
@@ -127,7 +127,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var product2 = new ProductBuilder().WithCategory(category).Build();
         await _productWriteRepository.AddAsync(product1);
         await _productWriteRepository.AddAsync(product2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -142,7 +142,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _orderReadRepository.GetDetailByIdAsync(order.Id);
@@ -162,7 +162,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -170,7 +170,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
@@ -181,7 +181,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         existingOrder.UpdateOrderStatus(OrderStatus.Processing);
 
         await _orderWriteRepository.UpdateAsync(existingOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
@@ -202,7 +202,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -210,7 +210,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
@@ -220,7 +220,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         existingOrder!.MarkAsPaid();
 
         await _orderWriteRepository.UpdateAsync(existingOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedOrder = await _orderReadRepository.GetByIdAsync(order.Id);
@@ -239,7 +239,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -248,7 +248,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
@@ -259,7 +259,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         existingOrder!.MarkAsShipped(trackingNumber);
 
         await _orderWriteRepository.UpdateAsync(existingOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
@@ -279,7 +279,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -287,7 +287,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
@@ -298,7 +298,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         existingOrder!.Cancel(cancellationReason, true); // Use admin privileges for test
 
         await _orderWriteRepository.UpdateAsync(existingOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
@@ -318,7 +318,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -326,11 +326,11 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         await _orderWriteRepository.DeleteAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _orderReadRepository.GetByIdAsync(order.Id);
@@ -347,7 +347,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -355,7 +355,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderWriteRepository.GetByIdAsync(order.Id);
@@ -393,7 +393,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _userWriteRepository.AddAsync(otherUser);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         var order2 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -402,7 +402,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(order1);
         await _orderWriteRepository.AddAsync(order2);
         await _orderWriteRepository.AddAsync(otherUserOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderWriteRepository.GetByUserIdAsync(user.Id);
@@ -423,7 +423,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var pendingOrder1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         var pendingOrder2 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -433,7 +433,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(pendingOrder1);
         await _orderWriteRepository.AddAsync(pendingOrder2);
         await _orderWriteRepository.AddAsync(shippedOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderWriteRepository.GetByStatusAsync(OrderStatus.Pending);
@@ -454,7 +454,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -462,7 +462,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Simulate concurrent access with two service scopes
         using var scope1 = ServiceProvider.CreateScope();
@@ -484,11 +484,11 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         // First update should succeed (Version incremented)
         await orderWriteRepository1.UpdateAsync(order1);
-        await unitOfWork1.SaveChangesAsync();
+        await unitOfWork1.CommitAsync();
 
         // Second update should fail with concurrency exception (stale Version)
         await orderWriteRepository2.UpdateAsync(order2);
-        var action = () => unitOfWork2.SaveChangesAsync();
+        var action = () => unitOfWork2.CommitAsync();
 
         // Assert
         await action.Should().ThrowAsync<ConcurrencyConflictException>();
@@ -504,7 +504,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -513,7 +513,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
@@ -524,7 +524,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         existingOrder!.ProcessRefund(refundReason);
 
         await _orderWriteRepository.UpdateAsync(existingOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
@@ -546,7 +546,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -558,7 +558,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(order).State = EntityState.Detached;
@@ -570,7 +570,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         existingOrder!.ProcessPartialRefund(partialRefundAmount, refundReason);
 
         await _orderWriteRepository.UpdateAsync(existingOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedOrder = await _orderReadRepository.GetDetailByIdAsync(order.Id);
@@ -596,7 +596,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
 
         var product = new ProductBuilder().WithCategory(category).Build();
         await _productWriteRepository.AddAsync(product);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -607,7 +607,7 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         order.AddItem(product, 2, unitPrice);
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var orderItem = order.Items.First();
 

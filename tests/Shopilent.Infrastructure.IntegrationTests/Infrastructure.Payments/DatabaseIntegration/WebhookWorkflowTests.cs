@@ -58,7 +58,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Simulate minimal valid Stripe webhook payload for payment success
         var webhookPayload = $$"""
@@ -133,7 +133,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Simulate minimal Stripe webhook payload for payment failure
         var webhookPayload = $$"""
@@ -217,7 +217,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Simulate Stripe webhook payload for refund
         var webhookPayload = $$"""
@@ -481,7 +481,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(order2);
         await _paymentWriteRepository.AddAsync(payment1);
         await _paymentWriteRepository.AddAsync(payment2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Process webhooks concurrently
         var tasks = new[]
@@ -616,7 +616,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var webhookPayload = $$"""
         {

@@ -68,7 +68,7 @@ internal sealed class CancelOrderCommandHandlerV1 : ICommandHandler<CancelOrderC
             await _orderWriteRepository.UpdateAsync(order, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Successfully cancelled order {OrderId}", request.OrderId);
 

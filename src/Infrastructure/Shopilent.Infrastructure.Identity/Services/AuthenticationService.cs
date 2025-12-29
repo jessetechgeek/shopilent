@@ -59,10 +59,6 @@ public class AuthenticationService : IAuthenticationService
 
             if (string.IsNullOrWhiteSpace(password))
                 return Result.Failure<AuthTokenResponse>(UserErrors.PasswordRequired);
-
-            // Begin transaction
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
             try
             {
                 // Find user by email
@@ -87,11 +83,11 @@ public class AuthenticationService : IAuthenticationService
                     if (loginFailureResult.IsFailure)
                     {
                         _logger.LogWarning("Account locked due to failed login attempts: {Email}", email.Value);
-                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                        await _unitOfWork.CommitAsync(cancellationToken);
                         return Result.Failure<AuthTokenResponse>(loginFailureResult.Error);
                     }
 
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _unitOfWork.CommitAsync(cancellationToken);
                     return Result.Failure<AuthTokenResponse>(UserErrors.InvalidCredentials);
                 }
 
@@ -112,10 +108,7 @@ public class AuthenticationService : IAuthenticationService
                 await _userWriteRepository.UpdateAsync(user, cancellationToken);
 
                 // Save all changes in a single operation
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                // Commit the transaction
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
 
                 return Result.Success(new AuthTokenResponse()
                 {
@@ -124,8 +117,6 @@ public class AuthenticationService : IAuthenticationService
             }
             catch (Exception ex)
             {
-                // Rollback transaction on error
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "Error during user authentication and token generation");
                 throw;
             }
@@ -163,9 +154,6 @@ public class AuthenticationService : IAuthenticationService
 
             if (string.IsNullOrWhiteSpace(lastName))
                 return Result.Failure<AuthTokenResponse>(UserErrors.LastNameRequired);
-
-            // Begin transaction
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
             {
@@ -210,7 +198,7 @@ public class AuthenticationService : IAuthenticationService
 
                 // Save user
                 await _userWriteRepository.AddAsync(user, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
 
                 // Generate tokens
                 var accessToken = _jwtService.GenerateAccessToken(user);
@@ -224,13 +212,10 @@ public class AuthenticationService : IAuthenticationService
 
                 // Update user with refresh token
                 await _userWriteRepository.UpdateAsync(user, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
 
                 // Send verification email
                 // await _emailService.SendEmailVerificationAsync(email.Value, user.EmailVerificationToken);
-
-                // Commit transaction
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
                 return Result.Success(new AuthTokenResponse()
                 {
@@ -239,8 +224,6 @@ public class AuthenticationService : IAuthenticationService
             }
             catch (Exception ex)
             {
-                // Rollback transaction on error
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "Error during user registration");
                 throw;
             }
@@ -265,9 +248,6 @@ public class AuthenticationService : IAuthenticationService
         {
             if (string.IsNullOrEmpty(refreshToken))
                 return Result.Failure<AuthTokenResponse>(RefreshTokenErrors.EmptyToken);
-
-            // Begin transaction
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
             {
@@ -309,10 +289,7 @@ public class AuthenticationService : IAuthenticationService
                 await _userWriteRepository.UpdateAsync(user, cancellationToken);
 
                 // Save changes
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                // Commit transaction
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
 
                 // return Result.Success((user, accessToken, newRefreshToken));
                 return Result.Success(new AuthTokenResponse()
@@ -322,8 +299,6 @@ public class AuthenticationService : IAuthenticationService
             }
             catch (Exception ex)
             {
-                // Rollback transaction on error
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "Error refreshing token");
                 throw;
             }
@@ -348,9 +323,6 @@ public class AuthenticationService : IAuthenticationService
             if (string.IsNullOrEmpty(refreshToken))
                 return Result.Failure(RefreshTokenErrors.EmptyToken);
 
-            // Begin transaction
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
             try
             {
                 // Find the refresh token
@@ -373,17 +345,12 @@ public class AuthenticationService : IAuthenticationService
                     return result;
 
                 // Save changes
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                // Commit transaction
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
 
                 return Result.Success();
             }
             catch (Exception ex)
             {
-                // Rollback transaction on error
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "Error revoking token");
                 throw;
             }
@@ -458,7 +425,7 @@ public class AuthenticationService : IAuthenticationService
             // Generate new verification token
             user.GenerateEmailVerificationToken();
             await _userWriteRepository.UpdateAsync(user, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             // Send verification email
             // await _emailService.SendEmailVerificationAsync(email.Value, user.EmailVerificationToken);
@@ -486,9 +453,6 @@ public class AuthenticationService : IAuthenticationService
                     code: "EmailVerification.InvalidToken",
                     message: "The verification token is invalid."));
 
-            // Begin transaction
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
             try
             {
                 // Find user by verification token
@@ -514,17 +478,12 @@ public class AuthenticationService : IAuthenticationService
 
                 // Save changes
                 await _userWriteRepository.UpdateAsync(user, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                // Commit transaction
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
 
                 return Result.Success();
             }
             catch (Exception ex)
             {
-                // Rollback transaction on error
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "Error verifying email");
                 throw;
             }
@@ -556,7 +515,7 @@ public class AuthenticationService : IAuthenticationService
             // Generate password reset token
             user.GeneratePasswordResetToken();
             await _userWriteRepository.UpdateAsync(user, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             // Send password reset email
             // await _emailService.SendPasswordResetAsync(email.Value, user.PasswordResetToken);
@@ -587,9 +546,6 @@ public class AuthenticationService : IAuthenticationService
 
             if (string.IsNullOrWhiteSpace(newPassword))
                 return Result.Failure(UserErrors.PasswordRequired);
-
-            // Begin transaction
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
             try
             {
@@ -627,17 +583,12 @@ public class AuthenticationService : IAuthenticationService
 
                 // Save changes
                 await _userWriteRepository.UpdateAsync(user, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                // Commit transaction
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
 
                 return Result.Success();
             }
             catch (Exception ex)
             {
-                // Rollback transaction on error
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "Error resetting password");
                 throw;
             }
@@ -666,9 +617,6 @@ public class AuthenticationService : IAuthenticationService
             if (string.IsNullOrWhiteSpace(newPassword))
                 return Result.Failure(UserErrors.PasswordRequired);
 
-            // Begin transaction
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
             try
             {
                 // Get user
@@ -693,17 +641,12 @@ public class AuthenticationService : IAuthenticationService
 
                 // Save changes
                 await _userWriteRepository.UpdateAsync(user, cancellationToken);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                // Commit transaction
-                await _unitOfWork.CommitTransactionAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
 
                 return Result.Success();
             }
             catch (Exception ex)
             {
-                // Rollback transaction on error
-                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
                 _logger.LogError(ex, "Error changing password");
                 throw;
             }

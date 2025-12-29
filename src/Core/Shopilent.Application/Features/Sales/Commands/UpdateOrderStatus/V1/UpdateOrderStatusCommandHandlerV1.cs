@@ -78,7 +78,7 @@ internal sealed class
             await _orderWriteRepository.UpdateAsync(order, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Order status updated successfully. Order ID: {OrderId}, New Status: {Status}",
                 order.Id, request.Status);

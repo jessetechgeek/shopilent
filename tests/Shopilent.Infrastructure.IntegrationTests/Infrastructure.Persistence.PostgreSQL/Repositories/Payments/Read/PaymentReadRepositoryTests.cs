@@ -55,7 +55,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentReadRepository.GetByIdAsync(payment.Id);
@@ -109,7 +109,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentReadRepository.GetByTransactionIdAsync(transactionId);
@@ -153,7 +153,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentReadRepository.GetByExternalReferenceAsync(externalReference);
@@ -203,7 +203,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment1);
         await _paymentWriteRepository.AddAsync(payment2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentReadRepository.GetByOrderIdAsync(order.Id);
@@ -256,7 +256,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await _paymentWriteRepository.AddAsync(pendingPayment);
         await _paymentWriteRepository.AddAsync(succeededPayment);
         await _paymentWriteRepository.AddAsync(failedPayment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act & Assert - Test Pending payments
         var pendingResults = await _paymentReadRepository.GetByStatusAsync(PaymentStatus.Pending);
@@ -318,7 +318,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
             await _paymentWriteRepository.AddAsync(payment);
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentReadRepository.GetRecentPaymentsAsync(3);
@@ -348,7 +348,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentReadRepository.GetRecentPaymentsAsync(10);
@@ -391,7 +391,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(order2);
         await _paymentWriteRepository.AddAsync(payment1);
         await _paymentWriteRepository.AddAsync(payment2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentReadRepository.GetByPaymentMethodIdAsync(paymentMethod.Id);
@@ -437,7 +437,7 @@ public class PaymentReadRepositoryTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(order2);
         await _paymentWriteRepository.AddAsync(payment1);
         await _paymentWriteRepository.AddAsync(payment2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentReadRepository.ListAllAsync();

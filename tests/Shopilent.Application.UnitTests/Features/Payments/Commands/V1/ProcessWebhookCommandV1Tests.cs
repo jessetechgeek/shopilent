@@ -31,7 +31,8 @@ public class ProcessWebhookCommandV1Tests : TestBase
         services.AddTransient(sp => Fixture.GetLogger<ProcessWebhookCommandHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<ProcessWebhookCommandV1>();
         });
 
@@ -55,10 +56,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             Provider = "Stripe",
             WebhookPayload = "{\"id\":\"evt_test_123\",\"type\":\"payment_intent.succeeded\"}",
             Signature = "stripe_signature_123",
-            Headers = new Dictionary<string, string>
-            {
-                { "stripe-signature", "stripe_signature_123" }
-            }
+            Headers = new Dictionary<string, string> { { "stripe-signature", "stripe_signature_123" } }
         };
 
         var webhookResult = new WebhookResult
@@ -67,11 +65,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             EventType = "payment_intent.succeeded",
             TransactionId = transactionId,
             IsProcessed = true,
-            EventData = new Dictionary<string, object>
-            {
-                { "id", transactionId },
-                { "status", "succeeded" }
-            }
+            EventData = new Dictionary<string, object> { { "id", transactionId }, { "status", "succeeded" } }
         };
 
         var user = new UserBuilder().WithId(userId).Build();
@@ -133,17 +127,8 @@ public class ProcessWebhookCommandV1Tests : TestBase
                 CancellationToken),
             Times.Once);
 
-        // Verify transaction was used
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.BeginTransactionAsync(CancellationToken),
-            Times.Once);
-
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
-            Times.Once);
-
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.CommitTransactionAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -186,10 +171,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             Provider = "Stripe",
             WebhookPayload = "{\"id\":\"evt_test_123\",\"type\":\"payment_intent.succeeded\"}",
             Signature = "invalid_signature",
-            Headers = new Dictionary<string, string>
-            {
-                { "stripe-signature", "invalid_signature" }
-            }
+            Headers = new Dictionary<string, string> { { "stripe-signature", "invalid_signature" } }
         };
 
         var webhookError = PaymentErrors.ProcessingFailed("Invalid signature");
@@ -220,11 +202,6 @@ public class ProcessWebhookCommandV1Tests : TestBase
                 command.Headers,
                 CancellationToken),
             Times.Once);
-
-        // Verify no transaction was used since processing failed early
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.BeginTransactionAsync(CancellationToken),
-            Times.Never);
     }
 
     [Fact]
@@ -240,10 +217,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             Provider = "Stripe",
             WebhookPayload = "{\"id\":\"evt_test_123\",\"type\":\"payment_intent.payment_failed\"}",
             Signature = "stripe_signature_123",
-            Headers = new Dictionary<string, string>
-            {
-                { "stripe-signature", "stripe_signature_123" }
-            }
+            Headers = new Dictionary<string, string> { { "stripe-signature", "stripe_signature_123" } }
         };
 
         var webhookResult = new WebhookResult
@@ -254,9 +228,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             IsProcessed = true,
             EventData = new Dictionary<string, object>
             {
-                { "id", transactionId },
-                { "status", "failed" },
-                { "failure_reason", "insufficient_funds" }
+                { "id", transactionId }, { "status", "failed" }, { "failure_reason", "insufficient_funds" }
             }
         };
 
@@ -307,17 +279,8 @@ public class ProcessWebhookCommandV1Tests : TestBase
         result.Value.EventType.Should().Be("payment_intent.payment_failed");
         result.Value.TransactionId.Should().Be(transactionId);
 
-        // Verify transaction was used properly
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.BeginTransactionAsync(CancellationToken),
-            Times.Once);
-
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
-            Times.Once);
-
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.CommitTransactionAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -330,10 +293,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             Provider = "Stripe",
             WebhookPayload = "{\"id\":\"evt_test_123\",\"type\":\"customer.created\"}",
             Signature = "stripe_signature_123",
-            Headers = new Dictionary<string, string>
-            {
-                { "stripe-signature", "stripe_signature_123" }
-            }
+            Headers = new Dictionary<string, string> { { "stripe-signature", "stripe_signature_123" } }
         };
 
         var webhookResult = new WebhookResult
@@ -342,10 +302,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             EventType = "customer.created",
             TransactionId = null,
             IsProcessed = false, // Not processed
-            EventData = new Dictionary<string, object>
-            {
-                { "id", "cus_test_customer" }
-            }
+            EventData = new Dictionary<string, object> { { "id", "cus_test_customer" } }
         };
 
         // Mock payment service
@@ -366,11 +323,6 @@ public class ProcessWebhookCommandV1Tests : TestBase
         result.Value.Should().NotBeNull();
         result.Value.EventType.Should().Be("customer.created");
         result.Value.IsProcessed.Should().BeFalse();
-
-        // Verify no transaction was used since event was not processed
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.BeginTransactionAsync(CancellationToken),
-            Times.Never);
     }
 
     [Fact]
@@ -384,10 +336,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             Provider = "Stripe",
             WebhookPayload = "{\"id\":\"evt_test_123\",\"type\":\"payment_intent.succeeded\"}",
             Signature = "stripe_signature_123",
-            Headers = new Dictionary<string, string>
-            {
-                { "stripe-signature", "stripe_signature_123" }
-            }
+            Headers = new Dictionary<string, string> { { "stripe-signature", "stripe_signature_123" } }
         };
 
         var webhookResult = new WebhookResult
@@ -396,11 +345,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
             EventType = "payment_intent.succeeded",
             TransactionId = transactionId,
             IsProcessed = true,
-            EventData = new Dictionary<string, object>
-            {
-                { "id", transactionId },
-                { "status", "succeeded" }
-            }
+            EventData = new Dictionary<string, object> { { "id", transactionId }, { "status", "succeeded" } }
         };
 
         // Mock payment service
@@ -427,17 +372,8 @@ public class ProcessWebhookCommandV1Tests : TestBase
         result.Value.EventType.Should().Be("payment_intent.succeeded");
         result.Value.TransactionId.Should().Be(transactionId);
 
-        // Verify transaction was still used and completed successfully
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.BeginTransactionAsync(CancellationToken),
-            Times.Once);
-
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
-            Times.Once);
-
-        Fixture.MockUnitOfWork.Verify(
-            uow => uow.CommitTransactionAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 }

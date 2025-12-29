@@ -55,7 +55,7 @@ internal sealed class
             await _orderWriteRepository.UpdateAsync(order, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Successfully processed full refund for order {OrderId} by user {UserId}",
                 request.OrderId, _currentUserContext.UserId);

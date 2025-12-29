@@ -103,7 +103,7 @@ internal sealed class DeletePaymentMethodCommandHandlerV1 : ICommandHandler<Dele
             await _paymentMethodWriteRepository.DeleteAsync(paymentMethod, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Payment method deleted successfully. ID: {PaymentMethodId}, User: {UserId}",
                 paymentMethod.Id, currentUserId);

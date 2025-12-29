@@ -49,7 +49,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _addressReadRepository.GetByIdAsync(address.Id);
@@ -84,7 +84,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _addressReadRepository.GetByIdAsync(address.Id);
@@ -107,7 +107,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(address).State = EntityState.Detached;
@@ -129,7 +129,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
         updateResult.IsSuccess.Should().BeTrue();
 
         await _addressWriteRepository.UpdateAsync(existingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedAddress = await _addressReadRepository.GetByIdAsync(address.Id);
@@ -157,7 +157,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(address).State = EntityState.Detached;
@@ -169,7 +169,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
         setTypeResult.IsSuccess.Should().BeTrue();
 
         await _addressWriteRepository.UpdateAsync(existingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedAddress = await _addressReadRepository.GetByIdAsync(address.Id);
@@ -191,7 +191,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(address).State = EntityState.Detached;
@@ -203,7 +203,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
         setDefaultResult.IsSuccess.Should().BeTrue();
 
         await _addressWriteRepository.UpdateAsync(existingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedAddress = await _addressReadRepository.GetByIdAsync(address.Id);
@@ -224,11 +224,11 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         await _addressWriteRepository.DeleteAsync(address);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _addressReadRepository.GetByIdAsync(address.Id);
@@ -248,7 +248,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressWriteRepository.GetByIdAsync(address.Id);
@@ -293,7 +293,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressWriteRepository.GetByUserIdAsync(user.Id);
@@ -343,7 +343,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
@@ -370,7 +370,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
@@ -404,7 +404,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Request default address for shipping
         var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
@@ -434,7 +434,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Simulate concurrent access with two service scopes
         // Create separate service scopes to simulate true concurrent access
@@ -460,11 +460,11 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         // First update should succeed (Version incremented)
         await addressWriteRepository1.UpdateAsync(address1);
-        await unitOfWork1.SaveChangesAsync();
+        await unitOfWork1.CommitAsync();
 
         // Second update should fail with concurrency exception (stale Version)
         await addressWriteRepository2.UpdateAsync(address2);
-        var action = () => unitOfWork2.SaveChangesAsync();
+        var action = () => unitOfWork2.CommitAsync();
 
         // Assert
         await action.Should().ThrowAsync<ConcurrencyConflictException>();
@@ -486,7 +486,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         // Act - Add user with multiple addresses
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert - All addresses should be persisted
         var userAddresses = await _addressWriteRepository.GetByUserIdAsync(user.Id);
@@ -527,7 +527,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var addresses = await _addressWriteRepository.GetByUserIdAsync(user.Id);

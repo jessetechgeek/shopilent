@@ -95,7 +95,7 @@ public class ProcessOrderRefundCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -129,7 +129,7 @@ public class ProcessOrderRefundCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -172,7 +172,7 @@ public class ProcessOrderRefundCommandV1Tests : TestBase
 
         // Verify save was not called since refund failed
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -214,7 +214,7 @@ public class ProcessOrderRefundCommandV1Tests : TestBase
 
         // Verify save was not called since refund failed
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 

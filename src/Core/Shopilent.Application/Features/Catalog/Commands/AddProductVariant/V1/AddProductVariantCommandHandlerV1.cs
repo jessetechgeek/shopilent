@@ -212,7 +212,7 @@ internal sealed class
             await _productVariantWriteRepository.AddAsync(variant, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             // Create response
             var attributeDtos = attributeValues.Select(a => new VariantAttributeDto

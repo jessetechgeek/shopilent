@@ -76,7 +76,7 @@ internal sealed class
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("User profile updated successfully. UserId: {UserId}", user.Id);
 

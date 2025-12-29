@@ -33,7 +33,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var attribute = AttributeBuilder.Random().Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeReadRepository.GetByIdAsync(attribute.Id);
@@ -74,7 +74,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
             .WithDisplayName("Test Attribute")
             .Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeReadRepository.GetByNameAsync(uniqueName);
@@ -110,7 +110,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
             .WithName(attributeName)
             .Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeReadRepository.NameExistsAsync(attributeName);
@@ -143,7 +143,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
             .WithName(attributeName)
             .Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Exclude the current attribute ID
         var result = await _attributeReadRepository.NameExistsAsync(attributeName, attribute.Id);
@@ -165,7 +165,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         await _attributeWriteRepository.AddAsync(variantAttribute1);
         await _attributeWriteRepository.AddAsync(variantAttribute2);
         await _attributeWriteRepository.AddAsync(regularAttribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeReadRepository.GetVariantAttributesAsync();
@@ -189,7 +189,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
 
         await _attributeWriteRepository.AddAsync(regularAttribute1);
         await _attributeWriteRepository.AddAsync(regularAttribute2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeReadRepository.GetVariantAttributesAsync();
@@ -210,7 +210,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
             await _attributeWriteRepository.AddAsync(attribute);
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeReadRepository.ListAllAsync();
@@ -234,7 +234,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         await _attributeWriteRepository.AddAsync(textAttribute);
         await _attributeWriteRepository.AddAsync(numberAttribute);
         await _attributeWriteRepository.AddAsync(booleanAttribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeReadRepository.ListAllAsync();
@@ -265,7 +265,7 @@ public class AttributeReadRepositoryTests : IntegrationTestBase
         await _attributeWriteRepository.AddAsync(filterableAttribute);
         await _attributeWriteRepository.AddAsync(searchableAttribute);
         await _attributeWriteRepository.AddAsync(bothAttribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var all = await _attributeReadRepository.ListAllAsync();
