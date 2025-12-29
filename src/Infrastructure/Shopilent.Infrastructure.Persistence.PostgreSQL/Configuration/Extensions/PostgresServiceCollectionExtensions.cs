@@ -3,8 +3,9 @@ using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Npgsql;
-using Shopilent.Infrastructure.Persistence.PostgreSQL.Dapper.TypeHandlers;
+using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Audit.Repositories.Read;
 using Shopilent.Domain.Audit.Repositories.Write;
@@ -22,7 +23,7 @@ using Shopilent.Domain.Shipping.Repositories.Read;
 using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Abstractions;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Context;
-using Shopilent.Infrastructure.Persistence.PostgreSQL.Extensions;
+using Shopilent.Infrastructure.Persistence.PostgreSQL.Dapper.TypeHandlers;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Factories;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Interceptors;
 using Shopilent.Infrastructure.Persistence.PostgreSQL.Repositories.Audit.Read;
@@ -49,13 +50,19 @@ public static class PostgresServiceCollectionExtensions
     {
         services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.SectionName));
 
-        var connectionConfig = new PostgresConnectionConfig
+        // Register PostgresConnectionConfig as a factory to inject ICacheService
+        services.AddSingleton<PostgresConnectionConfig>(sp =>
         {
-            WriteConnectionString = configuration.GetConnectionString("PostgreSql") ?? string.Empty,
-            ReadConnectionStrings = configuration.GetSection("ConnectionStrings:PostgreSqlReadReplicas")
-                .Get<List<string>>() ?? new List<string>()
-        };
-        services.AddSingleton(connectionConfig);
+            var logger = sp.GetRequiredService<ILogger<PostgresConnectionConfig>>();
+            var cacheService = sp.GetService<ICacheService>(); // Optional - falls back to round-robin if not available
+
+            return new PostgresConnectionConfig(logger, cacheService)
+            {
+                WriteConnectionString = configuration.GetConnectionString("PostgreSql") ?? string.Empty,
+                ReadConnectionStrings = configuration.GetSection("ConnectionStrings:PostgreSqlReadReplicas")
+                    .Get<List<string>>() ?? new List<string>()
+            };
+        });
 
         // Register Dapper type handlers for automatic JSONB conversion
         SqlMapper.AddTypeHandler(new JsonDictionaryTypeHandler());
@@ -65,10 +72,19 @@ public static class PostgresServiceCollectionExtensions
         services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             var interceptor = sp.GetRequiredService<AuditSaveChangesInterceptor>();
+            var config = sp.GetRequiredService<PostgresConnectionConfig>();
 
             options.UseNpgsql(
-                connectionConfig.WriteConnectionString,
-                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName));
+                config.WriteConnectionString,
+                b =>
+                {
+                    b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
+                    // Enable automatic retry on transient failures (connection issues, timeouts)
+                    b.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorCodesToAdd: null);
+                });
 
             options.AddInterceptors(interceptor);
         });
@@ -76,9 +92,26 @@ public static class PostgresServiceCollectionExtensions
         services.AddScoped<IDbConnection>(provider =>
         {
             var config = provider.GetRequiredService<PostgresConnectionConfig>();
-            var connection = new NpgsqlConnection(config.GetReadConnectionString());
-            connection.Open();
-            return connection;
+            var logger = provider.GetRequiredService<ILogger<PostgresConnectionConfig>>();
+
+            var connectionString = config.GetReadConnectionString();
+            var connection = new NpgsqlConnection(connectionString);
+
+            try
+            {
+                connection.Open();
+                return connection;
+            }
+            catch (NpgsqlException ex)
+            {
+                logger.LogWarning(ex, "Failed to connect to read replica, falling back to write connection");
+                connection.Dispose();
+
+                // Fallback to write connection on failure
+                connection = new NpgsqlConnection(config.WriteConnectionString);
+                connection.Open();
+                return connection;
+            }
         });
 
         services.AddScoped<IDapperConnectionFactory, DapperConnectionFactory>();
@@ -154,22 +187,19 @@ public static class PostgresServiceCollectionExtensions
 
     private static IServiceCollection AddHealthChecks(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionConfig = new PostgresConnectionConfig
-        {
-            WriteConnectionString = configuration.GetConnectionString("PostgreSql") ?? string.Empty,
-            ReadConnectionStrings = configuration.GetSection("ConnectionStrings:PostgreSqlReadReplicas")
-                .Get<List<string>>() ?? new List<string>()
-        };
-
         var healthChecks = services.AddHealthChecks();
 
         // Add main write database health check
-        healthChecks.AddNpgSql(connectionConfig.WriteConnectionString, name: "postgresql-main");
+        var writeConnectionString = configuration.GetConnectionString("PostgreSql") ?? string.Empty;
+        healthChecks.AddNpgSql(writeConnectionString, name: "postgresql-main");
 
         // Add health checks for each read replica
-        for (int i = 0; i < connectionConfig.ReadConnectionStrings.Count; i++)
+        var readReplicas = configuration.GetSection("ConnectionStrings:PostgreSqlReadReplicas")
+            .Get<List<string>>() ?? new List<string>();
+
+        for (int i = 0; i < readReplicas.Count; i++)
         {
-            var replicaConnectionString = connectionConfig.ReadConnectionStrings[i];
+            var replicaConnectionString = readReplicas[i];
             if (!string.IsNullOrEmpty(replicaConnectionString))
             {
                 healthChecks.AddNpgSql(replicaConnectionString, name: $"postgresql-replica-{i + 1}");
