@@ -43,7 +43,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -51,7 +51,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderReadRepository.GetByIdAsync(order.Id);
@@ -89,7 +89,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder()
             .WithUser(user)
@@ -98,7 +98,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderReadRepository.GetDetailByIdAsync(order.Id);
@@ -142,7 +142,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _userWriteRepository.AddAsync(otherUser);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         var order2 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).AsPaidOrder().Build();
@@ -151,7 +151,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(order1);
         await _orderWriteRepository.AddAsync(order2);
         await _orderWriteRepository.AddAsync(otherUserOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderReadRepository.GetByUserIdAsync(user.Id);
@@ -187,7 +187,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var pendingOrder1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         var pendingOrder2 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -197,7 +197,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(pendingOrder1);
         await _orderWriteRepository.AddAsync(pendingOrder2);
         await _orderWriteRepository.AddAsync(shippedOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderReadRepository.GetByStatusAsync(OrderStatus.Pending);
@@ -218,11 +218,11 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var pendingOrder = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         await _orderWriteRepository.AddAsync(pendingOrder);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderReadRepository.GetByStatusAsync(OrderStatus.Delivered);
@@ -242,24 +242,24 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         await _orderWriteRepository.AddAsync(order1);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Add a small delay to ensure different timestamps
         await Task.Delay(50);
 
         var order2 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         await _orderWriteRepository.AddAsync(order2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         await Task.Delay(50);
 
         var order3 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         await _orderWriteRepository.AddAsync(order3);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderReadRepository.GetRecentOrdersAsync(2);
@@ -280,11 +280,11 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Request 10 orders when only 1 exists
         var result = await _orderReadRepository.GetRecentOrdersAsync(10);
@@ -318,7 +318,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order1 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         var order2 = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
@@ -327,7 +327,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         await _orderWriteRepository.AddAsync(order1);
         await _orderWriteRepository.AddAsync(order2);
         await _orderWriteRepository.AddAsync(order3);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var requestedIds = new[] { order1.Id, order3.Id };
 
@@ -350,11 +350,11 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order = new OrderBuilder().WithUser(user).WithShippingAddress(shippingAddress).Build();
         await _orderWriteRepository.AddAsync(order);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var requestedIds = new[] { order.Id, Guid.NewGuid(), Guid.NewGuid() };
 
@@ -376,7 +376,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         var shippingAddress = new AddressBuilder().WithUser(user).Build();
         await _userWriteRepository.AddAsync(user);
         await _addressWriteRepository.AddAsync(shippingAddress);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Create multiple orders
         for (int i = 0; i < 5; i++)
@@ -385,7 +385,7 @@ public class OrderReadRepositoryTests : IntegrationTestBase
             await _orderWriteRepository.AddAsync(order);
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var request = new DataTableRequest
         {
@@ -439,14 +439,14 @@ public class OrderReadRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user2);
         await _addressWriteRepository.AddAsync(shippingAddress1);
         await _addressWriteRepository.AddAsync(shippingAddress2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var order1 = new OrderBuilder().WithUser(user1).WithShippingAddress(shippingAddress1).Build();
         var order2 = new OrderBuilder().WithUser(user2).WithShippingAddress(shippingAddress2).AsShippedOrder().Build();
 
         await _orderWriteRepository.AddAsync(order1);
         await _orderWriteRepository.AddAsync(order2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _orderReadRepository.ListAllAsync();

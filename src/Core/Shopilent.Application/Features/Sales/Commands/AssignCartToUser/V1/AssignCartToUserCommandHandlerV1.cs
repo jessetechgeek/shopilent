@@ -99,7 +99,7 @@ internal sealed class AssignCartToUserCommandHandlerV1 : ICommandHandler<AssignC
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Cart {CartId} successfully assigned to user {UserId}",
                 request.CartId, userId);

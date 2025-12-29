@@ -55,7 +55,7 @@ internal sealed class
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             // Create response
             var response = new UpdateVariantStockResponseV1

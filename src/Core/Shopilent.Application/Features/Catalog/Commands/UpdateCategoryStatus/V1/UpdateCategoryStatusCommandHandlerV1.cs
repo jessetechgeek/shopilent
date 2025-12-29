@@ -62,7 +62,7 @@ internal sealed class UpdateCategoryStatusCommandHandlerV1 : ICommandHandler<Upd
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Category status updated successfully. ID: {CategoryId}, IsActive: {IsActive}",
                 category.Id, request.IsActive);

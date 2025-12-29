@@ -55,7 +55,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         // Act
@@ -84,7 +84,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -117,7 +117,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -151,7 +151,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
 
         // Verify that save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -185,7 +185,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
 
         // Verify that save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -219,7 +219,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
 
         // Verify that save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -245,7 +245,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         // Act
@@ -282,7 +282,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         // Act
@@ -320,7 +320,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         // Act
@@ -389,7 +389,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         // Act
@@ -442,7 +442,7 @@ public class UpdateUserProfileCommandV1Tests : TestBase
             .ReturnsAsync(user);
 
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         var beforeExecution = DateTime.UtcNow;

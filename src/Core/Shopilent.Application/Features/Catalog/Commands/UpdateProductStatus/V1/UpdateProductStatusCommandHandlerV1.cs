@@ -62,7 +62,7 @@ internal sealed class UpdateProductStatusCommandHandlerV1 : ICommandHandler<Upda
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Product status updated successfully. ID: {ProductId}, IsActive: {IsActive}",
                 product.Id, request.IsActive);

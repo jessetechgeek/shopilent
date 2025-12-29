@@ -44,7 +44,7 @@ internal sealed class DeleteProductCommandHandlerV1 : ICommandHandler<DeleteProd
             await _productWriteRepository.DeleteAsync(product, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Product deleted successfully with ID: {ProductId}", product.Id);
 

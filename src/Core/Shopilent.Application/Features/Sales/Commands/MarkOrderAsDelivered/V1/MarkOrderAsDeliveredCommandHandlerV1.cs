@@ -55,7 +55,7 @@ internal sealed class MarkOrderAsDeliveredCommandHandlerV1 : ICommandHandler<Mar
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Order {OrderId} marked as delivered successfully by user {UserId}",
                 request.OrderId, _currentUserContext.UserId);

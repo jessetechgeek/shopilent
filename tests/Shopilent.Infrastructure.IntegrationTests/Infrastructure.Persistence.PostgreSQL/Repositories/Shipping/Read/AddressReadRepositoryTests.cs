@@ -37,7 +37,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressReadRepository.GetByIdAsync(address.Id);
@@ -109,7 +109,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user1);
         await _userWriteRepository.AddAsync(user2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressReadRepository.ListAllAsync();
@@ -147,7 +147,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user1);
         await _userWriteRepository.AddAsync(user2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressReadRepository.GetByUserIdAsync(user1.Id);
@@ -198,7 +198,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
@@ -225,7 +225,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Billing);
@@ -252,7 +252,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Should return the "Both" address for shipping requests
         var shippingResult = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
@@ -285,7 +285,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
@@ -319,7 +319,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Request default address for shipping
         var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
@@ -364,7 +364,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressReadRepository.GetByAddressTypeAsync(user.Id, AddressType.Shipping);
@@ -408,7 +408,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressReadRepository.GetByAddressTypeAsync(user.Id, AddressType.Billing);
@@ -451,7 +451,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _addressReadRepository.GetByAddressTypeAsync(user.Id, AddressType.Both);
@@ -477,7 +477,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Request shipping addresses when only billing exists
         var result = await _addressReadRepository.GetByAddressTypeAsync(user.Id, AddressType.Shipping);

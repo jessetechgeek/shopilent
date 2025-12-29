@@ -127,7 +127,7 @@ public class TestFixture
         MockAddressWriteRepository = new Mock<IAddressWriteRepository>();
 
         // Setup default save changes to return success
-        MockUnitOfWork.Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+        MockUnitOfWork.Setup(uow => uow.CommitAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Set up basic CurrentUserContext behaviors

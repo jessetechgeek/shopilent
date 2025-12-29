@@ -12,18 +12,15 @@ namespace Shopilent.Infrastructure.Services.Events;
 public class DomainEventService : IDomainEventService
 {
     private readonly IPublisher _mediator;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly IOutboxMessageWriteRepository _outboxMessageWriteRepository;
     private readonly ILogger<DomainEventService> _logger;
 
     public DomainEventService(
         IPublisher mediator,
-        IUnitOfWork unitOfWork,
         IOutboxMessageWriteRepository outboxMessageWriteRepository,
         ILogger<DomainEventService> logger)
     {
         _mediator = mediator;
-        _unitOfWork = unitOfWork;
         _outboxMessageWriteRepository = outboxMessageWriteRepository;
         _logger = logger;
     }

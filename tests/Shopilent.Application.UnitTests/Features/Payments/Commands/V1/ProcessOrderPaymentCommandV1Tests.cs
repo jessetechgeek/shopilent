@@ -171,7 +171,7 @@ public class ProcessOrderPaymentCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -517,7 +517,7 @@ public class ProcessOrderPaymentCommandV1Tests : TestBase
 
         // Verify save was called to record the failed payment
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 

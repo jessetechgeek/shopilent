@@ -37,7 +37,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _categoryWriteRepository.AddAsync(category);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var persisted = await _categoryReadRepository.GetByIdAsync(category.Id);
@@ -54,7 +54,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var existingCategory = CategoryBuilder.Random().WithSlug("duplicate-slug").Build();
         await _categoryWriteRepository.AddAsync(existingCategory);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var duplicateCategory = CategoryBuilder.Random().WithSlug("duplicate-slug").Build();
 
@@ -62,7 +62,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await _categoryWriteRepository.AddAsync(duplicateCategory);
 
         // The constraint violation should occur when SaveChangesAsync is called
-        var action = () => _unitOfWork.SaveChangesAsync();
+        var action = () => _unitOfWork.CommitAsync();
         await action.Should().ThrowAsync<Exception>();
     }
 
@@ -73,7 +73,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().Build();
         await _categoryWriteRepository.AddAsync(category);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate a fresh load
         DbContext.Entry(category).State = EntityState.Detached;
@@ -84,7 +84,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _categoryWriteRepository.UpdateAsync(updatedCategory);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var persisted = await _categoryReadRepository.GetByIdAsync(category.Id);
@@ -100,11 +100,11 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().Build();
         await _categoryWriteRepository.AddAsync(category);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         await _categoryWriteRepository.DeleteAsync(category);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var persisted = await _categoryReadRepository.GetByIdAsync(category.Id);
@@ -118,7 +118,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().Build();
         await _categoryWriteRepository.AddAsync(category);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _categoryWriteRepository.GetByIdAsync(category.Id);
@@ -151,7 +151,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().WithSlug("test-category").Build();
         await _categoryWriteRepository.AddAsync(category);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _categoryWriteRepository.GetBySlugAsync("test-category");
@@ -182,7 +182,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().WithSlug("existing-slug").Build();
         await _categoryWriteRepository.AddAsync(category);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var exists = await _categoryWriteRepository.SlugExistsAsync("existing-slug");
@@ -211,7 +211,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var category = CategoryBuilder.Random().WithSlug("test-slug").Build();
         await _categoryWriteRepository.AddAsync(category);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var exists = await _categoryWriteRepository.SlugExistsAsync("test-slug", category.Id);
@@ -229,7 +229,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         // Create parent category first
         var parentCategory = CategoryBuilder.Random().WithName("Electronics").Build();
         await _categoryWriteRepository.AddAsync(parentCategory);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Create child category with proper parent relationship
         var childCategory = CategoryBuilder.Random()
@@ -239,7 +239,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _categoryWriteRepository.AddAsync(childCategory);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         childCategory.Should().NotBeNull();
@@ -264,14 +264,14 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
         // Create 3-level hierarchy: Electronics -> Computers -> Laptops
         var electronics = CategoryBuilder.Random().WithName("Electronics").Build();
         await _categoryWriteRepository.AddAsync(electronics);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var computers = CategoryBuilder.Random()
             .WithName("Computers")
             .WithParentCategory(electronics)
             .Build();
         await _categoryWriteRepository.AddAsync(computers);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var laptops = CategoryBuilder.Random()
             .WithName("Laptops")
@@ -280,7 +280,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _categoryWriteRepository.AddAsync(laptops);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         laptops.Should().NotBeNull();
@@ -309,7 +309,7 @@ public class CategoryWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _categoryWriteRepository.AddAsync(rootCategory);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         rootCategory.Should().NotBeNull();

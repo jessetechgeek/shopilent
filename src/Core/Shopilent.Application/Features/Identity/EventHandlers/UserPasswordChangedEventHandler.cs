@@ -74,7 +74,7 @@ internal sealed class
                     }
 
                     // Save changes to persist token revocations
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _unitOfWork.CommitAsync(cancellationToken);
                 }
 
                 // Send notification email

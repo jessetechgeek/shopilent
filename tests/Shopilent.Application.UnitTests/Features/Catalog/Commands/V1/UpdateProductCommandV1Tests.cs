@@ -127,7 +127,7 @@ public class UpdateProductCommandV1Tests : TestBase
 
         // Verify the product was saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -158,7 +158,7 @@ public class UpdateProductCommandV1Tests : TestBase
 
         // Verify the product was not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -197,7 +197,7 @@ public class UpdateProductCommandV1Tests : TestBase
 
         // Verify the product was not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -246,7 +246,7 @@ public class UpdateProductCommandV1Tests : TestBase
 
         // Verify the product was not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -373,7 +373,7 @@ public class UpdateProductCommandV1Tests : TestBase
 
         // Verify the product was not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -413,7 +413,7 @@ public class UpdateProductCommandV1Tests : TestBase
 
         // Verify the product was not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 

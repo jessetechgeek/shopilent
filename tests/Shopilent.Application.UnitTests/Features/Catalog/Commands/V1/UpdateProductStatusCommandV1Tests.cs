@@ -88,7 +88,7 @@ public class UpdateProductStatusCommandV1Tests : TestBase
 
         // Verify the changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -126,7 +126,7 @@ public class UpdateProductStatusCommandV1Tests : TestBase
 
         // Verify the changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -160,7 +160,7 @@ public class UpdateProductStatusCommandV1Tests : TestBase
 
         // Verify the changes were saved (even though no change was made, the handler still saves)
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -194,7 +194,7 @@ public class UpdateProductStatusCommandV1Tests : TestBase
 
         // Verify the changes were saved (even though no change was made, the handler still saves)
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -223,7 +223,7 @@ public class UpdateProductStatusCommandV1Tests : TestBase
 
         // Verify the changes were not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -260,7 +260,7 @@ public class UpdateProductStatusCommandV1Tests : TestBase
 
         // Verify the changes were saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -285,7 +285,7 @@ public class UpdateProductStatusCommandV1Tests : TestBase
 
         // Mock SaveChangesAsync to throw an exception
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ThrowsAsync(new InvalidOperationException("Database error"));
 
         // Act
@@ -298,7 +298,7 @@ public class UpdateProductStatusCommandV1Tests : TestBase
 
         // Verify SaveChangesAsync was attempted
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 }

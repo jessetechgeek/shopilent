@@ -32,7 +32,7 @@ public class OutboxService : IOutboxService
         await outboxMessageWriteRepository.AddAsync(outboxMessage, cancellationToken);
 
         // Save changes
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
     }
 
     public async Task ProcessMessagesAsync(CancellationToken cancellationToken = default)
@@ -82,7 +82,7 @@ public class OutboxService : IOutboxService
                 // Exponential backoff for retries
                 var retryDelay = TimeSpan.FromMinutes(Math.Pow(2, Math.Min(message.RetryCount, 6)));
                 message.Reschedule(retryDelay);
-                await unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.CommitAsync(cancellationToken);
             }
         }
     }

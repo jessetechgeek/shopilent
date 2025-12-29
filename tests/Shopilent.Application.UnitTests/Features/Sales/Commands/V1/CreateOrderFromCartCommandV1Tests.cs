@@ -122,7 +122,7 @@ public class CreateOrderFromCartCommandV1Tests : TestBase
 
         // Mock save operations
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         // Act
@@ -146,7 +146,7 @@ public class CreateOrderFromCartCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 

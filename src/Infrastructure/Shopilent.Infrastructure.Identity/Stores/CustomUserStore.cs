@@ -37,7 +37,7 @@ internal sealed  class CustomUserStore :
         try
         {
             await _userWriteRepository.AddAsync(user, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
             return IdentityResult.Success;
         }
         catch (Exception ex)
@@ -55,7 +55,7 @@ internal sealed  class CustomUserStore :
         try
         {
             await _userWriteRepository.UpdateAsync(user, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
             return IdentityResult.Success;
         }
         catch (Exception ex)
@@ -73,7 +73,7 @@ internal sealed  class CustomUserStore :
         try
         {
             await _userWriteRepository.DeleteAsync(user, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
             return IdentityResult.Success;
         }
         catch (Exception ex)

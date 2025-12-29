@@ -114,7 +114,7 @@ internal sealed class SetAddressDefaultCommandHandlerV1 : ICommandHandler<SetAdd
             await _addressWriteRepository.UpdateAsync(address, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             // Return the updated address DTO
             var updatedAddressDto = await _addressReadRepository.GetByIdAsync(request.AddressId, cancellationToken);

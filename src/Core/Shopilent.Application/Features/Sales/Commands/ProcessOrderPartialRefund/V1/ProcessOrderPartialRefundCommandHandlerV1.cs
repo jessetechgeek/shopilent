@@ -60,7 +60,7 @@ internal sealed class ProcessOrderPartialRefundCommandHandlerV1
 
             // Save the updated order
             await _orderWriteRepository.UpdateAsync(order, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Successfully processed partial refund of {Amount} {Currency} for order {OrderId}",
                 request.Amount, request.Currency, request.OrderId);

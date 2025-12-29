@@ -79,7 +79,7 @@ public class MarkOrderAsShippedCommandV1Tests : TestBase
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -118,7 +118,7 @@ public class MarkOrderAsShippedCommandV1Tests : TestBase
             Times.Never);
 
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -156,7 +156,7 @@ public class MarkOrderAsShippedCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -201,7 +201,7 @@ public class MarkOrderAsShippedCommandV1Tests : TestBase
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -246,7 +246,7 @@ public class MarkOrderAsShippedCommandV1Tests : TestBase
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -284,7 +284,7 @@ public class MarkOrderAsShippedCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -329,7 +329,7 @@ public class MarkOrderAsShippedCommandV1Tests : TestBase
             Times.Once);
 
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 }

@@ -112,7 +112,7 @@ internal sealed class SetDefaultPaymentMethodCommandHandlerV1 :
             await _paymentMethodWriteRepository.UpdateAsync(paymentMethod, cancellationToken);
 
             // Save changes using Unit of Work
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Payment method {PaymentMethodId} set as default for user {UserId}",
                 request.PaymentMethodId, request.UserId);

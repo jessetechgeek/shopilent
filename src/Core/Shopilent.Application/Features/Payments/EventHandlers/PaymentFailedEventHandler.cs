@@ -80,7 +80,7 @@ internal sealed class PaymentFailedEventHandler : INotificationHandler<DomainEve
                         await _orderWriteRepository.UpdateAsync(order, cancellationToken);
 
                         // Save changes to persist the updates
-                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                        await _unitOfWork.CommitAsync(cancellationToken);
                     }
                     else
                     {

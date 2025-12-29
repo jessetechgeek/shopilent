@@ -78,7 +78,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
             .ReturnsAsync(addressDto);
 
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         // Act
@@ -98,7 +98,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -129,7 +129,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -167,7 +167,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -208,7 +208,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -260,7 +260,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
 
         // Verify save was not called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -306,7 +306,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
             .ReturnsAsync(addressDto);
 
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         // Act
@@ -326,7 +326,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -372,7 +372,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
             .ReturnsAsync(addressDto);
 
         Fixture.MockUnitOfWork
-            .Setup(uow => uow.SaveChangesAsync(CancellationToken))
+            .Setup(uow => uow.CommitAsync(CancellationToken))
             .ReturnsAsync(1);
 
         // Act
@@ -392,7 +392,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 

@@ -48,7 +48,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         // Act - Save user with RefreshToken (EF Core will cascade save the RefreshToken)
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
@@ -79,7 +79,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         // Act - Save user with RefreshToken (EF Core will cascade save the RefreshToken)
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
@@ -102,7 +102,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _refreshTokenWriteRepository.AddAsync(refreshToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
         DbContext.Entry(refreshToken).State = EntityState.Detached;
@@ -112,7 +112,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         existingToken!.Revoke("Test revocation");
 
         await _refreshTokenWriteRepository.UpdateAsync(existingToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedToken = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
@@ -134,11 +134,11 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _refreshTokenWriteRepository.AddAsync(refreshToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         await _refreshTokenWriteRepository.DeleteAsync(refreshToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
@@ -158,7 +158,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _refreshTokenWriteRepository.AddAsync(refreshToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _refreshTokenWriteRepository.GetByIdAsync(refreshToken.Id);
@@ -198,7 +198,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _refreshTokenWriteRepository.AddAsync(refreshToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _refreshTokenWriteRepository.GetByTokenAsync(tokenValue);
@@ -240,7 +240,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _refreshTokenWriteRepository.AddAsync(refreshToken1);
         await _refreshTokenWriteRepository.AddAsync(refreshToken2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _refreshTokenWriteRepository.GetByUserIdAsync(user.Id);
@@ -288,12 +288,12 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         await _refreshTokenWriteRepository.AddAsync(activeToken);
         await _refreshTokenWriteRepository.AddAsync(expiredToken);
         await _refreshTokenWriteRepository.AddAsync(revokedToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Revoke one token
         revokedToken.Revoke("Test revocation");
         await _refreshTokenWriteRepository.UpdateAsync(revokedToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _refreshTokenWriteRepository.GetActiveTokensAsync(user.Id);
@@ -315,7 +315,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _refreshTokenWriteRepository.AddAsync(expiredToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _refreshTokenWriteRepository.GetActiveTokensAsync(user.Id);
@@ -349,7 +349,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
             // Save the test user so it exists for the audit interceptor
             await _userWriteRepository.AddAsync(testUser);
-            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.CommitAsync();
         }
 
         var user = new UserBuilder().Build();
@@ -358,7 +358,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Simulate concurrent access with two service scopes
         // Create separate service scopes to simulate true concurrent access
@@ -380,11 +380,11 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         // First update should succeed
         await refreshTokenWriteRepository1.UpdateAsync(token1);
-        await unitOfWork1.SaveChangesAsync();
+        await unitOfWork1.CommitAsync();
 
         // Second update should fail with concurrency exception
         await refreshTokenWriteRepository2.UpdateAsync(token2);
-        var action = () => unitOfWork2.SaveChangesAsync();
+        var action = () => unitOfWork2.CommitAsync();
 
         await action.Should().ThrowAsync<ConcurrencyConflictException>();
     }
@@ -408,7 +408,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         // Act - Save user with all RefreshTokens (EF Core will cascade save all RefreshTokens)
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var userTokens = await _refreshTokenWriteRepository.GetByUserIdAsync(user.Id);
@@ -420,7 +420,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
             await _refreshTokenWriteRepository.DeleteAsync(token);
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Verify deletion
         var remainingTokens = await _refreshTokenWriteRepository.GetByUserIdAsync(user.Id);
@@ -440,7 +440,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _refreshTokenWriteRepository.AddAsync(refreshToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach and reload
         DbContext.Entry(refreshToken).State = EntityState.Detached;
@@ -451,7 +451,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
         revokeResult.IsSuccess.Should().BeTrue();
 
         await _refreshTokenWriteRepository.UpdateAsync(existingToken);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedToken = await _refreshTokenReadRepository.GetByIdAsync(refreshToken.Id);
@@ -475,7 +475,7 @@ public class RefreshTokenWriteRepositoryTests : IntegrationTestBase
 
         // Act - Save user with RefreshToken (EF Core will cascade save the RefreshToken)
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _refreshTokenReadRepository.GetByIdAsync(expiredToken.Id);

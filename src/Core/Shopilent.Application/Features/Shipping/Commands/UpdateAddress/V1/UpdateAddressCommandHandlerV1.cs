@@ -109,7 +109,7 @@ internal sealed class UpdateAddressCommandHandlerV1 : ICommandHandler<UpdateAddr
 
             // Save changes
             await _addressWriteRepository.UpdateAsync(address, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Successfully updated address {AddressId} for user {UserId}",
                 request.Id, _currentUserContext.UserId);

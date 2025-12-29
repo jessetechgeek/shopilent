@@ -49,7 +49,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
@@ -85,7 +85,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
@@ -117,7 +117,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
@@ -139,7 +139,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach entity to simulate real-world scenario
         DbContext.Entry(paymentMethod).State = EntityState.Detached;
@@ -151,7 +151,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _paymentMethodWriteRepository.UpdateAsync(existingPaymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
@@ -174,7 +174,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach and reload
         DbContext.Entry(paymentMethod).State = EntityState.Detached;
@@ -183,7 +183,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _paymentMethodWriteRepository.UpdateAsync(existingPaymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
@@ -205,7 +205,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach and reload
         DbContext.Entry(paymentMethod).State = EntityState.Detached;
@@ -214,7 +214,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _paymentMethodWriteRepository.UpdateAsync(existingPaymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
@@ -236,7 +236,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Prepare new card details
         var newCardDetails = PaymentCardDetails.Create(
@@ -251,7 +251,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _paymentMethodWriteRepository.UpdateAsync(existingPaymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
@@ -277,11 +277,11 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         await _paymentMethodWriteRepository.DeleteAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
@@ -302,7 +302,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
@@ -356,7 +356,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
         await _paymentMethodWriteRepository.AddAsync(paymentMethod1);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod2);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod3);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodWriteRepository.GetByUserIdAsync(user1.Id);
@@ -405,7 +405,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(defaultPaymentMethod);
         await _paymentMethodWriteRepository.AddAsync(nonDefaultPaymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodWriteRepository.GetDefaultForUserAsync(user.Id);
@@ -430,7 +430,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodWriteRepository.GetDefaultForUserAsync(user.Id);
@@ -463,7 +463,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
         await _paymentMethodWriteRepository.AddAsync(creditCardMethod1);
         await _paymentMethodWriteRepository.AddAsync(creditCardMethod2);
         await _paymentMethodWriteRepository.AddAsync(payPalMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var creditCardResults =
@@ -499,7 +499,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodWriteRepository.GetByTokenAsync(token);
@@ -540,7 +540,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _paymentMethodWriteRepository.TokenExistsAsync(token);
@@ -577,7 +577,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Create two separate scopes to simulate concurrent access
         using var scope1 = ServiceProvider.CreateScope();
@@ -599,13 +599,13 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // First update should succeed
         await paymentMethodRepository1.UpdateAsync(paymentMethod1);
-        await unitOfWork1.SaveChangesAsync();
+        await unitOfWork1.CommitAsync();
 
         // Second update should handle concurrency properly
         await paymentMethodRepository2.UpdateAsync(paymentMethod2);
 
         // Assert - Second update should throw concurrency exception
-        var concurrencyFunc = async () => await unitOfWork2.SaveChangesAsync();
+        var concurrencyFunc = async () => await unitOfWork2.CommitAsync();
         await concurrencyFunc.Should().ThrowAsync<ConcurrencyConflictException>();
 
         // Verify final state
@@ -635,7 +635,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
             await _paymentMethodWriteRepository.AddAsync(pm);
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         foreach (var pm in paymentMethods)
@@ -660,7 +660,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
             await _paymentMethodWriteRepository.UpdateAsync(existingPm);
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Verify bulk updates
         var userPaymentMethods = await _paymentMethodWriteRepository.GetByUserIdAsync(user.Id);
@@ -684,7 +684,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // Act & Assert - Add payment method
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var created = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
         created.Should().NotBeNull();
@@ -696,7 +696,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
         var toUpdate = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
         toUpdate!.SetDefault(true);
         await _paymentMethodWriteRepository.UpdateAsync(toUpdate);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var updated = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
         updated.Should().NotBeNull();
@@ -707,7 +707,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
         var toDeactivate = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
         toDeactivate!.Deactivate();
         await _paymentMethodWriteRepository.UpdateAsync(toDeactivate);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var deactivated = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
         deactivated.Should().NotBeNull();
@@ -716,7 +716,7 @@ public class PaymentMethodWriteRepositoryTests : IntegrationTestBase
 
         // Finally delete
         await _paymentMethodWriteRepository.DeleteAsync(deactivated);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var deleted = await _paymentMethodWriteRepository.GetByIdAsync(paymentMethod.Id);
         deleted.Should().BeNull();

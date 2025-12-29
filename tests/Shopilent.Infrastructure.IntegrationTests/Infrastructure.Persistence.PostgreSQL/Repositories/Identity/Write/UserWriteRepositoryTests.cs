@@ -45,7 +45,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var persistedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -70,7 +70,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(adminUser);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var persistedUser = await _userReadRepository.GetByIdAsync(adminUser.Id);
@@ -92,7 +92,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var persistedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -111,7 +111,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
         var user2 = UserBuilder.Random().WithEmail("duplicate@example.com").Build();
 
         await _userWriteRepository.AddAsync(user1);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act & Assert
         await _userWriteRepository.AddAsync(user2);
@@ -132,7 +132,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         DbContext.Entry(user).State = EntityState.Detached;
 
@@ -145,7 +145,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.UpdateAsync(existingUser);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -164,7 +164,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.Random().AsInactive().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach the entity
         DbContext.Entry(user).State = EntityState.Detached;
@@ -174,7 +174,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.UpdateAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -190,7 +190,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.Random().AsActive().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach the entity
         DbContext.Entry(user).State = EntityState.Detached;
@@ -200,7 +200,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.UpdateAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -216,7 +216,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.Random().WithUnverifiedEmail().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach the entity
         DbContext.Entry(user).State = EntityState.Detached;
@@ -226,7 +226,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.UpdateAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -242,11 +242,11 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.Random().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         await _userWriteRepository.DeleteAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var deletedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -261,7 +261,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.Random().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var retrievedUser = await _userWriteRepository.GetByIdAsync(user.Id);
@@ -296,7 +296,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
             .WithEmail("test@example.com")
             .Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var retrievedUser = await _userWriteRepository.GetByEmailAsync("test@example.com");
@@ -330,7 +330,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
             .WithEmail("Test@Example.COM")
             .Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var retrievedUser = await _userWriteRepository.GetByEmailAsync("test@example.com");
@@ -349,7 +349,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.CustomerUser().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach the entity
         DbContext.Entry(user).State = EntityState.Detached;
@@ -359,7 +359,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.UpdateAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -375,8 +375,8 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.Random().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
+        await _unitOfWork.CommitAsync();
 
         // Update personal info with phone number
         var newFullName = FullName.Create("Updated", "Name").Value;
@@ -385,7 +385,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.UpdateAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedUser = await _userReadRepository.GetByIdAsync(user.Id);
@@ -410,7 +410,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
             await _userWriteRepository.AddAsync(user);
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var persistedUsers = await _userReadRepository.ListAllAsync();
@@ -430,7 +430,7 @@ public class UserWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.Random().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         var userId = user.Id;
 
         // Create separate service scopes to simulate true concurrent access
@@ -461,12 +461,12 @@ public class UserWriteRepositoryTests : IntegrationTestBase
         // Act & Assert
         // First update should succeed
         await userWriteRepository1.UpdateAsync(user1);
-        await unitOfWork1.SaveChangesAsync();
+        await unitOfWork1.CommitAsync();
 
         // Second update should fail due to concurrency conflict
         await userWriteRepository2.UpdateAsync(user2);
 
-        var act = () => unitOfWork2.SaveChangesAsync();
+        var act = () => unitOfWork2.CommitAsync();
         await act.Should().ThrowAsync<ConcurrencyConflictException>();
     }
 }

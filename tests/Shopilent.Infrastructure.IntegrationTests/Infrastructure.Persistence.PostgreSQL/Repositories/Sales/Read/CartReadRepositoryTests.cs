@@ -41,7 +41,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var cart = new CartBuilder()
             .WithUser(user)
@@ -49,7 +49,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _cartWriteRepository.AddAsync(cart);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _cartReadRepository.GetByIdAsync(cart.Id);
@@ -85,7 +85,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var cart = new CartBuilder()
             .WithUser(user)
@@ -93,7 +93,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _cartWriteRepository.AddAsync(cart);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _cartReadRepository.GetByUserIdAsync(user.Id);
@@ -131,7 +131,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _cartWriteRepository.AddAsync(anonymousCart);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _cartReadRepository.GetByUserIdAsync(Guid.NewGuid());
@@ -164,7 +164,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
         var user2 = new UserBuilder().Build();
         await _userWriteRepository.AddAsync(user1);
         await _userWriteRepository.AddAsync(user2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var cart1 = new CartBuilder().WithUser(user1).Build();
         var cart2 = new CartBuilder().WithUser(user2).Build();
@@ -173,7 +173,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
         await _cartWriteRepository.AddAsync(cart1);
         await _cartWriteRepository.AddAsync(cart2);
         await _cartWriteRepository.AddAsync(anonymousCart);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _cartReadRepository.ListAllAsync();
@@ -201,7 +201,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
         var product2 = new ProductBuilder().WithCategory(category).Build();
         await _productWriteRepository.AddAsync(product1);
         await _productWriteRepository.AddAsync(product2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Create carts with items that will be considered "old"
         // Note: GetAbandonedCartsAsync only returns carts that have items
@@ -216,7 +216,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
 
         await _cartWriteRepository.AddAsync(oldCart);
         await _cartWriteRepository.AddAsync(anotherOldCart);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Wait to ensure the carts are older than our threshold
         await Task.Delay(2000); // Wait 2 seconds to be safe
@@ -238,11 +238,11 @@ public class CartReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var recentCart = new CartBuilder().WithUser(user).Build();
         await _cartWriteRepository.AddAsync(recentCart);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - looking for carts older than 1 hour
         var result = await _cartReadRepository.GetAbandonedCartsAsync(TimeSpan.FromHours(1));
@@ -281,7 +281,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
         var product2 = new ProductBuilder().WithCategory(category).Build();
         await _productWriteRepository.AddAsync(product1);
         await _productWriteRepository.AddAsync(product2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         var cart = new CartBuilder()
             .WithUser(user)
@@ -290,7 +290,7 @@ public class CartReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _cartWriteRepository.AddAsync(cart);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _cartReadRepository.GetByIdAsync(cart.Id);
@@ -312,19 +312,19 @@ public class CartReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
         await _userWriteRepository.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Create multiple carts for the same user
         var cart1 = new CartBuilder().WithUser(user).Build();
         await _cartWriteRepository.AddAsync(cart1);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Wait a bit to ensure different timestamps
         await Task.Delay(100);
 
         var cart2 = new CartBuilder().WithUser(user).WithMetadata("version", "2").Build();
         await _cartWriteRepository.AddAsync(cart2);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _cartReadRepository.GetByUserIdAsync(user.Id);

@@ -98,7 +98,7 @@ public class UpdateCategoryParentCommandV1Tests : TestBase
 
         // Verify the category was saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -150,7 +150,7 @@ public class UpdateCategoryParentCommandV1Tests : TestBase
 
         // Verify the category was saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Once);
     }
 
@@ -181,7 +181,7 @@ public class UpdateCategoryParentCommandV1Tests : TestBase
 
         // Verify the category was not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -222,7 +222,7 @@ public class UpdateCategoryParentCommandV1Tests : TestBase
 
         // Verify the category was not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 
@@ -258,7 +258,7 @@ public class UpdateCategoryParentCommandV1Tests : TestBase
 
         // Verify the category was not saved
         Fixture.MockUnitOfWork.Verify(
-            uow => uow.SaveChangesAsync(CancellationToken),
+            uow => uow.CommitAsync(CancellationToken),
             Times.Never);
     }
 }

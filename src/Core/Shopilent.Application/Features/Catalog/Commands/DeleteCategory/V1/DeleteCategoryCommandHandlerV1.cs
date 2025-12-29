@@ -65,7 +65,7 @@ internal sealed class DeleteCategoryCommandHandlerV1 : ICommandHandler<DeleteCat
             await _categoryWriteRepository.DeleteAsync(category, cancellationToken);
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Category deleted successfully with ID: {CategoryId}", category.Id);
 

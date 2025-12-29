@@ -74,7 +74,7 @@ internal sealed class UpdateUserCommandHandlerV1 : ICommandHandler<UpdateUserCom
 
             // Save changes
             await _userWriteRepository.UpdateAsync(user, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Successfully updated user {UserId}", request.UserId);
 

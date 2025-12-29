@@ -131,7 +131,7 @@ internal sealed class
 
             // Add to repository and save using Unit of Work
             await _paymentMethodWriteRepository.AddAsync(paymentMethod, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Payment method created successfully: {PaymentMethodId} for user: {UserId}",
                 paymentMethod.Id, userId);
@@ -582,7 +582,7 @@ internal sealed class
 
             // Add to repository and save using Unit of Work
             await _paymentMethodWriteRepository.AddAsync(paymentMethod, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation(
                 "Payment method created successfully from confirmed setup intent: {PaymentMethodId} for user: {UserId}",

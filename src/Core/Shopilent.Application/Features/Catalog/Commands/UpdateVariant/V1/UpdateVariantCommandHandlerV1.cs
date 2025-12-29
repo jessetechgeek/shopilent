@@ -296,7 +296,7 @@ internal sealed class UpdateVariantCommandHandlerV1 : ICommandHandler<UpdateVari
             }
 
             // Save changes
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             // Map images for response
             var images = variant.Images.Select(img => new VariantImageResponseDto

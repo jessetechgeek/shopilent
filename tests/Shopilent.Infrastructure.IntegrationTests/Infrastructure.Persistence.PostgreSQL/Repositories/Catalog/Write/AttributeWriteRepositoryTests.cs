@@ -38,7 +38,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _attributeReadRepository.GetByIdAsync(attribute.Id);
@@ -65,7 +65,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _attributeWriteRepository.GetByNameAsync(uniqueName);
@@ -92,11 +92,11 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _attributeWriteRepository.AddAsync(attribute1);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act & Assert
         await _attributeWriteRepository.AddAsync(attribute2);
-        var action = () => _unitOfWork.SaveChangesAsync();
+        var action = () => _unitOfWork.CommitAsync();
         await action.Should().ThrowAsync<Exception>();
     }
 
@@ -107,7 +107,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var originalAttribute = AttributeBuilder.Random().Build();
         await _attributeWriteRepository.AddAsync(originalAttribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach original entity to simulate real-world scenario
         DbContext.Entry(originalAttribute).State = EntityState.Detached;
@@ -118,7 +118,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
 
         existingAttribute!.Update(newDisplayName);
         await _attributeWriteRepository.UpdateAsync(existingAttribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var updatedAttribute = await _attributeReadRepository.GetByIdAsync(originalAttribute.Id);
@@ -135,7 +135,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var attribute = AttributeBuilder.Random().Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach entity
         DbContext.Entry(attribute).State = EntityState.Detached;
@@ -147,7 +147,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
         existingAttribute.SetIsVariant(true);
 
         await _attributeWriteRepository.UpdateAsync(existingAttribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _attributeReadRepository.GetByIdAsync(attribute.Id);
@@ -164,7 +164,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var attribute = AttributeBuilder.Random().Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Detach entity
         DbContext.Entry(attribute).State = EntityState.Detached;
@@ -176,7 +176,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
         existingAttribute.UpdateConfiguration("step", 1);
 
         await _attributeWriteRepository.UpdateAsync(existingAttribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _attributeWriteRepository.GetByIdAsync(attribute.Id);
@@ -196,11 +196,11 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var attribute = AttributeBuilder.Random().Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         await _attributeWriteRepository.DeleteAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _attributeReadRepository.GetByIdAsync(attribute.Id);
@@ -214,7 +214,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
         var attribute = AttributeBuilder.Random().Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeWriteRepository.GetByIdAsync(attribute.Id);
@@ -251,7 +251,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
             .WithName(uniqueName)
             .Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeWriteRepository.GetByNameAsync(uniqueName);
@@ -286,7 +286,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
             .WithName(attributeName)
             .Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act
         var result = await _attributeWriteRepository.NameExistsAsync(attributeName);
@@ -319,7 +319,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
             .WithName(attributeName)
             .Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Act - Exclude the current attribute ID
         var result = await _attributeWriteRepository.NameExistsAsync(attributeName, attribute.Id);
@@ -336,7 +336,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
 
         var attribute = AttributeBuilder.Random().Build();
         await _attributeWriteRepository.AddAsync(attribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
         var attributeId = attribute.Id;
 
         // Create separate service scopes to simulate true concurrent access
@@ -366,12 +366,12 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
         // Act & Assert
         // First update should succeed
         await attributeWriteRepository1.UpdateAsync(attribute1);
-        await unitOfWork1.SaveChangesAsync();
+        await unitOfWork1.CommitAsync();
 
         // Second update should fail due to concurrency conflict
         await attributeWriteRepository2.UpdateAsync(attribute2);
 
-        var action = () => unitOfWork2.SaveChangesAsync();
+        var action = () => unitOfWork2.CommitAsync();
         await action.Should().ThrowAsync<ConcurrencyConflictException>();
     }
 
@@ -400,7 +400,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
         await _attributeWriteRepository.AddAsync(textAttribute);
         await _attributeWriteRepository.AddAsync(numberAttribute);
         await _attributeWriteRepository.AddAsync(booleanAttribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var textResult = await _attributeReadRepository.GetByIdAsync(textAttribute.Id);
@@ -426,7 +426,7 @@ public class AttributeWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _attributeWriteRepository.AddAsync(variantAttribute);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         // Assert
         var result = await _attributeReadRepository.GetByIdAsync(variantAttribute.Id);

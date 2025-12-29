@@ -93,8 +93,6 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
 
         try
         {
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
             switch (webhookResult.EventType)
             {
                 case "payment_intent.succeeded":
@@ -135,8 +133,7 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
                     break;
             }
 
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync(cancellationToken);
+            await _unitOfWork.CommitAsync(cancellationToken);
 
             _logger.LogInformation("Successfully processed webhook event {EventType} for transaction {TransactionId}",
                 webhookResult.EventType, webhookResult.TransactionId);
