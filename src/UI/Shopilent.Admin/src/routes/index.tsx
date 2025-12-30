@@ -1,6 +1,7 @@
 import {Routes, Route, Navigate} from 'react-router-dom';
 import {useAuth} from '@/contexts/AuthContext';
 import ProtectedRoute from './ProtectedRoute';
+import {UserRole} from '@/models/auth';
 
 // Layouts
 import MainLayout from '@/layouts/MainLayout';
@@ -34,6 +35,7 @@ import EditCustomerPage from '@/pages/customers/EditCustomerPage';
 
 // Tools
 import ToolsPage from '@/pages/tools/ToolsPage';
+import StatusPage from '@/pages/status/StatusPage';
 
 // Not Found & Unauthorized
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -78,6 +80,13 @@ const AppRoutes = () => {
 
           {/* Tools */}
           <Route path="/tools" element={<ToolsPage/>}/>
+        </Route>
+      </Route>
+
+      {/* Admin-only Routes */}
+      <Route element={<ProtectedRoute requiredRoles={[UserRole.Admin]}/>}>
+        <Route element={<MainLayout/>}>
+          <Route path="/system-status" element={<StatusPage/>}/>
 
           {/* Settings */}
           <Route path="/profile" element={<ProfilePage/>}/>

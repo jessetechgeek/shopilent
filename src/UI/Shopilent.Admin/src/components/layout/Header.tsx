@@ -1,5 +1,5 @@
 import React from 'react';
-import {Bell, Search, User, Moon, Sun} from 'lucide-react';
+import {Bell, Search, User, Moon, Sun, Activity} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {
@@ -12,15 +12,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {useTheme} from '@/hooks/useTheme';
 import {useAuth} from '@/contexts/AuthContext';
-import {Link} from 'react-router-dom';
+import {Link, useLocation} from 'react-router-dom';
+import {cn} from '@/lib/utils';
+import {UserRole} from '@/models/auth';
 
 const Header: React.FC = () => {
   const {theme, setTheme} = useTheme();
-  const {user, logout} = useAuth();
+  const {user, logout, hasRole} = useAuth();
+  const location = useLocation();
 
   const handleLogout = async () => {
     await logout();
   };
+
+  const isSystemStatusActive = location.pathname === '/system-status';
 
   return (
     <header className="border-b border-border bg-background">
@@ -46,6 +51,21 @@ const Header: React.FC = () => {
 
         {/* Right side actions */}
         <div className="flex items-center space-x-2">
+          {/* System Status - Admin only */}
+          {hasRole([UserRole.Admin]) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="System Status"
+              asChild
+              className={cn(isSystemStatusActive && "bg-accent text-accent-foreground")}
+            >
+              <Link to="/system-status">
+                <Activity className="size-4"/>
+              </Link>
+            </Button>
+          )}
+
           {/* Theme toggle */}
           <Button
             variant="ghost"
