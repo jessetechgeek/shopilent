@@ -203,13 +203,28 @@ internal sealed class ProcessWebhookCommandHandlerV1 : ICommandHandler<ProcessWe
             var order = await _orderWriteRepository.GetByIdAsync(payment.OrderId, cancellationToken);
             if (order != null)
             {
-                // Optionally cancel the order if payment failed
-                if (webhookResult.EventType == "payment_intent.canceled")
+                // This restores stock via OrderCancelledEvent
+                if (webhookResult.EventType == "payment_intent.canceled" ||
+                    webhookResult.EventType == "payment_intent.payment_failed")
                 {
-                    order.Cancel("Payment was canceled");
+                    var cancelReason = webhookResult.EventType == "payment_intent.canceled"
+                        ? "Payment was canceled"
+                        : $"Payment failed: {errorMessage}";
 
-                    _logger.LogInformation("Canceled order {OrderId} due to payment cancellation {TransactionId}",
-                        order.Id, webhookResult.TransactionId);
+                    var cancelResult = order.Cancel(cancelReason);
+
+                    if (cancelResult.IsSuccess)
+                    {
+                        _logger.LogInformation(
+                            "Canceled order {OrderId} due to payment failure. TransactionId: {TransactionId}, EventType: {EventType}, Reason: {Reason}",
+                            order.Id, webhookResult.TransactionId, webhookResult.EventType, cancelReason);
+                    }
+                    else
+                    {
+                        _logger.LogWarning(
+                            "Failed to cancel order {OrderId} after payment failure: {Error}. Order may already be cancelled.",
+                            order.Id, cancelResult.Error.Message);
+                    }
                 }
             }
         }
