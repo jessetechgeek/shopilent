@@ -67,4 +67,22 @@ public static class OrderErrors
     public static Error AccessDenied => Error.Forbidden(
         code: "Order.AccessDenied",
         message: "You are not authorized to view this order.");
+
+    public static Error InsufficientStockForOrder(List<(Guid VariantId, string Sku, int Requested, int Available)> outOfStockItems)
+    {
+        var itemDetails = string.Join(", ", outOfStockItems.Select(i =>
+            $"{i.Sku} (requested: {i.Requested}, available: {i.Available})"));
+
+        return Error.Validation(
+            code: "Order.InsufficientStock",
+            message: $"Insufficient stock for the following items: {itemDetails}. Please remove these items from your cart and try again.");
+    }
+
+    public static Error StockReductionFailed(Guid variantId) => Error.Failure(
+        code: "Order.StockReductionFailed",
+        message: $"Failed to reduce stock for variant {variantId}. Please try again.");
+
+    public static Error StockRestorationFailed(Guid variantId) => Error.Failure(
+        code: "Order.StockRestorationFailed",
+        message: $"Failed to restore stock for variant {variantId}.");
 }

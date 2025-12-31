@@ -125,6 +125,51 @@ internal sealed class
                 billingAddress = shippingAddress;
             }
 
+            _logger.LogInformation("Validating stock availability for {ItemCount} items", cart.Items.Count);
+
+            var stockValidationErrors = new List<(Guid VariantId, string Sku, int Requested, int Available)>();
+
+            foreach (var cartItem in cart.Items)
+            {
+                // Skip products without variants
+                if (!cartItem.VariantId.HasValue)
+                    continue;
+
+                var variant = await _productVariantWriteRepository.GetByIdAsync(
+                    cartItem.VariantId.Value,
+                    cancellationToken);
+
+                if (variant == null)
+                    return Result.Failure<CreateOrderFromCartResponseV1>(
+                        ProductVariantErrors.NotFound(cartItem.VariantId.Value));
+
+                // Check if sufficient stock is available
+                if (variant.StockQuantity < cartItem.Quantity)
+                {
+                    _logger.LogWarning(
+                        "Insufficient stock for variant {VariantId}: requested {Requested}, available {Available}",
+                        variant.Id, cartItem.Quantity, variant.StockQuantity);
+
+                    stockValidationErrors.Add((
+                        variant.Id,
+                        variant.Sku ?? "N/A",
+                        cartItem.Quantity,
+                        variant.StockQuantity
+                    ));
+                }
+            }
+
+            // Reject entire order if ANY item has insufficient stock
+            if (stockValidationErrors.Any())
+            {
+                _logger.LogWarning(
+                    "Order creation failed for user {UserId} due to insufficient stock for {Count} items",
+                    _currentUserContext.UserId, stockValidationErrors.Count);
+
+                return Result.Failure<CreateOrderFromCartResponseV1>(
+                    OrderErrors.InsufficientStockForOrder(stockValidationErrors));
+            }
+
             // Calculate order totals (this would typically involve tax and shipping calculation services)
             var subtotal = CalculateSubtotal(cart);
             var tax = CalculateTax(cart, shippingAddress); // You'd implement tax calculation logic
@@ -165,6 +210,24 @@ internal sealed class
                     if (variant == null)
                         return Result.Failure<CreateOrderFromCartResponseV1>(
                             ProductVariantErrors.NotFound(cartItem.VariantId.Value));
+
+                    var removeStockResult = variant.RemoveStock(cartItem.Quantity);
+                    if (removeStockResult.IsFailure)
+                    {
+                        _logger.LogError(
+                            "Failed to reduce stock for variant {VariantId}: {Error}",
+                            variant.Id, removeStockResult.Error.Message);
+
+                        return Result.Failure<CreateOrderFromCartResponseV1>(
+                            OrderErrors.StockReductionFailed(variant.Id));
+                    }
+
+                    // Update the variant in the repository
+                    await _productVariantWriteRepository.UpdateAsync(variant, cancellationToken);
+
+                    _logger.LogInformation(
+                        "Reduced stock for variant {VariantId} (SKU: {Sku}) by {Quantity}. New stock: {NewStock}",
+                        variant.Id, variant.Sku, cartItem.Quantity, variant.StockQuantity);
                 }
 
                 // Determine unit price (variant price takes precedence over product base price)
@@ -200,10 +263,11 @@ internal sealed class
                 await _cartWriteRepository.UpdateAsync(cart, cancellationToken);
             }
 
-            // **CRITICAL: Commit the transaction to save to database**
             await _unitOfWork.CommitAsync(cancellationToken);
 
-            _logger.LogInformation("Order {OrderId} created successfully from cart {CartId}", order.Id, cart.Id);
+            _logger.LogInformation(
+                "Order {OrderId} created successfully from cart {CartId} with stock reduced for {ItemCount} items",
+                order.Id, cart.Id, order.Items.Count);
 
             // Map to response
             var response = new CreateOrderFromCartResponseV1
