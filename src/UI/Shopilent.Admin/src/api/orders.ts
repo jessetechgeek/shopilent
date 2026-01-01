@@ -11,7 +11,9 @@ import {
     PartialRefundOrderRequest,
     PartialRefundOrderResponse,
     CancelOrderRequest,
-    CancelOrderResponse
+    CancelOrderResponse,
+    MarkAsReturnedRequest,
+    MarkAsReturnedResponse
 } from '@/models/orders';
 import { DataTableResult } from '@/models/common';
 import {
@@ -24,7 +26,8 @@ import {
     cancelOrderEndpoint,
     getOrderTrackingEndpoint,
     markOrderAsShippedEndpoint,
-    markOrderAsDeliveredEndpoint
+    markOrderAsDeliveredEndpoint,
+    markOrderAsReturnedEndpoint
 } from '@/api/endpoints';
 
 export const orderApi = {
@@ -67,6 +70,10 @@ export const orderApi = {
     // Mark order as delivered
     markOrderAsDelivered: (id: string) =>
         apiClient.put<ApiResponse<{ id: string; status: number; updatedAt: string; message: string }>>(markOrderAsDeliveredEndpoint(id)),
+
+    // Mark order as returned
+    markOrderAsReturned: (id: string, request?: MarkAsReturnedRequest) =>
+        apiClient.post<ApiResponse<MarkAsReturnedResponse>>(markOrderAsReturnedEndpoint(id), request || {}),
 
     // Get recent orders for dashboard
     getRecentOrders: () =>

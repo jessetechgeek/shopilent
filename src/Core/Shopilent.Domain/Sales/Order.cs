@@ -237,6 +237,29 @@ public class Order : AggregateRoot
         return Result.Success();
     }
 
+    public Result MarkAsReturned(string returnReason = null)
+    {
+        if (Status == OrderStatus.Returned)
+            return Result.Success(); // Idempotent
+
+        // Only delivered orders can be marked as returned
+        if (Status != OrderStatus.Delivered)
+            return Result.Failure(OrderErrors.InvalidOrderStatus("mark as returned - only delivered orders can be returned"));
+
+        var oldStatus = Status;
+        Status = OrderStatus.Returned;
+
+        if (returnReason != null)
+            Metadata["returnReason"] = returnReason;
+
+        Metadata["returnedAt"] = DateTime.UtcNow;
+
+        AddDomainEvent(new OrderStatusChangedEvent(Id, oldStatus, Status));
+        AddDomainEvent(new OrderReturnedEvent(Id, returnReason));
+
+        return Result.Success();
+    }
+
     public Result Cancel(string reason = null, bool isAdminOrManager = false)
     {
         if (Status == OrderStatus.Cancelled)
@@ -296,11 +319,11 @@ public class Order : AggregateRoot
         if (PaymentStatus != PaymentStatus.Succeeded)
             return Result.Failure(OrderErrors.InvalidOrderStatus("refund"));
 
-        // Can't refund delivered orders without special permission
-        if (Status == OrderStatus.Delivered)
-            return Result.Failure(OrderErrors.InvalidOrderStatus("refund a delivered order"));
+        // Can refund orders that are Processing, Shipped, Delivered, or Returned
+        // Cannot refund Pending (not yet paid) or Cancelled orders
+        if (Status == OrderStatus.Pending)
+            return Result.Failure(OrderErrors.InvalidOrderStatus("refund - order must be paid first"));
 
-        // Can't refund cancelled orders (they should be cancelled via the Cancel method)
         if (Status == OrderStatus.Cancelled)
             return Result.Failure(OrderErrors.InvalidOrderStatus("refund a cancelled order"));
 
@@ -312,7 +335,12 @@ public class Order : AggregateRoot
         // Update order status
         var oldStatus = Status;
         var oldPaymentStatus = PaymentStatus;
-        Status = OrderStatus.Cancelled;
+
+        // Preserve the Returned status for analytics by using ReturnedAndRefunded
+        Status = oldStatus == OrderStatus.Returned
+            ? OrderStatus.ReturnedAndRefunded
+            : OrderStatus.Cancelled;
+
         PaymentStatus = PaymentStatus.Refunded;
 
         // Add a note to metadata about the refund

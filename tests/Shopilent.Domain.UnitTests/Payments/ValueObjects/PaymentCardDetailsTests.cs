@@ -92,13 +92,13 @@ public class PaymentCardDetailsTests
     public void Equals_WithSameValues_ShouldReturnTrue()
     {
         // Arrange
-        var expiryDate = new DateTime(2025, 12, 31); // Use fixed date for comparison
+        var expiryDate = new DateTime(2030, 12, 31); // Use fixed date for comparison
         var detailsResult1 = PaymentCardDetails.Create("Visa", "4242", expiryDate);
         var detailsResult2 = PaymentCardDetails.Create("Visa", "4242", expiryDate);
-        
+
         detailsResult1.IsSuccess.Should().BeTrue();
         detailsResult2.IsSuccess.Should().BeTrue();
-        
+
         var details1 = detailsResult1.Value;
         var details2 = detailsResult2.Value;
 
@@ -112,13 +112,13 @@ public class PaymentCardDetailsTests
     public void Equals_WithDifferentBrand_ShouldReturnFalse()
     {
         // Arrange
-        var expiryDate = new DateTime(2025, 12, 31);
+        var expiryDate = new DateTime(2040, 12, 31);
         var detailsResult1 = PaymentCardDetails.Create("Visa", "4242", expiryDate);
         var detailsResult2 = PaymentCardDetails.Create("Mastercard", "4242", expiryDate);
-        
+
         detailsResult1.IsSuccess.Should().BeTrue();
         detailsResult2.IsSuccess.Should().BeTrue();
-        
+
         var details1 = detailsResult1.Value;
         var details2 = detailsResult2.Value;
 
@@ -132,13 +132,13 @@ public class PaymentCardDetailsTests
     public void Equals_WithDifferentLastFour_ShouldReturnFalse()
     {
         // Arrange
-        var expiryDate = new DateTime(2025, 12, 31);
+        var expiryDate = new DateTime(2030, 12, 31);
         var detailsResult1 = PaymentCardDetails.Create("Visa", "4242", expiryDate);
         var detailsResult2 = PaymentCardDetails.Create("Visa", "5555", expiryDate);
-        
+
         detailsResult1.IsSuccess.Should().BeTrue();
         detailsResult2.IsSuccess.Should().BeTrue();
-        
+
         var details1 = detailsResult1.Value;
         var details2 = detailsResult2.Value;
 
@@ -152,12 +152,12 @@ public class PaymentCardDetailsTests
     public void Equals_WithDifferentExpiryDate_ShouldReturnFalse()
     {
         // Arrange
-        var detailsResult1 = PaymentCardDetails.Create("Visa", "4242", new DateTime(2025, 12, 31));
-        var detailsResult2 = PaymentCardDetails.Create("Visa", "4242", new DateTime(2026, 12, 31));
-        
+        var detailsResult1 = PaymentCardDetails.Create("Visa", "4242", new DateTime(2030, 12, 31));
+        var detailsResult2 = PaymentCardDetails.Create("Visa", "4242", new DateTime(2031, 12, 31));
+
         detailsResult1.IsSuccess.Should().BeTrue();
         detailsResult2.IsSuccess.Should().BeTrue();
-        
+
         var details1 = detailsResult1.Value;
         var details2 = detailsResult2.Value;
 

@@ -25,6 +25,7 @@ export enum OrderEndpoint {
   Cancel = '/v1/orders/{id}/cancel',
   MarkShipped = '/v1/orders/{id}/shipped',
   MarkDelivered = '/v1/orders/{id}/delivered',
+  MarkReturned = '/v1/orders/{id}/return',
 
   // Tracking
   GetTracking = '/v1/orders/{id}/tracking',
@@ -118,4 +119,14 @@ export function markOrderAsShippedEndpoint(id: string): string {
  */
 export function markOrderAsDeliveredEndpoint(id: string): string {
   return replacePath(OrderEndpoint.MarkDelivered, { id });
+}
+
+/**
+ * Get mark order as returned endpoint by ID
+ *
+ * @param id - Order ID
+ * @returns Mark order as returned endpoint with ID
+ */
+export function markOrderAsReturnedEndpoint(id: string): string {
+  return replacePath(OrderEndpoint.MarkReturned, { id });
 }

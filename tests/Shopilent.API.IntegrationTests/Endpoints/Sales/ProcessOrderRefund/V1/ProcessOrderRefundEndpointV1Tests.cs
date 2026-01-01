@@ -207,24 +207,24 @@ public class ProcessOrderRefundEndpointV1Tests : ApiIntegrationTestBase
     }
 
     [Fact]
-    public async Task ProcessOrderRefund_DeliveredOrder_ShouldReturnBadRequest()
+    public async Task ProcessOrderRefund_DeliveredOrder_ShouldReturnSuccess()
     {
         // Arrange
         var accessToken = await AuthenticateAsAdminAsync();
         SetAuthenticationHeader(accessToken);
 
         var orderId = await CreateTestOrderAsync(OrderStatus.Delivered, PaymentStatus.Succeeded);
-        var request = OrderTestDataV1.Refund.CreateValidRequest("Trying to refund delivered order");
+        var request = OrderTestDataV1.Refund.CreateValidRequest("Refunding delivered order");
 
         // Act
-        var response = await PostAsync($"v1/orders/{orderId}/refund", request);
+        var response = await PostApiResponseAsync<object, ProcessOrderRefundResponseV1>(
+            $"v1/orders/{orderId}/refund", request);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-        var content = await response.Content.ReadAsStringAsync();
-        content.Should().NotBeNullOrEmpty();
-        content.Should().Contain("Cannot perform refund a delivered order operation with current order status");
+        AssertApiSuccess(response);
+        response!.Data.Status.Should().Be("Refunded"); // Delivered → Cancelled after refund
+        response.Data.RefundAmount.Should().BeGreaterThan(0);
+        response.Data.Reason.Should().Be("Refunding delivered order");
     }
 
     [Fact]

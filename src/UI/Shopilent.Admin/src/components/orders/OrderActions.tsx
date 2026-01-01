@@ -9,7 +9,8 @@ import {
   RotateCcw,
   CreditCard,
   Send,
-  CheckCircle
+  CheckCircle,
+  PackageX
 } from 'lucide-react';
 import {useNavigate} from 'react-router-dom';
 import {OrderDto, OrderStatus, PaymentStatus} from '@/models/orders';
@@ -22,6 +23,7 @@ interface OrderActionsProps {
   onUpdateTracking: (order: OrderDto) => void;
   onMarkAsShipped: (order: OrderDto) => void;
   onMarkAsDelivered: (order: OrderDto) => void;
+  onMarkAsReturned: (order: OrderDto) => void;
   onRefund: (order: OrderDto) => void;
   onPartialRefund: (order: OrderDto) => void;
   onCancel: (order: OrderDto) => void;
@@ -35,6 +37,7 @@ export function OrderActions({
                                onUpdateTracking,
                                onMarkAsShipped,
                                onMarkAsDelivered,
+                               onMarkAsReturned,
                                onRefund,
                                onPartialRefund,
                                onCancel,
@@ -45,17 +48,17 @@ export function OrderActions({
   const canUpdateTracking = order.status === OrderStatus.Shipped;
   const canMarkAsShipped = order.status === OrderStatus.Pending || order.status === OrderStatus.Processing;
   const canMarkAsDelivered = order.status === OrderStatus.Shipped;
-  const canUpdateStatus = order.status !== OrderStatus.Cancelled && order.status !== OrderStatus.Refunded;
+  const canMarkAsReturned = order.status === OrderStatus.Delivered;
+  const canUpdateStatus = order.status !== OrderStatus.Cancelled && order.status !== OrderStatus.ReturnedAndRefunded;
   const canUpdatePayment = order.paymentStatus !== PaymentStatus.Refunded && order.status !== OrderStatus.Cancelled;
   const canCancel = order.status !== OrderStatus.Cancelled &&
-    order.status !== OrderStatus.Refunded &&
-    order.status !== OrderStatus.Delivered;
+    order.status !== OrderStatus.ReturnedAndRefunded &&
+    order.status !== OrderStatus.Delivered &&
+    order.status !== OrderStatus.Returned;
   const canRefund = order.paymentStatus === PaymentStatus.Paid &&
-    order.status !== OrderStatus.Cancelled &&
-    order.status !== OrderStatus.Refunded;
+    order.status !== OrderStatus.Cancelled;
   const canPartialRefund = (order.paymentStatus === PaymentStatus.Paid || order.paymentStatus === PaymentStatus.PartiallyRefunded) &&
-    order.status !== OrderStatus.Cancelled &&
-    order.status !== OrderStatus.Refunded;
+    order.status !== OrderStatus.Cancelled;
 
   // Handle edit navigation
   const handleEdit = () => {
@@ -113,7 +116,7 @@ export function OrderActions({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{canUpdateStatus ? 'Update Status' : 'Cannot update status (cancelled/refunded)'}</p>
+            <p>{canUpdateStatus ? 'Update Status' : 'Cannot update status (cancelled/returned & refunded)'}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -194,6 +197,26 @@ export function OrderActions({
           </Tooltip>
         )}
 
+        {/* Mark as Returned */}
+        {canMarkAsReturned && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onMarkAsReturned(order)}
+                className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              >
+                <PackageX className="size-4"/>
+                <span className="sr-only">Mark as returned</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Mark as Returned</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         {/* Full Refund Order */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -247,7 +270,7 @@ export function OrderActions({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{canCancel ? 'Cancel Order' : 'Cannot cancel (already cancelled/refunded/delivered)'}</p>
+            <p>{canCancel ? 'Cancel Order' : 'Cannot cancel (already cancelled/returned & refunded/delivered)'}</p>
           </TooltipContent>
         </Tooltip>
       </div>

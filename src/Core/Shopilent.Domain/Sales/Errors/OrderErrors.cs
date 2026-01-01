@@ -85,4 +85,8 @@ public static class OrderErrors
     public static Error StockRestorationFailed(Guid variantId) => Error.Failure(
         code: "Order.StockRestorationFailed",
         message: $"Failed to restore stock for variant {variantId}.");
+
+    public static Error CannotReturnNonDeliveredOrder => Error.Validation(
+        code: "Order.CannotReturnNonDeliveredOrder",
+        message: "Only delivered orders can be marked as returned.");
 }

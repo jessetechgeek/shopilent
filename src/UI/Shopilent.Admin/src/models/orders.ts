@@ -6,8 +6,9 @@ export enum OrderStatus {
   Processing = 1,
   Shipped = 2,
   Delivered = 3,
-  Cancelled = 4,
-  Refunded = 5
+  Returned = 4,
+  ReturnedAndRefunded = 5,
+  Cancelled = 6
 }
 
 export enum PaymentStatus {
@@ -212,4 +213,17 @@ export interface CancelOrderResponse {
   status: OrderStatus;
   reason?: string;
   cancelledAt: string;
+}
+
+// Mark as Returned Request
+export interface MarkAsReturnedRequest {
+  returnReason?: string;
+}
+
+// Mark as Returned Response
+export interface MarkAsReturnedResponse {
+  orderId: string;
+  status: string;
+  returnReason?: string;
+  returnedAt: string;
 }

@@ -32,7 +32,8 @@ import {
   PartialRefundOrderRequest,
   CancelOrderRequest,
   OrderStatus,
-  UpdateOrderStatusRequest
+  UpdateOrderStatusRequest,
+  MarkAsReturnedRequest
 } from '@/models/orders';
 import {useTitle} from '@/hooks/useTitle';
 
@@ -57,6 +58,7 @@ const OrdersPage: React.FC = () => {
   const [trackingDialogOpen, setTrackingDialogOpen] = useState(false);
   const [markAsShippedDialogOpen, setMarkAsShippedDialogOpen] = useState(false);
   const [markAsDeliveredDialogOpen, setMarkAsDeliveredDialogOpen] = useState(false);
+  const [markAsReturnedDialogOpen, setMarkAsReturnedDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderDto | null>(null);
 
   // Prepare datatables request
@@ -209,6 +211,28 @@ const OrdersPage: React.FC = () => {
     }
   });
 
+  // Mark order as returned mutation
+  const markReturnedMutation = useMutation({
+    mutationFn: ({id, request}: { id: string; request: MarkAsReturnedRequest }) =>
+      orderApi.markOrderAsReturned(id, request),
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Order marked as returned successfully'
+      });
+      queryClient.invalidateQueries({queryKey: ['orders']});
+      setMarkAsReturnedDialogOpen(false);
+      setSelectedOrder(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to mark order as returned',
+        variant: 'destructive'
+      });
+    }
+  });
+
   // Full refund order mutation
   const refundOrderMutation = useMutation({
     mutationFn: ({id, request}: { id: string; request: RefundOrderRequest }) =>
@@ -309,6 +333,12 @@ const OrdersPage: React.FC = () => {
     setMarkAsDeliveredDialogOpen(true);
   };
 
+  // Handle mark as returned
+  const handleMarkAsReturned = (order: OrderDto) => {
+    setSelectedOrder(order);
+    setMarkAsReturnedDialogOpen(true);
+  };
+
   // Handle cancel
   const handleCancel = (order: OrderDto) => {
     setSelectedOrder(order);
@@ -357,6 +387,16 @@ const OrdersPage: React.FC = () => {
   const handleConfirmMarkAsDelivered = () => {
     if (selectedOrder) {
       markDeliveredMutation.mutate(selectedOrder.id);
+    }
+  };
+
+  // Handle confirm mark as returned
+  const handleConfirmMarkAsReturned = (returnReason?: string) => {
+    if (selectedOrder) {
+      const request: MarkAsReturnedRequest = {
+        returnReason
+      };
+      markReturnedMutation.mutate({id: selectedOrder.id, request});
     }
   };
 
@@ -450,6 +490,7 @@ const OrdersPage: React.FC = () => {
         onUpdateTracking={handleUpdateTracking}
         onMarkAsShipped={handleMarkAsShipped}
         onMarkAsDelivered={handleMarkAsDelivered}
+        onMarkAsReturned={handleMarkAsReturned}
         onRefund={handleRefund}
         onPartialRefund={handlePartialRefund}
         onCancel={handleCancel}
@@ -637,6 +678,61 @@ const OrdersPage: React.FC = () => {
         onConfirm={handleConfirmMarkAsDelivered}
         isLoading={markDeliveredMutation.isPending}
       />
+
+      {/* Mark as Returned Dialog */}
+      {markAsReturnedDialogOpen && (
+        <Dialog open={markAsReturnedDialogOpen} onOpenChange={setMarkAsReturnedDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Mark Order as Returned</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Order #{selectedOrder?.id.slice(-8).toUpperCase()}
+              </p>
+              <p className="text-sm">
+                Are you sure you want to mark this order as returned? This indicates the customer has returned the items.
+              </p>
+              <div>
+                <label htmlFor="returnReason" className="text-sm font-medium">
+                  Return Reason (optional)
+                </label>
+                <textarea
+                  id="returnReason"
+                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
+                  placeholder="Enter return reason..."
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setMarkAsReturnedDialogOpen(false)}
+                  className="px-4 py-2 text-sm border rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const textarea = document.getElementById('returnReason') as HTMLTextAreaElement;
+                    handleConfirmMarkAsReturned(textarea?.value);
+                  }}
+                  disabled={markReturnedMutation.isPending}
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {markReturnedMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin inline"/>
+                      Marking...
+                    </>
+                  ) : (
+                    'Mark as Returned'
+                  )}
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

@@ -277,8 +277,9 @@ const EditOrderPage: React.FC = () => {
       {value: OrderStatus.Processing.toString(), label: 'Processing'}, // "1"
       {value: OrderStatus.Shipped.toString(), label: 'Shipped'}, // "2"
       {value: OrderStatus.Delivered.toString(), label: 'Delivered'}, // "3"
-      {value: OrderStatus.Cancelled.toString(), label: 'Cancelled'}, // "4"
-      {value: OrderStatus.Refunded.toString(), label: 'Refunded'} // "5"
+      {value: OrderStatus.Returned.toString(), label: 'Returned'}, // "4"
+      {value: OrderStatus.ReturnedAndRefunded.toString(), label: 'Returned & Refunded'}, // "5"
+      {value: OrderStatus.Cancelled.toString(), label: 'Cancelled'} // "6"
     ];
 
     console.log('Order status options:', options);
