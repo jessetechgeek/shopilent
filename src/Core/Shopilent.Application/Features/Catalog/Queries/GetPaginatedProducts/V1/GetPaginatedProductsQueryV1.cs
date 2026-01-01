@@ -5,8 +5,8 @@ using Shopilent.Application.Abstractions.Search;
 namespace Shopilent.Application.Features.Catalog.Queries.GetPaginatedProducts.V1;
 
 public sealed record GetPaginatedProductsQueryV1 :
-    IQuery<SearchResponse<ProductSearchResultDto>>,
-    ICachedQuery<SearchResponse<ProductSearchResultDto>>
+    IQuery<SearchResponse<ProductSearchResponseDto>>,
+    ICachedQuery<SearchResponse<ProductSearchResponseDto>>
 {
     public int PageNumber { get; init; } = 1;
     public int PageSize { get; init; } = 10;

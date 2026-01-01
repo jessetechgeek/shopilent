@@ -15,7 +15,17 @@ public class UniversalSearchQueryV1Tests : TestBase
     {
         _handler = new UniversalSearchQueryHandlerV1(
             Fixture.MockSearchService.Object,
-            Fixture.GetLogger<UniversalSearchQueryHandlerV1>());
+            Fixture.GetLogger<UniversalSearchQueryHandlerV1>(),
+            Fixture.MockS3StorageService.Object);
+
+        // Setup S3 service mock to return presigned URLs
+        Fixture.MockS3StorageService
+            .Setup(service => service.GetPresignedUrlAsync(
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string key, TimeSpan expiration, CancellationToken ct) =>
+                Result.Success($"https://s3.example.com/{key}"));
     }
 
     [Fact]
