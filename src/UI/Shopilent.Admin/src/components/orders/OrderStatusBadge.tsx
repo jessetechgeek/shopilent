@@ -32,17 +32,23 @@ export function OrderStatusBadge({status}: OrderStatusBadgeProps) {
           variant: 'secondary' as const,
           className: 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-500'
         };
+      case OrderStatus.Returned:
+        return {
+          label: 'Returned',
+          variant: 'secondary' as const,
+          className: 'bg-orange-100 text-orange-800 dark:bg-orange-800/20 dark:text-orange-500'
+        };
+      case OrderStatus.ReturnedAndRefunded:
+        return {
+          label: 'Returned & Refunded',
+          variant: 'secondary' as const,
+          className: 'bg-purple-100 text-purple-800 dark:bg-purple-800/20 dark:text-purple-500'
+        };
       case OrderStatus.Cancelled:
         return {
           label: 'Cancelled',
           variant: 'destructive' as const,
           className: 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-500'
-        };
-      case OrderStatus.Refunded:
-        return {
-          label: 'Refunded',
-          variant: 'secondary' as const,
-          className: 'bg-purple-100 text-purple-800 dark:bg-purple-800/20 dark:text-purple-500'
         };
       default:
         return {

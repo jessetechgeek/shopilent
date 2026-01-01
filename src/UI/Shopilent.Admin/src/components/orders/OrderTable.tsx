@@ -33,6 +33,7 @@ interface OrderTableProps {
   onUpdateTracking: (order: OrderDto) => void;
   onMarkAsShipped: (order: OrderDto) => void;
   onMarkAsDelivered: (order: OrderDto) => void;
+  onMarkAsReturned: (order: OrderDto) => void;
   onRefund: (order: OrderDto) => void;
   onPartialRefund: (order: OrderDto) => void;
   onCancel: (order: OrderDto) => void;
@@ -57,6 +58,7 @@ export function OrderTable({
                              onUpdateTracking,
                              onMarkAsShipped,
                              onMarkAsDelivered,
+                             onMarkAsReturned,
                              onRefund,
                              onPartialRefund,
                              onCancel,
@@ -251,6 +253,7 @@ export function OrderTable({
             onUpdateTracking={onUpdateTracking}
             onMarkAsShipped={onMarkAsShipped}
             onMarkAsDelivered={onMarkAsDelivered}
+            onMarkAsReturned={onMarkAsReturned}
             onRefund={onRefund}
             onPartialRefund={onPartialRefund}
             onCancel={onCancel}
@@ -258,7 +261,7 @@ export function OrderTable({
         ),
       },
     ],
-    [sortColumn, sortDirection, onViewDetails, onUpdateStatus, onUpdatePayment, onUpdateTracking, onMarkAsShipped, onMarkAsDelivered, onRefund, onPartialRefund, onCancel]
+    [sortColumn, sortDirection, onViewDetails, onUpdateStatus, onUpdatePayment, onUpdateTracking, onMarkAsShipped, onMarkAsDelivered, onMarkAsReturned, onRefund, onPartialRefund, onCancel]
   );
 
   return (

@@ -34,8 +34,9 @@ const STATUS_OPTIONS = [
   {value: OrderStatus.Processing.toString(), label: 'Processing', description: 'Order is being prepared'},
   {value: OrderStatus.Shipped.toString(), label: 'Shipped', description: 'Order has been shipped to customer'},
   {value: OrderStatus.Delivered.toString(), label: 'Delivered', description: 'Order has been delivered to customer'},
+  {value: OrderStatus.Returned.toString(), label: 'Returned', description: 'Customer initiated return'},
+  {value: OrderStatus.ReturnedAndRefunded.toString(), label: 'Returned & Refunded', description: 'Return completed with refund'},
   {value: OrderStatus.Cancelled.toString(), label: 'Cancelled', description: 'Order has been cancelled'},
-  {value: OrderStatus.Refunded.toString(), label: 'Refunded', description: 'Order has been refunded'},
 ];
 
 export function UpdateOrderStatusDialog({

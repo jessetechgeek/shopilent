@@ -1482,4 +1482,96 @@ public class OrderTests
         cancelResult.Error.Code.Should().Be("Order.InvalidStatus");
         cancelResult.Error.Message.Should().Contain("cancel - delivered orders cannot be cancelled");
     }
+
+    [Fact]
+    public void ProcessRefund_WhenOrderIsReturned_ShouldSetStatusToReturnedAndRefunded()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        var shippingAddress = CreateTestAddress(user);
+        var billingAddress = CreateTestAddress(user);
+
+        var subtotalResult = Money.Create(100, "USD");
+        subtotalResult.IsSuccess.Should().BeTrue();
+
+        var taxResult = Money.Create(10, "USD");
+        taxResult.IsSuccess.Should().BeTrue();
+
+        var shippingCostResult = Money.Create(5, "USD");
+        shippingCostResult.IsSuccess.Should().BeTrue();
+
+        var orderResult = Order.CreatePaidOrder(
+            user,
+            shippingAddress,
+            billingAddress,
+            subtotalResult.Value,
+            taxResult.Value,
+            shippingCostResult.Value);
+
+        orderResult.IsSuccess.Should().BeTrue();
+        var order = orderResult.Value;
+
+        // Ship and deliver the order
+        order.MarkAsShipped();
+        order.MarkAsDelivered();
+
+        // Mark as returned
+        var returnResult = order.MarkAsReturned("Customer not satisfied");
+        returnResult.IsSuccess.Should().BeTrue();
+        order.Status.Should().Be(OrderStatus.Returned);
+
+        // Act - Process refund for returned order
+        var refundResult = order.ProcessRefund("Refund for returned item");
+
+        // Assert
+        refundResult.IsSuccess.Should().BeTrue();
+        order.Status.Should().Be(OrderStatus.ReturnedAndRefunded);
+        order.PaymentStatus.Should().Be(PaymentStatus.Refunded);
+        order.RefundedAmount.Should().Be(order.Total);
+        order.RefundedAt.Should().NotBeNull();
+        order.DomainEvents.Should().Contain(e => e is OrderRefundedEvent);
+    }
+
+    [Fact]
+    public void ProcessRefund_WhenOrderIsNotReturned_ShouldSetStatusToCancelled()
+    {
+        // Arrange
+        var user = CreateTestUser();
+        var shippingAddress = CreateTestAddress(user);
+        var billingAddress = CreateTestAddress(user);
+
+        var subtotalResult = Money.Create(100, "USD");
+        subtotalResult.IsSuccess.Should().BeTrue();
+
+        var taxResult = Money.Create(10, "USD");
+        taxResult.IsSuccess.Should().BeTrue();
+
+        var shippingCostResult = Money.Create(5, "USD");
+        shippingCostResult.IsSuccess.Should().BeTrue();
+
+        var orderResult = Order.CreatePaidOrder(
+            user,
+            shippingAddress,
+            billingAddress,
+            subtotalResult.Value,
+            taxResult.Value,
+            shippingCostResult.Value);
+
+        orderResult.IsSuccess.Should().BeTrue();
+        var order = orderResult.Value;
+
+        // Order is in Processing status (not returned)
+        order.Status.Should().Be(OrderStatus.Processing);
+
+        // Act - Process refund for non-returned order
+        var refundResult = order.ProcessRefund("Admin discretion refund");
+
+        // Assert
+        refundResult.IsSuccess.Should().BeTrue();
+        order.Status.Should().Be(OrderStatus.Cancelled);
+        order.PaymentStatus.Should().Be(PaymentStatus.Refunded);
+        order.RefundedAmount.Should().Be(order.Total);
+        order.RefundedAt.Should().NotBeNull();
+        order.DomainEvents.Should().Contain(e => e is OrderRefundedEvent);
+    }
 }
