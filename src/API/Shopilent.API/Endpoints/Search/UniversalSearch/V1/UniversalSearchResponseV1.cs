@@ -6,7 +6,7 @@ namespace Shopilent.API.Endpoints.Search.UniversalSearch.V1;
 
 public class UniversalSearchResponseV1
 {
-    public ProductSearchResultDto[] Items { get; init; } = [];
+    public ProductSearchResponseDto[] Items { get; init; } = [];
     public SearchFacets Facets { get; init; } = new();
     public int TotalCount { get; init; }
     public int PageNumber { get; init; }

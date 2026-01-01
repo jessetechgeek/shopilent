@@ -16,7 +16,7 @@ public record UniversalSearchQueryV1(
     int PageSize = 20,
     string SortBy = "relevance",
     bool SortDescending = false
-) : IQuery<SearchResponse<ProductSearchResultDto>>
+) : IQuery<SearchResponse<ProductSearchResponseDto>>
 {
     public UniversalSearchQueryV1() : this("", Array.Empty<string>(), new Dictionary<string, string[]>()) { }
 }

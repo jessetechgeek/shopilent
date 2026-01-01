@@ -18,7 +18,17 @@ public class GetPaginatedProductsQueryV1Tests : TestBase
         _mockSearchService = new Mock<ISearchService>();
         _handler = new GetPaginatedProductsQueryHandlerV1(
             _mockSearchService.Object,
-            Fixture.GetLogger<GetPaginatedProductsQueryHandlerV1>());
+            Fixture.GetLogger<GetPaginatedProductsQueryHandlerV1>(),
+            Fixture.MockS3StorageService.Object);
+
+        // Setup S3 service mock to return presigned URLs
+        Fixture.MockS3StorageService
+            .Setup(service => service.GetPresignedUrlAsync(
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string key, TimeSpan expiration, CancellationToken ct) =>
+                Result.Success($"https://s3.example.com/{key}"));
     }
 
     [Fact]
