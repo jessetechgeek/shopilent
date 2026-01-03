@@ -6,6 +6,7 @@ using Shopilent.Application.Features.Catalog.Queries.GetProduct.V1;
 using Shopilent.Application.UnitTests.Common;
 using Shopilent.Domain.Catalog.DTOs;
 using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Common.Results;
 
 namespace Shopilent.Application.UnitTests.Features.Catalog.Queries.V1;
 
@@ -20,7 +21,17 @@ public class GetProductQueryV1Tests : TestBase
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockProductReadRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
+        services.AddTransient(sp => Fixture.MockS3StorageService.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetProductQueryHandlerV1>());
+
+        // Setup S3 service mock to return presigned URLs
+        Fixture.MockS3StorageService
+            .Setup(service => service.GetPresignedUrlAsync(
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string key, TimeSpan expiry, CancellationToken ct) =>
+                Result.Success($"https://s3.example.com/{key}"));
 
         // Set up MediatR
         services.AddMediatR(cfg =>
@@ -91,9 +102,12 @@ public class GetProductQueryV1Tests : TestBase
         result.Value.Currency.Should().Be("USD");
         result.Value.IsActive.Should().BeTrue();
 
-        // Verify images
+        // Verify images - keys should be null, URLs should be populated
         result.Value.Images.Should().ContainSingle();
-        result.Value.Images.First().ImageKey.Should().Be("products/test-image.jpg");
+        result.Value.Images.First().ImageKey.Should().BeNull();
+        result.Value.Images.First().ThumbnailKey.Should().BeNull();
+        result.Value.Images.First().ImageUrl.Should().Be("https://s3.example.com/products/test-image.jpg");
+        result.Value.Images.First().ThumbnailUrl.Should().Be("https://s3.example.com/products/test-image-thumb.jpg");
         result.Value.Images.First().AltText.Should().Be("Product image");
 
         // Verify repository was called correctly
