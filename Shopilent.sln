@@ -53,9 +53,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UI", "UI", "{9CF72851-172A-
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shopilent.Application.UnitTests", "tests\Shopilent.Application.UnitTests\Shopilent.Application.UnitTests.csproj", "{2E1D9AB4-C199-41B8-B5DB-C7A286B79690}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Shopilent.Admin", "src\UI\Shopilent.Admin\shopilent.admin.esproj", "{2486DD0A-0D5D-2935-825B-9087B050AECC}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Shopilent.Admin", "src\UI\Shopilent.Admin\Shopilent.Admin.esproj", "{2486DD0A-0D5D-2935-825B-9087B050AECC}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Shopilent.Client", "src\UI\Shopilent.Client\shopilent.client.esproj", "{4F4C987E-2EB1-B5D0-1FDE-6E4950B8BA35}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "Shopilent.Client", "src\UI\Shopilent.Client\Shopilent.Client.esproj", "{4F4C987E-2EB1-B5D0-1FDE-6E4950B8BA35}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shopilent.Infrastructure.Payments", "src\Infrastructure\Shopilent.Infrastructure.Payments\Shopilent.Infrastructure.Payments.csproj", "{544175F3-59A1-4FF8-A41F-4261EC654187}"
 EndProject
