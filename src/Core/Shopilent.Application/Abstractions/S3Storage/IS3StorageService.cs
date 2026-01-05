@@ -28,6 +28,10 @@ public interface IS3StorageService
         TimeSpan expiry,
         CancellationToken cancellationToken = default);
 
+    Task<Result<string>> GetPublicUrlAsync(
+        string key,
+        CancellationToken cancellationToken = default);
+
     Task<Result<IEnumerable<S3ObjectInfo>>> ListFilesAsync(
         string? prefix = null,
         CancellationToken cancellationToken = default);

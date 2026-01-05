@@ -271,6 +271,141 @@ public class S3StorageServiceTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task GetPublicUrlAsync_WithValidFile_ShouldReturnPublicUrl()
+    {
+        // Arrange
+        var key = $"test-files/{Guid.NewGuid()}.txt";
+        var content = "Hello, Public URL Test!";
+        var contentBytes = Encoding.UTF8.GetBytes(content);
+        using var stream = new MemoryStream(contentBytes);
+
+        // First upload the file
+        var uploadResult = await _s3StorageService.UploadFileAsync(key, stream, "text/plain");
+        uploadResult.IsSuccess.Should().BeTrue();
+
+        // Act
+        var result = await _s3StorageService.GetPublicUrlAsync(key);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNullOrEmpty();
+        result.Value.Should().Contain(key);
+
+        // For MinIO in integration tests, URL should be modified to localhost
+        if (_s3Settings.Provider == "MinIO")
+        {
+            result.Value.Should().Contain("localhost:9858");
+        }
+
+        // Public URL should NOT contain query parameters (unlike presigned URLs)
+        result.Value.Should().NotContain("X-Amz-Algorithm");
+        result.Value.Should().NotContain("X-Amz-Credential");
+        result.Value.Should().NotContain("X-Amz-Signature");
+    }
+
+    [Fact]
+    public async Task GetPublicUrlAsync_WithNonExistentFile_ShouldReturnValidUrl()
+    {
+        // Arrange
+        var key = $"non-existent/{Guid.NewGuid()}.txt";
+
+        // Act
+        var result = await _s3StorageService.GetPublicUrlAsync(key);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNullOrEmpty();
+        result.Value.Should().Contain(key);
+
+        // Public URL should NOT contain query parameters
+        result.Value.Should().NotContain("X-Amz-Algorithm");
+        result.Value.Should().NotContain("X-Amz-Credential");
+        result.Value.Should().NotContain("X-Amz-Signature");
+    }
+
+    [Theory]
+    [InlineData("MinIO")]
+    [InlineData("DigitalOcean")]
+    [InlineData("Backblaze")]
+    [InlineData("AWS")]
+    public async Task GetPublicUrlAsync_WithDifferentProviders_ShouldGenerateCorrectUrlFormat(string provider)
+    {
+        // Arrange
+        var key = $"provider-test/{Guid.NewGuid()}.txt";
+
+        // Temporarily modify the provider setting
+        var originalProvider = _s3Settings.Provider;
+        var originalServiceUrl = _s3Settings.ServiceUrl;
+
+        try
+        {
+            // Use reflection to modify the settings for this test
+            var providerProperty = typeof(S3Settings).GetProperty(nameof(S3Settings.Provider));
+            var serviceUrlProperty = typeof(S3Settings).GetProperty(nameof(S3Settings.ServiceUrl));
+
+            providerProperty?.SetValue(_s3Settings, provider);
+
+            // Set appropriate service URLs for different providers
+            switch (provider)
+            {
+                case "DigitalOcean":
+                    serviceUrlProperty?.SetValue(_s3Settings, "https://nyc3.digitaloceanspaces.com");
+                    break;
+                case "Backblaze":
+                    serviceUrlProperty?.SetValue(_s3Settings, "https://s3.us-west-002.backblazeb2.com");
+                    break;
+                case "AWS":
+                    serviceUrlProperty?.SetValue(_s3Settings, "https://s3.amazonaws.com");
+                    break;
+                default: // MinIO
+                    serviceUrlProperty?.SetValue(_s3Settings,
+                        IntegrationTestFixture.MinioContainer.GetConnectionString());
+                    break;
+            }
+
+            // Act
+            var result = await _s3StorageService.GetPublicUrlAsync(key);
+
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+            result.Value.Should().NotBeNullOrEmpty();
+            result.Value.Should().Contain(key);
+
+            // Public URL should NOT contain query parameters
+            result.Value.Should().NotContain("X-Amz-Algorithm");
+            result.Value.Should().NotContain("X-Amz-Credential");
+            result.Value.Should().NotContain("X-Amz-Signature");
+
+            // Verify URL format based on provider
+            switch (provider)
+            {
+                case "DigitalOcean":
+                    result.Value.Should().Match($"https://{_testBucket}.nyc3.digitaloceanspaces.com/{key}");
+                    break;
+                case "Backblaze":
+                    result.Value.Should().Match($"https://s3.us-west-002.backblazeb2.com/file/{_testBucket}/{key}");
+                    break;
+                case "MinIO":
+                    result.Value.Should().Contain("localhost:9858");
+                    result.Value.Should().Contain(key);
+                    break;
+                case "AWS":
+                    // AWS can use either path-style or virtual-hosted-style
+                    result.Value.Should().Contain(key);
+                    break;
+            }
+        }
+        finally
+        {
+            // Restore original settings
+            var providerProperty = typeof(S3Settings).GetProperty(nameof(S3Settings.Provider));
+            var serviceUrlProperty = typeof(S3Settings).GetProperty(nameof(S3Settings.ServiceUrl));
+            providerProperty?.SetValue(_s3Settings, originalProvider);
+            serviceUrlProperty?.SetValue(_s3Settings, originalServiceUrl);
+        }
+    }
+
+    [Fact]
     public async Task ListFilesAsync_WithEmptyBucket_ShouldReturnEmptyList()
     {
         // Arrange

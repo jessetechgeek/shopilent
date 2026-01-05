@@ -21,13 +21,12 @@ public class GetPaginatedProductsQueryV1Tests : TestBase
             Fixture.GetLogger<GetPaginatedProductsQueryHandlerV1>(),
             Fixture.MockS3StorageService.Object);
 
-        // Setup S3 service mock to return presigned URLs
+        // Setup S3 service mock to return public URLs
         Fixture.MockS3StorageService
-            .Setup(service => service.GetPresignedUrlAsync(
+            .Setup(service => service.GetPublicUrlAsync(
                 It.IsAny<string>(),
-                It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string key, TimeSpan expiration, CancellationToken ct) =>
+            .ReturnsAsync((string key, CancellationToken ct) =>
                 Result.Success($"https://s3.example.com/{key}"));
     }
 
