@@ -7,6 +7,7 @@ namespace Shopilent.Domain.Catalog.Repositories.Read;
 public interface IProductReadRepository : IAggregateReadRepository<ProductDto>
 {
     Task<ProductDetailDto> GetDetailByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<ProductDetailDto> GetDetailBySlugAsync(string slug, CancellationToken cancellationToken = default);
     Task<ProductDto> GetBySlugAsync(string slug, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ProductDto>> GetByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default);
 

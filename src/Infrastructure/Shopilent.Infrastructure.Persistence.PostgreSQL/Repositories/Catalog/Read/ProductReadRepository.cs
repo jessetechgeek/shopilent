@@ -301,6 +301,247 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
         return productDetail;
     }
 
+    public async Task<ProductDetailDto> GetDetailBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        // Single optimized query using PostgreSQL JSON aggregation to fetch everything at once
+        const string sql = @"
+        SELECT
+            p.id AS Id,
+            p.name AS Name,
+            p.description AS Description,
+            p.base_price AS BasePrice,
+            p.currency AS Currency,
+            p.sku AS Sku,
+            p.slug AS Slug,
+            p.metadata::text AS MetadataJson,
+            p.is_active AS IsActive,
+            p.created_by AS CreatedBy,
+            p.modified_by AS ModifiedBy,
+            p.last_modified AS LastModified,
+            p.created_at AS CreatedAt,
+            p.updated_at AS UpdatedAt,
+            -- Categories as JSON array
+            COALESCE(
+                (SELECT jsonb_agg(
+                    jsonb_build_object(
+                        'id', c.id,
+                        'name', c.name,
+                        'description', c.description,
+                        'parentId', c.parent_id,
+                        'slug', c.slug,
+                        'level', c.level,
+                        'path', c.path,
+                        'isActive', c.is_active,
+                        'createdAt', c.created_at,
+                        'updatedAt', c.updated_at
+                    )
+                )
+                FROM categories c
+                JOIN product_categories pc ON c.id = pc.category_id
+                WHERE pc.product_id = p.id), '[]'::jsonb)::text AS CategoriesJson,
+            -- Attributes as JSON array
+            COALESCE(
+                (SELECT jsonb_agg(
+                    jsonb_build_object(
+                        'id', pa.id,
+                        'productId', pa.product_id,
+                        'attributeId', pa.attribute_id,
+                        'attributeName', a.name,
+                        'attributeDisplayName', a.display_name,
+                        'isVariant', a.is_variant,
+                        'values', pa.values,
+                        'createdAt', pa.created_at,
+                        'updatedAt', pa.updated_at
+                    )
+                )
+                FROM product_attributes pa
+                JOIN attributes a ON pa.attribute_id = a.id
+                WHERE pa.product_id = p.id), '[]'::jsonb)::text AS AttributesJson,
+            -- Variants as JSON array with nested attributes and images
+            COALESCE(
+                (SELECT jsonb_agg(
+                    jsonb_build_object(
+                        'id', pv.id,
+                        'productId', pv.product_id,
+                        'sku', pv.sku,
+                        'price', pv.price,
+                        'currency', pv.currency,
+                        'stockQuantity', pv.stock_quantity,
+                        'isActive', pv.is_active,
+                        'metadata', pv.metadata,
+                        'createdAt', pv.created_at,
+                        'updatedAt', pv.updated_at,
+                        'attributes', COALESCE(
+                            (SELECT jsonb_agg(
+                                jsonb_build_object(
+                                    'variantId', va.variant_id,
+                                    'attributeId', va.attribute_id,
+                                    'attributeName', a2.name,
+                                    'attributeDisplayName', a2.display_name,
+                                    'value', va.value
+                                )
+                            )
+                            FROM variant_attributes va
+                            JOIN attributes a2 ON va.attribute_id = a2.id
+                            WHERE va.variant_id = pv.id), '[]'::jsonb),
+                        'images', COALESCE(
+                            (SELECT jsonb_agg(
+                                jsonb_build_object(
+                                    'imageKey', pvi.image_key,
+                                    'thumbnailKey', pvi.thumbnail_key,
+                                    'altText', pvi.alt_text,
+                                    'isDefault', pvi.is_default,
+                                    'displayOrder', pvi.display_order
+                                ) ORDER BY pvi.display_order, pvi.is_default DESC
+                            )
+                            FROM product_variant_images pvi
+                            WHERE pvi.variant_id = pv.id), '[]'::jsonb)
+                    )
+                )
+                FROM product_variants pv
+                WHERE pv.product_id = p.id), '[]'::jsonb)::text AS VariantsJson,
+            -- Product images as JSON array
+            COALESCE(
+                (SELECT jsonb_agg(
+                    jsonb_build_object(
+                        'imageKey', pi.image_key,
+                        'thumbnailKey', pi.thumbnail_key,
+                        'altText', pi.alt_text,
+                        'isDefault', pi.is_default,
+                        'displayOrder', pi.display_order
+                    ) ORDER BY pi.display_order, pi.is_default DESC
+                )
+                FROM product_images pi
+                WHERE pi.product_id = p.id), '[]'::jsonb)::text AS ImagesJson
+        FROM products p
+        WHERE p.slug = @Slug";
+
+        ProductDetailDto productDetail = null;
+
+        using (var reader = await Connection.ExecuteReaderAsync(sql, new { Slug = slug }))
+        {
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            if (reader.Read())
+            {
+                productDetail = new ProductDetailDto
+                {
+                    Id = reader.GetGuid(reader.GetOrdinal("Id")),
+                    Name = reader.GetString(reader.GetOrdinal("Name")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("Description")),
+                    BasePrice = reader.GetDecimal(reader.GetOrdinal("BasePrice")),
+                    Currency = reader.GetString(reader.GetOrdinal("Currency")),
+                    Sku = reader.IsDBNull(reader.GetOrdinal("Sku"))
+                        ? null
+                        : reader.GetString(reader.GetOrdinal("Sku")),
+                    Slug = reader.GetString(reader.GetOrdinal("Slug")),
+                    IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                    CreatedBy = reader.IsDBNull(reader.GetOrdinal("CreatedBy"))
+                        ? null
+                        : (Guid?)reader.GetGuid(reader.GetOrdinal("CreatedBy")),
+                    ModifiedBy = reader.IsDBNull(reader.GetOrdinal("ModifiedBy"))
+                        ? null
+                        : (Guid?)reader.GetGuid(reader.GetOrdinal("ModifiedBy")),
+                    LastModified = reader.IsDBNull(reader.GetOrdinal("LastModified"))
+                        ? null
+                        : (DateTime?)reader.GetDateTime(reader.GetOrdinal("LastModified")),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                    UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt")),
+                    Metadata = new Dictionary<string, object>(),
+                    Categories = new List<CategoryDto>(),
+                    Attributes = new List<ProductAttributeDto>(),
+                    Variants = new List<ProductVariantDto>(),
+                    Images = new List<ProductImageDto>()
+                };
+
+                // Parse metadata
+                if (!reader.IsDBNull(reader.GetOrdinal("MetadataJson")))
+                {
+                    string metadataJson = reader.GetString(reader.GetOrdinal("MetadataJson"));
+                    if (!string.IsNullOrEmpty(metadataJson))
+                    {
+                        try
+                        {
+                            productDetail.Metadata = JsonSerializer.Deserialize<Dictionary<string, object>>(
+                                metadataJson, jsonOptions) ?? new Dictionary<string, object>();
+                        }
+                        catch
+                        {
+                            productDetail.Metadata = new Dictionary<string, object>();
+                        }
+                    }
+                }
+
+                // Parse categories
+                string categoriesJson = reader.GetString(reader.GetOrdinal("CategoriesJson"));
+                if (!string.IsNullOrEmpty(categoriesJson) && categoriesJson != "[]")
+                {
+                    try
+                    {
+                        productDetail.Categories = JsonSerializer.Deserialize<List<CategoryDto>>(
+                            categoriesJson, jsonOptions) ?? new List<CategoryDto>();
+                    }
+                    catch
+                    {
+                        productDetail.Categories = new List<CategoryDto>();
+                    }
+                }
+
+                // Parse attributes
+                string attributesJson = reader.GetString(reader.GetOrdinal("AttributesJson"));
+                if (!string.IsNullOrEmpty(attributesJson) && attributesJson != "[]")
+                {
+                    try
+                    {
+                        productDetail.Attributes = JsonSerializer.Deserialize<List<ProductAttributeDto>>(
+                            attributesJson, jsonOptions) ?? new List<ProductAttributeDto>();
+                    }
+                    catch
+                    {
+                        productDetail.Attributes = new List<ProductAttributeDto>();
+                    }
+                }
+
+                // Parse variants with nested attributes and images
+                string variantsJson = reader.GetString(reader.GetOrdinal("VariantsJson"));
+                if (!string.IsNullOrEmpty(variantsJson) && variantsJson != "[]")
+                {
+                    try
+                    {
+                        productDetail.Variants = JsonSerializer.Deserialize<List<ProductVariantDto>>(
+                            variantsJson, jsonOptions) ?? new List<ProductVariantDto>();
+                    }
+                    catch
+                    {
+                        productDetail.Variants = new List<ProductVariantDto>();
+                    }
+                }
+
+                // Parse product images
+                string imagesJson = reader.GetString(reader.GetOrdinal("ImagesJson"));
+                if (!string.IsNullOrEmpty(imagesJson) && imagesJson != "[]")
+                {
+                    try
+                    {
+                        productDetail.Images = JsonSerializer.Deserialize<List<ProductImageDto>>(
+                            imagesJson, jsonOptions) ?? new List<ProductImageDto>();
+                    }
+                    catch
+                    {
+                        productDetail.Images = new List<ProductImageDto>();
+                    }
+                }
+            }
+        }
+
+        return productDetail;
+    }
+
     public async Task<ProductDto> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
     {
         const string sql = @"
