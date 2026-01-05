@@ -28,6 +28,10 @@ public static class ProductErrors
         code: "Product.NotFound",
         message: $"Product with ID {id} was not found.");
 
+    public static Error NotFoundBySlug(string slug) => Error.NotFound(
+        code: "Product.NotFound",
+        message: $"Product with slug '{slug}' was not found.");
+
     public static Error InactiveProduct => Error.Validation(
         code: "Product.Inactive",
         message: "Cannot perform operation on inactive product.");
