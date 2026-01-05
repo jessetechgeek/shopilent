@@ -19,13 +19,12 @@ public class GetProductsDatatableQueryV1Tests : TestBase
             Fixture.GetLogger<GetProductsDatatableQueryHandlerV1>(),
             Fixture.MockS3StorageService.Object);
 
-        // Setup S3 service to return presigned URLs
+        // Setup S3 service to return public URLs
         Fixture.MockS3StorageService
-            .Setup(s => s.GetPresignedUrlAsync(
+            .Setup(s => s.GetPublicUrlAsync(
                 It.IsAny<string>(),
-                It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string key, TimeSpan expiry, CancellationToken ct) =>
+            .ReturnsAsync((string key, CancellationToken ct) =>
                 Result.Success($"https://s3.example.com/{key}"));
     }
 

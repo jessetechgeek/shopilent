@@ -74,9 +74,8 @@ internal sealed class QuickSearchQueryHandlerV1
                 {
                     if (!string.IsNullOrEmpty(image.ImageKey))
                     {
-                        var imageUrlResult = await _s3StorageService.GetPresignedUrlAsync(
+                        var imageUrlResult = await _s3StorageService.GetPublicUrlAsync(
                             image.ImageKey,
-                            TimeSpan.FromHours(24),
                             cancellationToken);
 
                         if (imageUrlResult.IsSuccess)
@@ -85,9 +84,8 @@ internal sealed class QuickSearchQueryHandlerV1
 
                     if (!string.IsNullOrEmpty(image.ThumbnailKey))
                     {
-                        var thumbnailUrlResult = await _s3StorageService.GetPresignedUrlAsync(
+                        var thumbnailUrlResult = await _s3StorageService.GetPublicUrlAsync(
                             image.ThumbnailKey,
-                            TimeSpan.FromHours(24),
                             cancellationToken);
 
                         if (thumbnailUrlResult.IsSuccess)

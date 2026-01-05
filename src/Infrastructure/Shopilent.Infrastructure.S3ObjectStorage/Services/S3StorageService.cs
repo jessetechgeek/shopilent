@@ -170,6 +170,67 @@ public class S3StorageService : IS3StorageService
         }
     }
 
+    public Task<Result<string>> GetPublicUrlAsync(
+        string key,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            string url;
+
+            switch (_settings.Provider?.ToUpperInvariant())
+            {
+                case "AWS":
+                case "S3":
+                    url = _settings.ForcePathStyle
+                        ? $"https://s3.{_settings.Region}.amazonaws.com/{_settings.DefaultBucket}/{key}"
+                        : $"https://{_settings.DefaultBucket}.s3.{_settings.Region}.amazonaws.com/{key}";
+                    break;
+
+                case "DIGITALOCEAN":
+                    var doSpaceName = !string.IsNullOrEmpty(_settings.SpaceName)
+                        ? _settings.SpaceName
+                        : _settings.DefaultBucket;
+                    var doHost = new Uri(_settings.ServiceUrl).Host;
+                    url = $"https://{doSpaceName}.{doHost}/{key}";
+                    break;
+
+                case "BACKBLAZE":
+                    var b2Host = new Uri(_settings.ServiceUrl).Host;
+                    url = $"https://{b2Host}/file/{_settings.DefaultBucket}/{key}";
+                    break;
+
+                case "MINIO":
+                    var baseUrl = _settings.ServiceUrl.TrimEnd('/');
+                    // MinIO always uses path-style URLs: {baseUrl}/{bucket}/{key}
+                    url = $"{baseUrl}/{_settings.DefaultBucket}/{key}";
+
+                    var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+                    var isProduction = environment == "Production";
+
+                    var targetUrl = isProduction
+                        ? "https://s3.shopilent.com"
+                        : "http://localhost:9858";
+
+                    url = url.Replace(_settings.ServiceUrl, targetUrl);
+                    break;
+
+                default:
+                    var defaultBaseUrl = _settings.ServiceUrl.TrimEnd('/');
+                    url = $"{defaultBaseUrl}/{_settings.DefaultBucket}/{key}";
+                    break;
+            }
+
+            _logger.LogDebug("Generated public URL for key {Key}: {Url}", key, url);
+            return Task.FromResult(Result.Success(url));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating public URL. Bucket: {Bucket}, Key: {Key}", _settings.DefaultBucket, key);
+            return Task.FromResult(Result.Failure<string>(Error.Failure(message: $"Failed to generate public URL: {ex.Message}")));
+        }
+    }
+
     private string RewriteMinioUrl(string url)
     {
         var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");

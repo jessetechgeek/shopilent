@@ -59,12 +59,11 @@ internal sealed class GetProductsDatatableQueryHandlerV1 :
                             ThumbnailUrl = string.Empty
                         };
 
-                        // Generate presigned URLs for image and thumbnail
+                        // Generate public URLs for image and thumbnail
                         if (!string.IsNullOrEmpty(image.ImageKey))
                         {
-                            var imageUrlResult = await _s3StorageService.GetPresignedUrlAsync(
+                            var imageUrlResult = await _s3StorageService.GetPublicUrlAsync(
                                 image.ImageKey,
-                                TimeSpan.FromHours(24),
                                 cancellationToken);
 
                             if (imageUrlResult.IsSuccess)
@@ -75,9 +74,8 @@ internal sealed class GetProductsDatatableQueryHandlerV1 :
 
                         if (!string.IsNullOrEmpty(image.ThumbnailKey))
                         {
-                            var thumbnailUrlResult = await _s3StorageService.GetPresignedUrlAsync(
+                            var thumbnailUrlResult = await _s3StorageService.GetPublicUrlAsync(
                                 image.ThumbnailKey,
-                                TimeSpan.FromHours(24),
                                 cancellationToken);
 
                             if (thumbnailUrlResult.IsSuccess)

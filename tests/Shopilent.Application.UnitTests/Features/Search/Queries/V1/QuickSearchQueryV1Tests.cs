@@ -13,13 +13,12 @@ public class QuickSearchQueryV1Tests : TestBase
 
     public QuickSearchQueryV1Tests()
     {
-        // Setup S3 service to return successful presigned URLs for any key
+        // Setup S3 service to return successful public URLs for any key
         Fixture.MockS3StorageService
-            .Setup(service => service.GetPresignedUrlAsync(
+            .Setup(service => service.GetPublicUrlAsync(
                 It.IsAny<string>(),
-                It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string key, TimeSpan expiration, CancellationToken ct) =>
+            .ReturnsAsync((string key, CancellationToken ct) =>
                 Result.Success($"https://s3.example.com/{key}"));
 
         _handler = new QuickSearchQueryHandlerV1(

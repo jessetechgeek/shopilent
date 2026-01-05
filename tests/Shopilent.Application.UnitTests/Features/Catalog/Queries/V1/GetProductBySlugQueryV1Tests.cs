@@ -24,13 +24,12 @@ public class GetProductBySlugQueryV1Tests : TestBase
         services.AddTransient(sp => Fixture.MockS3StorageService.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetProductBySlugQueryHandlerV1>());
 
-        // Setup S3 service mock to return presigned URLs
+        // Setup S3 service mock to return public URLs
         Fixture.MockS3StorageService
-            .Setup(service => service.GetPresignedUrlAsync(
+            .Setup(service => service.GetPublicUrlAsync(
                 It.IsAny<string>(),
-                It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string key, TimeSpan expiry, CancellationToken ct) =>
+            .ReturnsAsync((string key, CancellationToken ct) =>
                 Result.Success($"https://s3.example.com/{key}"));
 
         // Set up MediatR
