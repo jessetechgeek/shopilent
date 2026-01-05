@@ -1,6 +1,8 @@
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
+using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Models;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
@@ -478,5 +480,154 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         result.RecordsFiltered.Should().Be(1); // After filtering
         result.Data.Should().HaveCount(1);
         result.Data.First().Name.Should().Be("Searchable Product");
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_ExistingProduct_ShouldReturnProductDetailDto()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var product = ProductBuilder.Random()
+            .WithSlug($"test-product-slug-{DateTime.Now.Ticks}")
+            .Build();
+        await _productWriteRepository.AddAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Act
+        var result = await _productReadRepository.GetDetailBySlugAsync(product.Slug.Value);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(product.Id);
+        result.Name.Should().Be(product.Name);
+        result.Description.Should().Be(product.Description);
+        result.Slug.Should().Be(product.Slug.Value);
+        result.IsActive.Should().Be(product.IsActive);
+        result.BasePrice.Should().Be(product.BasePrice.Amount);
+        result.Currency.Should().Be(product.BasePrice.Currency);
+        result.CreatedAt.Should().BeCloseTo(product.CreatedAt, TimeSpan.FromMilliseconds(100));
+        result.UpdatedAt.Should().BeCloseTo(product.UpdatedAt, TimeSpan.FromMilliseconds(100));
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_NonExistentSlug_ShouldReturnNull()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var nonExistentSlug = $"non-existent-slug-{DateTime.Now.Ticks}";
+
+        // Act
+        var result = await _productReadRepository.GetDetailBySlugAsync(nonExistentSlug);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_WithCategories_ShouldReturnProductWithCategories()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var category = CategoryBuilder.Random().Build();
+        await _categoryWriteRepository.AddAsync(category);
+
+        var product = ProductBuilder.Random()
+            .WithSlug($"product-with-cat-{DateTime.Now.Ticks}")
+            .Build();
+        product.AddCategory(category);
+        await _productWriteRepository.AddAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Act
+        var result = await _productReadRepository.GetDetailBySlugAsync(product.Slug.Value);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Categories.Should().HaveCount(1);
+        result.Categories.First().Id.Should().Be(category.Id);
+        result.Categories.First().Name.Should().Be(category.Name);
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_WithImages_ShouldReturnProductWithImages()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var product = ProductBuilder.Random()
+            .WithSlug($"product-with-images-{DateTime.Now.Ticks}")
+            .Build();
+
+        var image1 = ProductImage.Create("images/product1.jpg", "thumb/product1.jpg", "Product Image 1", true, 1).Value;
+        var image2 = ProductImage.Create("images/product2.jpg", "thumb/product2.jpg", "Product Image 2", false, 2)
+            .Value;
+        product.AddImage(image1);
+        product.AddImage(image2);
+
+        await _productWriteRepository.AddAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Act
+        var result = await _productReadRepository.GetDetailBySlugAsync(product.Slug.Value);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Images.Should().HaveCount(2);
+        result.Images.Should().Contain(img => img.ImageKey == "images/product1.jpg" && img.IsDefault == true);
+        result.Images.Should().Contain(img => img.ImageKey == "images/product2.jpg" && img.IsDefault == false);
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_WithVariants_ShouldReturnProductWithVariants()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var product = ProductBuilder.Random()
+            .WithSlug($"product-with-variants-{DateTime.Now.Ticks}")
+            .Build();
+        await _productWriteRepository.AddAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Create variants
+        var variant1 = ProductVariantBuilder.Random()
+            .WithSku($"VAR1-{DateTime.Now.Ticks}")
+            .BuildForProduct(product);
+        var variant2 = ProductVariantBuilder.Random()
+            .WithSku($"VAR2-{DateTime.Now.Ticks}")
+            .BuildForProduct(product);
+
+        product.AddVariant(variant1);
+        product.AddVariant(variant2);
+        await _productWriteRepository.UpdateAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Act
+        var result = await _productReadRepository.GetDetailBySlugAsync(product.Slug.Value);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Variants.Should().HaveCount(2);
+        result.Variants.Should().Contain(v => v.Sku == variant1.Sku);
+        result.Variants.Should().Contain(v => v.Sku == variant2.Sku);
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_InactiveProduct_ShouldStillReturnProduct()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var product = ProductBuilder.Random()
+            .WithSlug($"inactive-product-{DateTime.Now.Ticks}")
+            .AsInactive()
+            .Build();
+        await _productWriteRepository.AddAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Act
+        var result = await _productReadRepository.GetDetailBySlugAsync(product.Slug.Value);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.IsActive.Should().BeFalse();
+        result.Id.Should().Be(product.Id);
     }
 }
