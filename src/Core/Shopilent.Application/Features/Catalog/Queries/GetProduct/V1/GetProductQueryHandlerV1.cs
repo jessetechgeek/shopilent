@@ -147,8 +147,8 @@ internal sealed class GetProductQueryHandlerV1 : IQueryHandler<GetProductQueryV1
 
         return new ProductImageDto
         {
-            ImageKey = null,
-            ThumbnailKey = null,
+            ImageKey = image.ImageKey,
+            ThumbnailKey = image.ThumbnailKey,
             ImageUrl = imageUrl,
             ThumbnailUrl = thumbnailUrl,
             AltText = image.AltText,

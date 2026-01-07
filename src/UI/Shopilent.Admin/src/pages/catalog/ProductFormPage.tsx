@@ -8,7 +8,6 @@ import {Loading} from '@/components/ui/loading';
 import {useForm} from '@/hooks/useForm';
 import {useApiMutation} from '@/hooks/useApiMutation';
 import {useTitle} from '@/hooks/useTitle';
-import {getS3Url} from '@/config/env';
 
 // Import section components
 import BasicDetailsSection from '@/components/catalog/sections/BasicDetailsSection';
@@ -354,10 +353,10 @@ const ProductFormPage: React.FC = () => {
         setProductAttributes(attrs);
       }
 
-      // Extract images
+      // Extract images - use imageUrl from API response instead of constructing from imageKey
       if (product.images && Array.isArray(product.images)) {
         const loadedImages = product.images.map((img: ProductImageDto) => ({
-          url: getS3Url(img.imageKey),
+          url: img.imageUrl || '',
           imageKey: img.imageKey
         }));
         setProductImages(loadedImages);

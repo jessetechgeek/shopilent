@@ -611,7 +611,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task GetDetailBySlugAsync_InactiveProduct_ShouldStillReturnProduct()
+    public async Task GetDetailBySlugAsync_InactiveProduct_ShouldReturnNull()
     {
         // Arrange
         await ResetDatabaseAsync();
@@ -625,7 +625,101 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         // Act
         var result = await _productReadRepository.GetDetailBySlugAsync(product.Slug.Value);
 
-        // Assert
+        // Assert - Inactive products should not be returned via slug (public endpoint)
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_ActiveProductWithInactiveVariants_ShouldReturnProductWithOnlyActiveVariants()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var product = ProductBuilder.Random()
+            .WithSlug($"product-mixed-variants-{DateTime.Now.Ticks}")
+            .Build();
+        await _productWriteRepository.AddAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Create active and inactive variants
+        var activeVariant = ProductVariantBuilder.Random()
+            .WithSku($"ACTIVE-VAR-{DateTime.Now.Ticks}")
+            .Build();
+        var inactiveVariant = ProductVariantBuilder.Random()
+            .WithSku($"INACTIVE-VAR-{DateTime.Now.Ticks}")
+            .AsInactive()
+            .Build();
+
+        product.AddVariant(activeVariant);
+        product.AddVariant(inactiveVariant);
+        await _productWriteRepository.UpdateAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Act
+        var result = await _productReadRepository.GetDetailBySlugAsync(product.Slug.Value);
+
+        // Assert - Only active variants should be returned
+        result.Should().NotBeNull();
+        result!.Variants.Should().HaveCount(1);
+        result.Variants.Should().Contain(v => v.Sku == activeVariant.Sku);
+        result.Variants.Should().NotContain(v => v.Sku == inactiveVariant.Sku);
+        result.Variants.First().IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetDetailBySlugAsync_ActiveProductWithInactiveCategories_ShouldReturnProductWithOnlyActiveCategories()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var activeCategory = CategoryBuilder.Random()
+            .WithSlug($"active-cat-{DateTime.Now.Ticks}")
+            .Build();
+        var categoryToDeactivate = CategoryBuilder.Random()
+            .WithSlug($"will-deactivate-cat-{DateTime.Now.Ticks}")
+            .Build();
+
+        await _categoryWriteRepository.AddAsync(activeCategory);
+        await _categoryWriteRepository.AddAsync(categoryToDeactivate);
+        await _unitOfWork.CommitAsync();
+
+        var product = ProductBuilder.Random()
+            .WithSlug($"product-mixed-cats-{DateTime.Now.Ticks}")
+            .Build();
+        product.AddCategory(activeCategory);
+        product.AddCategory(categoryToDeactivate);
+        await _productWriteRepository.AddAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Deactivate category AFTER it was added to product (simulates business scenario)
+        categoryToDeactivate.Deactivate();
+        await _categoryWriteRepository.UpdateAsync(categoryToDeactivate);
+        await _unitOfWork.CommitAsync();
+
+        // Act
+        var result = await _productReadRepository.GetDetailBySlugAsync(product.Slug.Value);
+
+        // Assert - Only active categories should be returned
+        result.Should().NotBeNull();
+        result!.Categories.Should().HaveCount(1);
+        result.Categories.Should().Contain(c => c.Id == activeCategory.Id);
+        result.Categories.Should().NotContain(c => c.Id == categoryToDeactivate.Id);
+        result.Categories.First().IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetDetailByIdAsync_InactiveProduct_ShouldStillReturnProduct()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var product = ProductBuilder.Random()
+            .AsInactive()
+            .Build();
+        await _productWriteRepository.AddAsync(product);
+        await _unitOfWork.CommitAsync();
+
+        // Act - GetDetailByIdAsync is for admin use and should return inactive products
+        var result = await _productReadRepository.GetDetailByIdAsync(product.Id);
+
+        // Assert - Admin endpoint should return inactive products
         result.Should().NotBeNull();
         result!.IsActive.Should().BeFalse();
         result.Id.Should().Be(product.Id);

@@ -1,6 +1,7 @@
 using FastEndpoints;
 using MediatR;
 using Shopilent.API.Common.Models;
+using Shopilent.Application.Common.Constants;
 using Shopilent.Application.Features.Catalog.Queries.GetProduct.V1;
 using Shopilent.Domain.Catalog.DTOs;
 using Shopilent.Domain.Common.Errors;
@@ -19,12 +20,12 @@ public class GetProductEndpointV1 : EndpointWithoutRequest<ApiResponse<ProductDe
     public override void Configure()
     {
         Get("v1/products/{id}");
-        AllowAnonymous();
         Description(b => b
             .WithName("GetProductById")
             .Produces<ApiResponse<ProductDetailDto>>(StatusCodes.Status200OK)
             .Produces<ApiResponse<ProductDetailDto>>(StatusCodes.Status404NotFound)
             .WithTags("Products"));
+        Policies(nameof(AuthorizationPolicy.RequireAdminOrManager));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

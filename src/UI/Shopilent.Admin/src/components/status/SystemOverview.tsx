@@ -53,7 +53,7 @@ export const SystemOverview: React.FC<SystemOverviewProps> = ({
   unhealthyCount,
   totalDuration,
   lastUpdated,
-  isAutoRefresh,
+  isAutoRefresh: _isAutoRefresh,
   isRefreshing,
 }) => {
   const lastUpdatedDate = new Date(lastUpdated);

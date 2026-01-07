@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2, ZoomIn, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { getS3Url } from '@/config/env';
 import {
     Dialog,
     DialogContent,
@@ -16,6 +15,8 @@ interface VariantImageData {
     file?: File;
     imageKey?: string;
     thumbnailKey?: string;
+    imageUrl?: string;
+    thumbnailUrl?: string;
     altText?: string;
     isDefault?: boolean;
     displayOrder?: number;
@@ -193,10 +194,11 @@ const VariantImageUpload: React.FC<VariantImageUploadProps> = ({
         if (image.file && image.url.startsWith('blob:')) {
             return image.url;
         }
-        // For existing server images
-        if (image.imageKey) {
-            return getS3Url(image.imageKey);
+        // For existing server images, use imageUrl from API response
+        if (image.imageUrl) {
+            return image.imageUrl;
         }
+        // Fallback to url field
         return image.url;
     };
 
