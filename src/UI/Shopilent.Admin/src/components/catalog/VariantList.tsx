@@ -8,7 +8,6 @@ import {
     CardContent
 } from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
-import {getS3Url} from '@/config/env';
 import {
     Table,
     TableHeader,
@@ -209,14 +208,12 @@ const VariantList: React.FC<VariantListProps> = ({
             // Find default image or use first image
             const defaultImage = variant.images.find(img => img.isDefault) || variant.images[0];
 
-            if (defaultImage.url) {
-                // If there's a complete URL (blob URL or full URL), use it
-                return defaultImage.url.startsWith('blob:')
-                    ? defaultImage.url
-                    : getS3Url(defaultImage.imageKey);
-            } else if (defaultImage.imageKey) {
-                // If there's only imageKey (from API response), construct the URL
-                return getS3Url(defaultImage.imageKey);
+            // Use imageUrl from API response (already includes presigned/public URL)
+            if (defaultImage.imageUrl) {
+                return defaultImage.imageUrl;
+            } else if (defaultImage.url) {
+                // Fallback to url field (for blob URLs during upload)
+                return defaultImage.url;
             }
         }
         return null;

@@ -320,7 +320,7 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
             p.last_modified AS LastModified,
             p.created_at AS CreatedAt,
             p.updated_at AS UpdatedAt,
-            -- Categories as JSON array
+            -- Categories as JSON array (only active categories)
             COALESCE(
                 (SELECT jsonb_agg(
                     jsonb_build_object(
@@ -338,7 +338,7 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
                 )
                 FROM categories c
                 JOIN product_categories pc ON c.id = pc.category_id
-                WHERE pc.product_id = p.id), '[]'::jsonb)::text AS CategoriesJson,
+                WHERE pc.product_id = p.id AND c.is_active = true), '[]'::jsonb)::text AS CategoriesJson,
             -- Attributes as JSON array
             COALESCE(
                 (SELECT jsonb_agg(
@@ -399,7 +399,7 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
                     )
                 )
                 FROM product_variants pv
-                WHERE pv.product_id = p.id), '[]'::jsonb)::text AS VariantsJson,
+                WHERE pv.product_id = p.id AND pv.is_active = true), '[]'::jsonb)::text AS VariantsJson,
             -- Product images as JSON array
             COALESCE(
                 (SELECT jsonb_agg(
@@ -414,7 +414,7 @@ public class ProductReadRepository : AggregateReadRepositoryBase<Product, Produc
                 FROM product_images pi
                 WHERE pi.product_id = p.id), '[]'::jsonb)::text AS ImagesJson
         FROM products p
-        WHERE p.slug = @Slug";
+        WHERE p.slug = @Slug AND p.is_active = true";
 
         ProductDetailDto productDetail = null;
 

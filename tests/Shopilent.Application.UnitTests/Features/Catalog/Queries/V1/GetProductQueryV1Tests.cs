@@ -101,10 +101,10 @@ public class GetProductQueryV1Tests : TestBase
         result.Value.Currency.Should().Be("USD");
         result.Value.IsActive.Should().BeTrue();
 
-        // Verify images - keys should be null, URLs should be populated
+        // Verify images - Admin endpoint should expose keys AND URLs
         result.Value.Images.Should().ContainSingle();
-        result.Value.Images.First().ImageKey.Should().BeNull();
-        result.Value.Images.First().ThumbnailKey.Should().BeNull();
+        result.Value.Images.First().ImageKey.Should().Be("products/test-image.jpg");
+        result.Value.Images.First().ThumbnailKey.Should().Be("products/test-image-thumb.jpg");
         result.Value.Images.First().ImageUrl.Should().Be("https://s3.example.com/products/test-image.jpg");
         result.Value.Images.First().ThumbnailUrl.Should().Be("https://s3.example.com/products/test-image-thumb.jpg");
         result.Value.Images.First().AltText.Should().Be("Product image");

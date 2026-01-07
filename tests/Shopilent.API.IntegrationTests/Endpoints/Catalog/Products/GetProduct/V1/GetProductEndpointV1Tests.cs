@@ -34,9 +34,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        // Clear auth header to test anonymous access
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -108,8 +105,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -151,8 +146,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -173,8 +166,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -191,6 +182,8 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
     public async Task GetProduct_WithNonExistentId_ShouldReturnNotFound()
     {
         // Arrange
+        var accessToken = await AuthenticateAsAdminAsync();
+        SetAuthenticationHeader(accessToken);
         var nonExistentId = Guid.NewGuid();
 
         // Act
@@ -208,6 +201,10 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
     [Fact]
     public async Task GetProduct_WithInvalidGuidFormat_ShouldReturnBadRequest()
     {
+        // Arrange
+        var accessToken = await AuthenticateAsAdminAsync();
+        SetAuthenticationHeader(accessToken);
+
         // Act
         var response = await Client.GetAsync("v1/products/invalid-guid-format");
 
@@ -218,6 +215,10 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
     [Fact]
     public async Task GetProduct_WithEmptyGuid_ShouldReturnNotFound()
     {
+        // Arrange
+        var accessToken = await AuthenticateAsAdminAsync();
+        SetAuthenticationHeader(accessToken);
+
         // Act
         var response = await Client.GetAsync($"v1/products/{Guid.Empty}");
 
@@ -227,10 +228,10 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
 
     #endregion
 
-    #region Anonymous Access Tests
+    #region Authorization Tests
 
     [Fact]
-    public async Task GetProduct_WithoutAuthentication_ShouldReturnSuccess()
+    public async Task GetProduct_WithoutAuthentication_ShouldReturnUnauthorized()
     {
         // Arrange
         var accessToken = await AuthenticateAsAdminAsync();
@@ -246,16 +247,14 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         ClearAuthenticationHeader();
 
         // Act
-        var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
+        var response = await Client.GetAsync($"v1/products/{productId}");
 
-        // Assert
-        AssertApiSuccess(response);
-        response!.Data.Should().NotBeNull();
-        response.Data.Id.Should().Be(productId);
+        // Assert - Endpoint requires admin/manager authentication
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task GetProduct_WithCustomerRole_ShouldReturnSuccess()
+    public async Task GetProduct_WithCustomerRole_ShouldReturnForbidden()
     {
         // Arrange
         var adminToken = await AuthenticateAsAdminAsync();
@@ -272,6 +271,26 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         SetAuthenticationHeader(customerToken);
 
         // Act
+        var response = await Client.GetAsync($"v1/products/{productId}");
+
+        // Assert - Customers should not have access to admin endpoint
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetProduct_WithAdminRole_ShouldReturnSuccess()
+    {
+        // Arrange
+        var accessToken = await AuthenticateAsAdminAsync();
+        SetAuthenticationHeader(accessToken);
+
+        // Create a test product
+        var createRequest = ProductTestDataV1.Creation.CreateValidRequest();
+        var createResponse = await PostMultipartApiResponseAsync<CreateProductResponseV1>("v1/products", createRequest);
+        AssertApiSuccess(createResponse);
+        var productId = createResponse!.Data.Id;
+
+        // Act - Admin should have access
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
         // Assert
@@ -296,8 +315,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -319,8 +336,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         var createResponse = await PostMultipartApiResponseAsync<CreateProductResponseV1>("v1/products", createRequest);
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
-
-        ClearAuthenticationHeader();
 
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
@@ -351,8 +366,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         var createResponse = await PostMultipartApiResponseAsync<CreateProductResponseV1>("v1/products", createRequest);
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
-
-        ClearAuthenticationHeader();
 
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
@@ -398,8 +411,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -424,8 +435,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         var createResponse = await PostMultipartApiResponseAsync<CreateProductResponseV1>("v1/products", createRequest);
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
-
-        ClearAuthenticationHeader();
 
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
@@ -458,8 +467,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         var createResponse = await PostMultipartApiResponseAsync<CreateProductResponseV1>("v1/products", createRequest);
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
-
-        ClearAuthenticationHeader();
 
         // Act - Call twice
         var firstResponse = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
@@ -499,8 +506,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -529,8 +534,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -553,8 +556,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -576,8 +577,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         var createResponse = await PostMultipartApiResponseAsync<CreateProductResponseV1>("v1/products", createRequest);
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
-
-        ClearAuthenticationHeader();
 
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
@@ -618,8 +617,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
             AssertApiSuccess(createResponse);
             productIds.Add(createResponse!.Data.Id);
         }
-
-        ClearAuthenticationHeader();
 
         // Act & Assert - Retrieve and verify each product
         for (int i = 0; i < testProducts.Length; i++)
@@ -664,8 +661,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(productResponse);
         var productId = productResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -699,8 +694,6 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(productResponse);
         var productId = productResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
@@ -727,12 +720,10 @@ public class GetProductEndpointV1Tests : ApiIntegrationTestBase
         AssertApiSuccess(createResponse);
         var productId = createResponse!.Data.Id;
 
-        ClearAuthenticationHeader();
-
         // Act
         var response = await GetApiResponseAsync<ProductDetailDto>($"v1/products/{productId}");
 
-        // Assert - GetProduct should return inactive products (filtering happens at list level)
+        // Assert - Admin endpoint should return inactive products (allows admin to manage all products)
         AssertApiSuccess(response);
         response!.Data.Should().NotBeNull();
         response.Data.IsActive.Should().BeFalse();

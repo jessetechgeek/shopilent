@@ -140,47 +140,29 @@ public class GetProductBySlugQueryV1Tests : TestBase
     }
 
     [Fact]
-    public async Task GetProductBySlug_WithInactiveProduct_ReturnsProduct()
+    public async Task GetProductBySlug_WithInactiveProduct_ReturnsNotFound()
     {
         // Arrange
-        var productId = Guid.NewGuid();
         var slug = "inactive-product";
         var query = new GetProductBySlugQueryV1 { Slug = slug };
 
-        var inactiveProductDto = new ProductDetailDto
-        {
-            Id = productId,
-            Name = "Inactive Product",
-            Slug = slug,
-            BasePrice = 50.00m,
-            Currency = "USD",
-            IsActive = false, // Inactive product
-            Metadata = new Dictionary<string, object>(),
-            Images = new List<ProductImageDto>(),
-            CreatedAt = DateTime.UtcNow.AddDays(-30),
-            UpdatedAt = DateTime.UtcNow.AddDays(-1),
-            Categories = new List<CategoryDto>(),
-            Attributes = new List<ProductAttributeDto>(),
-            Variants = new List<ProductVariantDto>(),
-            CreatedBy = Guid.NewGuid(),
-            ModifiedBy = Guid.NewGuid(),
-            LastModified = DateTime.UtcNow.AddDays(-1)
-        };
-
-        // Mock repository calls
+        // Mock repository calls - Repository now filters inactive products at SQL level
         Fixture.MockProductReadRepository
             .Setup(repo => repo.GetDetailBySlugAsync(slug, CancellationToken))
-            .ReturnsAsync(inactiveProductDto);
+            .ReturnsAsync((ProductDetailDto)null);
 
         // Act
         var result = await _mediator.Send(query, CancellationToken);
 
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-        result.Value.Id.Should().Be(productId);
-        result.Value.Slug.Should().Be(slug);
-        result.Value.IsActive.Should().BeFalse();
+        // Assert - Inactive products should return not found
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Code.Should().Be(ProductErrors.NotFoundBySlug(slug).Code);
+        result.Error.Message.Should().Contain(slug);
+
+        // Verify repository was called correctly
+        Fixture.MockProductReadRepository.Verify(
+            repo => repo.GetDetailBySlugAsync(slug, CancellationToken),
+            Times.Once);
     }
 
     [Fact]

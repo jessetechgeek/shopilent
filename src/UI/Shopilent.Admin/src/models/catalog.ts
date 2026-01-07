@@ -303,6 +303,9 @@ export interface VariantImageDto {
   id: string;
   variantId: string;
   imageKey: string;
+  thumbnailKey: string;
+  imageUrl: string;
+  thumbnailUrl: string;
   url: string;
   altText?: string;
   isDefault: boolean;
@@ -321,6 +324,9 @@ export interface ProductImageDto {
   id: string;
   productId: string;
   imageKey: string;
+  thumbnailKey: string;
+  imageUrl: string;
+  thumbnailUrl: string;
   url: string;
   altText?: string;
   isDefault: boolean;
