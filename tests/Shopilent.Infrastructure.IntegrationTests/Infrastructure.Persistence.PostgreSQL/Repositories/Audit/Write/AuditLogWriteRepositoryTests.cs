@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Audit;
 using Shopilent.Domain.Audit.Enums;
 using Shopilent.Domain.Audit.Repositories.Read;
 using Shopilent.Domain.Audit.Repositories.Write;
@@ -375,7 +376,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         await _userWriteRepository.AddAsync(user);
         await _unitOfWork.CommitAsync();
 
-        var auditLogs = new List<Domain.Audit.AuditLog>
+        var auditLogs = new List<AuditLog>
         {
             AuditLogBuilder.CreateCreateAuditLog("Product", Guid.NewGuid(), user),
             AuditLogBuilder.CreateUpdateAuditLog("Product", Guid.NewGuid(), user),
@@ -494,7 +495,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         // Act & Assert - Test CreateForCreate
         var createValues = new Dictionary<string, object> { ["Name"] = "New Product", ["Price"] = 99.99m };
-        var createResult = Domain.Audit.AuditLog.CreateForCreate(entityType, entityId, createValues, user);
+        var createResult = AuditLog.CreateForCreate(entityType, entityId, createValues, user.Id);
         createResult.IsSuccess.Should().BeTrue();
 
         await _auditLogWriteRepository.AddAsync(createResult.Value);
@@ -509,7 +510,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
         // Act & Assert - Test CreateForUpdate
         var oldValues = new Dictionary<string, object> { ["Name"] = "Old Product", ["Price"] = 89.99m };
         var newValues = new Dictionary<string, object> { ["Name"] = "Updated Product", ["Price"] = 99.99m };
-        var updateResult = Domain.Audit.AuditLog.CreateForUpdate(entityType, entityId, oldValues, newValues, user);
+        var updateResult = AuditLog.CreateForUpdate(entityType, entityId, oldValues, newValues, user.Id);
         updateResult.IsSuccess.Should().BeTrue();
 
         await _auditLogWriteRepository.AddAsync(updateResult.Value);
@@ -523,7 +524,7 @@ public class AuditLogWriteRepositoryTests : IntegrationTestBase
 
         // Act & Assert - Test CreateForDelete
         var deleteValues = new Dictionary<string, object> { ["Name"] = "Deleted Product", ["Price"] = 99.99m };
-        var deleteResult = Domain.Audit.AuditLog.CreateForDelete(entityType, entityId, deleteValues, user);
+        var deleteResult = AuditLog.CreateForDelete(entityType, entityId, deleteValues, user.Id);
         deleteResult.IsSuccess.Should().BeTrue();
 
         await _auditLogWriteRepository.AddAsync(deleteResult.Value);

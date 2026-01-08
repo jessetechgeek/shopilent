@@ -2,7 +2,6 @@ using Shopilent.Domain.Audit.Enums;
 using Shopilent.Domain.Audit.Errors;
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Identity;
 
 namespace Shopilent.Domain.Audit;
 
@@ -17,7 +16,7 @@ public class AuditLog : AggregateRoot
         string entityType,
         Guid entityId,
         AuditAction action,
-        User user = null,
+        Guid? userId = null,
         Dictionary<string, object> oldValues = null,
         Dictionary<string, object> newValues = null,
         string ipAddress = null,
@@ -27,7 +26,7 @@ public class AuditLog : AggregateRoot
         EntityType = entityType;
         EntityId = entityId;
         Action = action;
-        UserId = user?.Id;
+        UserId = userId;
         OldValues = oldValues;
         NewValues = newValues;
         IpAddress = ipAddress;
@@ -39,7 +38,7 @@ public class AuditLog : AggregateRoot
         string entityType,
         Guid entityId,
         AuditAction action,
-        User user = null,
+        Guid? userId = null,
         Dictionary<string, object> oldValues = null,
         Dictionary<string, object> newValues = null,
         string ipAddress = null,
@@ -52,19 +51,20 @@ public class AuditLog : AggregateRoot
         if (entityId == Guid.Empty)
             return Result.Failure<AuditLog>(AuditLogErrors.InvalidEntityId);
 
-        return Result.Success(new AuditLog(entityType, entityId, action, user, oldValues, newValues, ipAddress, userAgent, appVersion));
+        return Result.Success(new AuditLog(entityType, entityId, action, userId, oldValues, newValues, ipAddress,
+            userAgent, appVersion));
     }
 
     public static Result<AuditLog> CreateForCreate(
         string entityType,
         Guid entityId,
         Dictionary<string, object> values,
-        User user = null,
+        Guid? userId = null,
         string ipAddress = null,
         string userAgent = null,
         string appVersion = null)
     {
-        return Create(entityType, entityId, AuditAction.Create, user, null, values, ipAddress, userAgent, appVersion);
+        return Create(entityType, entityId, AuditAction.Create, userId, null, values, ipAddress, userAgent, appVersion);
     }
 
     public static Result<AuditLog> CreateForUpdate(
@@ -72,24 +72,25 @@ public class AuditLog : AggregateRoot
         Guid entityId,
         Dictionary<string, object> oldValues,
         Dictionary<string, object> newValues,
-        User user = null,
+        Guid? userId = null,
         string ipAddress = null,
         string userAgent = null,
         string appVersion = null)
     {
-        return Create(entityType, entityId, AuditAction.Update, user, oldValues, newValues, ipAddress, userAgent, appVersion);
+        return Create(entityType, entityId, AuditAction.Update, userId, oldValues, newValues, ipAddress, userAgent,
+            appVersion);
     }
 
     public static Result<AuditLog> CreateForDelete(
         string entityType,
         Guid entityId,
         Dictionary<string, object> values,
-        User user = null,
+        Guid? userId = null,
         string ipAddress = null,
         string userAgent = null,
         string appVersion = null)
     {
-        return Create(entityType, entityId, AuditAction.Delete, user, values, null, ipAddress, userAgent, appVersion);
+        return Create(entityType, entityId, AuditAction.Delete, userId, values, null, ipAddress, userAgent, appVersion);
     }
 
     public Guid? UserId { get; private set; }

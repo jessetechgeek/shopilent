@@ -209,11 +209,13 @@ public class AuditSaveChangesInterceptor : SaveChangesInterceptor
             if (!oldValues.Any()) oldValues.Add("_placeholder", "empty");
             if (!newValues.Any()) newValues.Add("_placeholder", "empty");
 
+            var userId = user?.Id;
+
             var auditLogResult = AuditLog.Create(
                 entityType,
                 entityId,
                 action,
-                user,
+                userId,
                 oldValues,
                 newValues,
                 ipAddress,
