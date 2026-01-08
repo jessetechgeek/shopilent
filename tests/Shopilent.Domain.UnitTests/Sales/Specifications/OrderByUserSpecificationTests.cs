@@ -15,15 +15,15 @@ public class OrderByUserSpecificationTests
     {
         var emailResult = Email.Create(email);
         emailResult.IsSuccess.Should().BeTrue();
-        
+
         var fullNameResult = FullName.Create("Test", "User");
         fullNameResult.IsSuccess.Should().BeTrue();
-        
+
         var userResult = User.Create(
             emailResult.Value,
             "hashed_password",
             fullNameResult.Value);
-            
+
         userResult.IsSuccess.Should().BeTrue();
         return userResult.Value;
     }
@@ -36,13 +36,13 @@ public class OrderByUserSpecificationTests
             "State",
             "Country",
             "12345");
-            
+
         postalAddressResult.IsSuccess.Should().BeTrue();
-        
+
         var addressResult = Address.CreateShipping(
-            user,
+            user.Id,
             postalAddressResult.Value);
-            
+
         addressResult.IsSuccess.Should().BeTrue();
         return addressResult.Value;
     }
@@ -53,16 +53,16 @@ public class OrderByUserSpecificationTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user,
             address,
@@ -70,10 +70,10 @@ public class OrderByUserSpecificationTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
-        
+
         var specification = new OrderByUserSpecification(user.Id);
 
         // Act
@@ -90,16 +90,16 @@ public class OrderByUserSpecificationTests
         var user1 = CreateTestUser("user1@example.com");
         var user2 = CreateTestUser("user2@example.com");
         var address = CreateTestAddress(user1);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user1,
             address,
@@ -107,10 +107,10 @@ public class OrderByUserSpecificationTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
-        
+
         var specification = new OrderByUserSpecification(user2.Id);
 
         // Act
@@ -126,16 +126,16 @@ public class OrderByUserSpecificationTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             null,
             address,
@@ -143,10 +143,10 @@ public class OrderByUserSpecificationTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
-        
+
         var specification = new OrderByUserSpecification(user.Id);
 
         // Act

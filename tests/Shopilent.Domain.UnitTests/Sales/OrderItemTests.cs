@@ -41,7 +41,7 @@ public class OrderItemTests
         postalAddressResult.IsSuccess.Should().BeTrue();
 
         var addressResult = Address.CreateShipping(
-            user,
+            user.Id,
             postalAddressResult.Value);
 
         addressResult.IsSuccess.Should().BeTrue();

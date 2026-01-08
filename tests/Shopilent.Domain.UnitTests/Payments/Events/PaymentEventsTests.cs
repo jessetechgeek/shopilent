@@ -21,7 +21,7 @@ public class PaymentEventsTests
             emailResult.Value,
             "hashed_password",
             fullNameResult.Value);
-            
+
         userResult.IsSuccess.Should().BeTrue();
         return userResult.Value;
     }
@@ -34,13 +34,13 @@ public class PaymentEventsTests
             "State",
             "Country",
             "12345");
-            
+
         postalAddressResult.IsSuccess.Should().BeTrue();
-        
+
         var addressResult = Address.CreateShipping(
-            user,
+            user.Id,
             postalAddressResult.Value);
-            
+
         addressResult.IsSuccess.Should().BeTrue();
         return addressResult.Value;
     }
@@ -50,11 +50,11 @@ public class PaymentEventsTests
         var subtotalResult = Money.Create(100, "USD");
         var taxResult = Money.Create(10, "USD");
         var shippingCostResult = Money.Create(5, "USD");
-        
+
         subtotalResult.IsSuccess.Should().BeTrue();
         taxResult.IsSuccess.Should().BeTrue();
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user,
             address,
@@ -62,7 +62,7 @@ public class PaymentEventsTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         return orderResult.Value;
     }
@@ -78,7 +78,7 @@ public class PaymentEventsTests
         // Act
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,
@@ -103,7 +103,7 @@ public class PaymentEventsTests
         var order = CreateTestOrder(user, address);
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,
@@ -112,9 +112,9 @@ public class PaymentEventsTests
             PaymentProvider.Stripe);
         paymentResult.IsSuccess.Should().BeTrue();
         var payment = paymentResult.Value;
-        
+
         payment.ClearDomainEvents(); // Clear the creation event
-        
+
         var oldStatus = payment.Status;
         var newStatus = PaymentStatus.Processing;
 
@@ -139,7 +139,7 @@ public class PaymentEventsTests
         var order = CreateTestOrder(user, address);
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,
@@ -148,7 +148,7 @@ public class PaymentEventsTests
             PaymentProvider.Stripe);
         paymentResult.IsSuccess.Should().BeTrue();
         var payment = paymentResult.Value;
-        
+
         payment.ClearDomainEvents(); // Clear the creation event
         var transactionId = "txn_123";
 
@@ -172,7 +172,7 @@ public class PaymentEventsTests
         var order = CreateTestOrder(user, address);
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,
@@ -181,7 +181,7 @@ public class PaymentEventsTests
             PaymentProvider.Stripe);
         paymentResult.IsSuccess.Should().BeTrue();
         var payment = paymentResult.Value;
-        
+
         payment.ClearDomainEvents(); // Clear the creation event
         var errorMessage = "Card declined";
 
@@ -206,7 +206,7 @@ public class PaymentEventsTests
         var order = CreateTestOrder(user, address);
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,
@@ -215,11 +215,11 @@ public class PaymentEventsTests
             PaymentProvider.Stripe);
         paymentResult.IsSuccess.Should().BeTrue();
         var payment = paymentResult.Value;
-        
+
         // First mark as succeeded
         var succeededResult = payment.MarkAsSucceeded("txn_123");
         succeededResult.IsSuccess.Should().BeTrue();
-        
+
         payment.ClearDomainEvents(); // Clear previous events
         var refundId = "ref_123";
 

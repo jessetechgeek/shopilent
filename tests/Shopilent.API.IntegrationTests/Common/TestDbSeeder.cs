@@ -2,6 +2,7 @@ using Bogus;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Enums;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.Enums;
 using Shopilent.Domain.Identity.ValueObjects;
@@ -908,7 +909,7 @@ public static class TestDbSeeder
             var phoneNumber = phone != null ? PhoneNumber.Create(phone).Value : null;
 
             var address = Address.CreateShipping(
-                user: user,
+                userId: user.Id,
                 postalAddress: postalAddress,
                 phone: phoneNumber,
                 isDefault: isDefault
@@ -966,7 +967,7 @@ public static class TestDbSeeder
             var phoneNumber = PhoneNumber.Create(_faker.Phone.PhoneNumber()).Value;
 
             var shippingAddress = Address.CreateShipping(
-                user: user,
+                userId: user.Id,
                 postalAddress: postalAddress,
                 phone: phoneNumber,
                 isDefault: true
@@ -1291,7 +1292,7 @@ public static class TestDbSeeder
             var phoneNumber = PhoneNumber.Create(_faker.Phone.PhoneNumber()).Value;
 
             var address = Address.CreateShipping(
-                user: user,
+                userId: user.Id,
                 postalAddress: postalAddress,
                 phone: phoneNumber,
                 isDefault: false
@@ -1341,7 +1342,7 @@ public static class TestDbSeeder
             var phoneNumber = PhoneNumber.Create(_faker.Phone.PhoneNumber()).Value;
 
             var address = Address.CreateShipping(
-                user: user,
+                userId: user.Id,
                 postalAddress: postalAddress,
                 phone: phoneNumber,
                 isDefault: false

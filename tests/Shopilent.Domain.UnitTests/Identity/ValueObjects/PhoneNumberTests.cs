@@ -1,3 +1,4 @@
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity.ValueObjects;
 
 namespace Shopilent.Domain.Tests.Identity.ValueObjects;

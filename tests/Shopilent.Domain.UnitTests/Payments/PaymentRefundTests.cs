@@ -42,7 +42,7 @@ public class PaymentRefundTests
         postalAddressResult.IsSuccess.Should().BeTrue();
 
         var addressResult = Address.CreateShipping(
-            user,
+            user.Id,
             postalAddressResult.Value);
 
         addressResult.IsSuccess.Should().BeTrue();
@@ -112,7 +112,7 @@ public class PaymentRefundTests
         refundResult.IsSuccess.Should().BeTrue();
         payment.Status.Should().Be(PaymentStatus.Refunded);
         payment.TransactionId.Should().Be(refundTransactionId);
-        
+
         var domainEvent = payment.DomainEvents.Should().ContainSingle(e => e is PaymentRefundedEvent).Subject;
         var refundedEvent = (PaymentRefundedEvent)domainEvent;
         refundedEvent.PaymentId.Should().Be(payment.Id);
@@ -126,7 +126,7 @@ public class PaymentRefundTests
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
         var order = CreateTestOrder(user, address);
-        
+
         // Create payment but don't mark as succeeded
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
@@ -139,7 +139,7 @@ public class PaymentRefundTests
             PaymentProvider.Stripe);
         paymentResult.IsSuccess.Should().BeTrue();
         var payment = paymentResult.Value;
-        
+
         var refundTransactionId = "ref_123";
 
         // Act
@@ -178,14 +178,14 @@ public class PaymentRefundTests
         var address = CreateTestAddress(user);
         var order = CreateTestOrder(user, address);
         var payment = CreateTestPayment(order, user);
-        
+
         // First refund
         var firstResult = payment.MarkAsRefunded("ref_123");
         firstResult.IsSuccess.Should().BeTrue();
         payment.Status.Should().Be(PaymentStatus.Refunded);
-        
+
         payment.ClearDomainEvents(); // Clear events from first refund
-        
+
         // Act - attempt second refund
         var secondResult = payment.MarkAsRefunded("ref_456");
 

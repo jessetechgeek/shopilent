@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.Enums;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 
@@ -219,7 +221,7 @@ internal sealed  class CustomUserStore :
 
     public Task AddToRoleAsync(User user, string roleName, CancellationToken cancellationToken)
     {
-        if (Enum.TryParse<Domain.Identity.Enums.UserRole>(roleName, true, out var role))
+        if (Enum.TryParse<UserRole>(roleName, true, out var role))
         {
             user.SetRole(role);
         }
@@ -250,7 +252,7 @@ internal sealed  class CustomUserStore :
     {
         // In our domain, users always have exactly one role
         // Removing from a role means setting back to Customer (default)
-        user.SetRole(Domain.Identity.Enums.UserRole.Customer);
+        user.SetRole(UserRole.Customer);
         return Task.CompletedTask;
     }
 

@@ -4,6 +4,7 @@ using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.DTOs;
 using Shopilent.Domain.Identity.Errors;
