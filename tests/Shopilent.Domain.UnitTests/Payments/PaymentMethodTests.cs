@@ -17,7 +17,7 @@ public class PaymentMethodTests
             emailResult.Value,
             "hashed_password",
             fullNameResult.Value);
-            
+
         userResult.IsSuccess.Should().BeTrue();
         return userResult.Value;
     }
@@ -36,7 +36,7 @@ public class PaymentMethodTests
 
         // Act
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             provider,
             token,
             cardDetails,
@@ -62,7 +62,7 @@ public class PaymentMethodTests
     public void CreateCardMethod_WithNullUser_ShouldReturnFailure()
     {
         // Arrange
-        User user = null;
+        var userId = Guid.Empty;
         var provider = PaymentProvider.Stripe;
         var token = "tok_visa_123";
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
@@ -71,7 +71,7 @@ public class PaymentMethodTests
 
         // Act
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            userId,
             provider,
             token,
             cardDetails);
@@ -94,7 +94,7 @@ public class PaymentMethodTests
 
         // Act
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             provider,
             token,
             cardDetails);
@@ -115,7 +115,7 @@ public class PaymentMethodTests
 
         // Act
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             provider,
             token,
             cardDetails);
@@ -136,7 +136,7 @@ public class PaymentMethodTests
 
         // Act
         var paymentMethodResult = PaymentMethod.CreatePayPalMethod(
-            user,
+            user.Id,
             token,
             email,
             isDefault);
@@ -166,9 +166,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails);
@@ -193,9 +193,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails);
@@ -220,9 +220,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails,
@@ -248,9 +248,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails);
@@ -277,9 +277,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails);
@@ -304,9 +304,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails);
@@ -331,9 +331,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails);
@@ -358,9 +358,9 @@ public class PaymentMethodTests
         var oldCardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         oldCardDetailsResult.IsSuccess.Should().BeTrue();
         var oldCardDetails = oldCardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             oldCardDetails);
@@ -390,9 +390,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails);
@@ -415,7 +415,7 @@ public class PaymentMethodTests
         // Arrange
         var user = CreateTestUser();
         var paypalMethodResult = PaymentMethod.CreatePayPalMethod(
-            user,
+            user.Id,
             "paypal_token_123",
             "customer@example.com");
         paypalMethodResult.IsSuccess.Should().BeTrue();
@@ -441,9 +441,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails);
@@ -470,9 +470,9 @@ public class PaymentMethodTests
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
         var cardDetails = cardDetailsResult.Value;
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetails);

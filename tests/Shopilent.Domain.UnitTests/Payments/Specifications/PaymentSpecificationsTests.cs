@@ -77,7 +77,7 @@ public class PaymentSpecificationsTests
         cardDetailsResult.IsSuccess.Should().BeTrue();
 
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetailsResult.Value);
@@ -102,7 +102,7 @@ public class PaymentSpecificationsTests
         cardDetailsResult.IsSuccess.Should().BeTrue();
 
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetailsResult.Value);
@@ -130,7 +130,7 @@ public class PaymentSpecificationsTests
         cardDetailsResult.IsSuccess.Should().BeTrue();
 
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetailsResult.Value,
@@ -156,7 +156,7 @@ public class PaymentSpecificationsTests
         cardDetailsResult.IsSuccess.Should().BeTrue();
 
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             PaymentProvider.Stripe,
             "tok_visa_123",
             cardDetailsResult.Value,

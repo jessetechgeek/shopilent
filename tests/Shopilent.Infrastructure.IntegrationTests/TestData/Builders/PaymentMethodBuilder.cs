@@ -71,14 +71,14 @@ public class PaymentMethodBuilder
         var faker = new Faker();
         _type = PaymentMethodType.CreditCard;
         _provider = PaymentProvider.Stripe;
-        
+
         var brand = faker.PickRandom("Visa", "Mastercard", "Amex");
         var lastFour = faker.Random.Int(1000, 9999).ToString();
         var expiryDate = DateTime.UtcNow.AddYears(faker.Random.Int(1, 5));
 
         _cardDetails = PaymentCardDetails.Create(brand, lastFour, expiryDate).Value;
         _displayName = $"{brand} ending in {lastFour}";
-        
+
         return this;
     }
 
@@ -105,11 +105,11 @@ public class PaymentMethodBuilder
 
         return _type switch
         {
-            PaymentMethodType.CreditCard when _cardDetails != null => 
-                PaymentMethod.CreateCardMethod(_user, _provider, _token, _cardDetails, _isDefault).Value,
-            PaymentMethodType.PayPal => 
-                PaymentMethod.CreatePayPalMethod(_user, _token, _email, _isDefault).Value,
-            _ => PaymentMethod.Create(_user, _type, _provider, _token, _displayName, _isDefault).Value
+            PaymentMethodType.CreditCard when _cardDetails != null =>
+                PaymentMethod.CreateCardMethod(_user.Id, _provider, _token, _cardDetails, _isDefault).Value,
+            PaymentMethodType.PayPal =>
+                PaymentMethod.CreatePayPalMethod(_user.Id, _token, _email, _isDefault).Value,
+            _ => PaymentMethod.Create(_user.Id, _type, _provider, _token, _displayName, _isDefault).Value
         };
     }
 }
