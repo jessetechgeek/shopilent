@@ -1,4 +1,5 @@
 using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.DTOs;
 using Shopilent.Domain.Identity.Enums;
 using Shopilent.Domain.Identity.ValueObjects;
 
@@ -71,6 +72,25 @@ public class UserBuilder
     {
         _createdAt = createdAt;
         return this;
+    }
+
+    public UserDto BuildDto()
+    {
+        return new UserDto
+        {
+            Id = _id,
+            Email = _email,
+            FirstName = _firstName,
+            LastName = _lastName,
+            MiddleName = null,
+            Phone = null,
+            Role = _role,
+            IsActive = _isActive,
+            LastLogin = null,
+            EmailVerified = _emailVerified,
+            CreatedAt = _createdAt,
+            UpdatedAt = _updatedAt
+        };
     }
 
     public User Build()

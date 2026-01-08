@@ -1,3 +1,4 @@
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.Enums;
 using Shopilent.Domain.Identity.Events;

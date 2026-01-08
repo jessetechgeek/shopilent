@@ -4,6 +4,7 @@ using Shopilent.API.IntegrationTests.Common;
 using Shopilent.API.IntegrationTests.Common.TestData;
 using Shopilent.Application.Features.Sales.Commands.CreateOrderFromCart.V1;
 using Shopilent.Domain.Catalog;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Sales;
 using Shopilent.Domain.Shipping;
@@ -642,7 +643,7 @@ public class CreateOrderFromCartEndpointV1Tests : ApiIntegrationTestBase
             ).Value;
 
             var phone = PhoneNumber.Create("555-0123").Value;
-            var address = Address.CreateShipping(adminUser, postalAddress, phone, false).Value;
+            var address = Address.CreateShipping(adminUser.Id, postalAddress, phone, false).Value;
             context.Addresses.Add(address);
             await context.SaveChangesAsync();
 

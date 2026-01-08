@@ -4,7 +4,7 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Identity.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Shipping.Errors;
 using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Domain.Shipping.ValueObjects;

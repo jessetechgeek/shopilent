@@ -4,6 +4,7 @@ using Shopilent.API.IntegrationTests.Common;
 using Shopilent.API.IntegrationTests.Common.TestData;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Sales;
@@ -849,7 +850,7 @@ public class GetUserOrdersEndpointV1Tests : ApiIntegrationTestBase
         ).Value;
 
         var phone = PhoneNumber.Create("555-0123").Value;
-        var address = Address.CreateShipping(user, postalAddress, phone, false).Value;
+        var address = Address.CreateShipping(user.Id, postalAddress, phone, false).Value;
         context.Addresses.Add(address);
         await context.SaveChangesAsync();
 

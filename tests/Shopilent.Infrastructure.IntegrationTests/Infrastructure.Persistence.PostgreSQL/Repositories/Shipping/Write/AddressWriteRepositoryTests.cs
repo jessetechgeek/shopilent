@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Exceptions;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Shipping.Enums;

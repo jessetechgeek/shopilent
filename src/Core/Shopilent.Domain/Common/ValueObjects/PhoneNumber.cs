@@ -1,8 +1,7 @@
-using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Identity.Errors;
 
-namespace Shopilent.Domain.Identity.ValueObjects;
+namespace Shopilent.Domain.Common.ValueObjects;
 
 public class PhoneNumber : ValueObject
 {

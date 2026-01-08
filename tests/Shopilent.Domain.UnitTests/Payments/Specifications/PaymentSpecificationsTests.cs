@@ -22,7 +22,7 @@ public class PaymentSpecificationsTests
             emailResult.Value,
             "hashed_password",
             fullNameResult.Value);
-            
+
         userResult.IsSuccess.Should().BeTrue();
         return userResult.Value;
     }
@@ -35,13 +35,13 @@ public class PaymentSpecificationsTests
             "State",
             "Country",
             "12345");
-            
+
         postalAddressResult.IsSuccess.Should().BeTrue();
-        
+
         var addressResult = Address.CreateShipping(
-            user,
+            user.Id,
             postalAddressResult.Value);
-            
+
         addressResult.IsSuccess.Should().BeTrue();
         return addressResult.Value;
     }
@@ -51,11 +51,11 @@ public class PaymentSpecificationsTests
         var subtotalResult = Money.Create(100, "USD");
         var taxResult = Money.Create(10, "USD");
         var shippingCostResult = Money.Create(5, "USD");
-        
+
         subtotalResult.IsSuccess.Should().BeTrue();
         taxResult.IsSuccess.Should().BeTrue();
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user,
             address,
@@ -63,7 +63,7 @@ public class PaymentSpecificationsTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         return orderResult.Value;
     }
@@ -75,7 +75,7 @@ public class PaymentSpecificationsTests
         var user = CreateTestUser();
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
             user,
             PaymentProvider.Stripe,
@@ -100,7 +100,7 @@ public class PaymentSpecificationsTests
         var user = CreateTestUser();
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
             user,
             PaymentProvider.Stripe,
@@ -128,7 +128,7 @@ public class PaymentSpecificationsTests
         var user = CreateTestUser();
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
             user,
             PaymentProvider.Stripe,
@@ -154,7 +154,7 @@ public class PaymentSpecificationsTests
         var user = CreateTestUser();
         var cardDetailsResult = PaymentCardDetails.Create("Visa", "4242", DateTime.UtcNow.AddYears(1));
         cardDetailsResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentMethodResult = PaymentMethod.CreateCardMethod(
             user,
             PaymentProvider.Stripe,
@@ -182,7 +182,7 @@ public class PaymentSpecificationsTests
         var order = CreateTestOrder(user, address);
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,
@@ -212,7 +212,7 @@ public class PaymentSpecificationsTests
 
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,
@@ -240,7 +240,7 @@ public class PaymentSpecificationsTests
         var order = CreateTestOrder(user, address);
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,
@@ -271,7 +271,7 @@ public class PaymentSpecificationsTests
         var order = CreateTestOrder(user, address);
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,
@@ -301,7 +301,7 @@ public class PaymentSpecificationsTests
         var order = CreateTestOrder(user, address);
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
-        
+
         var paymentResult = Payment.Create(
             order,
             user,

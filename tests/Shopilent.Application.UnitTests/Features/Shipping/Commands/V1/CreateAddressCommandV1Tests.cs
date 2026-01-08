@@ -5,7 +5,7 @@ using Moq;
 using Shopilent.Application.Features.Shipping.Commands.CreateAddress.V1;
 using Shopilent.Application.UnitTests.Common;
 using Shopilent.Application.UnitTests.Testing.Builders;
-using Shopilent.Domain.Identity;
+using Shopilent.Domain.Identity.DTOs;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Shipping.Enums;
 
@@ -21,7 +21,7 @@ public class CreateAddressCommandV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
-        services.AddTransient(sp => Fixture.MockUserWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockUserReadRepository.Object);
         services.AddTransient(sp => Fixture.MockAddressWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<CreateAddressCommandHandlerV1>());
@@ -57,13 +57,13 @@ public class CreateAddressCommandV1Tests : TestBase
             IsDefault = false
         };
 
-        var user = new UserBuilder().WithId(userId).Build();
+        var user = new UserBuilder().WithId(userId).BuildDto();
 
         // Setup authenticated user
         Fixture.SetAuthenticatedUser(userId);
 
         // Mock repository calls
-        Fixture.MockUserWriteRepository
+        Fixture.MockUserReadRepository
             .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
@@ -146,9 +146,9 @@ public class CreateAddressCommandV1Tests : TestBase
         Fixture.SetAuthenticatedUser(userId);
 
         // Mock user not found
-        Fixture.MockUserWriteRepository
+        Fixture.MockUserReadRepository
             .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
-            .ReturnsAsync((User)null);
+            .ReturnsAsync((UserDto)null);
 
         // Act
         var result = await _mediator.Send(command, CancellationToken);
@@ -180,13 +180,13 @@ public class CreateAddressCommandV1Tests : TestBase
             IsDefault = true
         };
 
-        var user = new UserBuilder().WithId(userId).Build();
+        var user = new UserBuilder().WithId(userId).BuildDto();
 
         // Setup authenticated user
         Fixture.SetAuthenticatedUser(userId);
 
         // Mock repository calls
-        Fixture.MockUserWriteRepository
+        Fixture.MockUserReadRepository
             .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
@@ -231,13 +231,13 @@ public class CreateAddressCommandV1Tests : TestBase
             IsDefault = false
         };
 
-        var user = new UserBuilder().WithId(userId).Build();
+        var user = new UserBuilder().WithId(userId).BuildDto();
 
         // Setup authenticated user
         Fixture.SetAuthenticatedUser(userId);
 
         // Mock repository calls
-        Fixture.MockUserWriteRepository
+        Fixture.MockUserReadRepository
             .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
@@ -284,13 +284,13 @@ public class CreateAddressCommandV1Tests : TestBase
             AddressType = AddressType.Shipping
         };
 
-        var user = new UserBuilder().WithId(userId).Build();
+        var user = new UserBuilder().WithId(userId).BuildDto();
 
         // Setup authenticated user
         Fixture.SetAuthenticatedUser(userId);
 
         // Mock repository calls
-        Fixture.MockUserWriteRepository
+        Fixture.MockUserReadRepository
             .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
@@ -336,13 +336,13 @@ public class CreateAddressCommandV1Tests : TestBase
             // IsDefault will default to false
         };
 
-        var user = new UserBuilder().WithId(userId).Build();
+        var user = new UserBuilder().WithId(userId).BuildDto();
 
         // Setup authenticated user
         Fixture.SetAuthenticatedUser(userId);
 
         // Mock repository calls
-        Fixture.MockUserWriteRepository
+        Fixture.MockUserReadRepository
             .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 
@@ -393,13 +393,13 @@ public class CreateAddressCommandV1Tests : TestBase
             Phone = "invalid-phone-format" // Invalid phone number
         };
 
-        var user = new UserBuilder().WithId(userId).Build();
+        var user = new UserBuilder().WithId(userId).BuildDto();
 
         // Setup authenticated user
         Fixture.SetAuthenticatedUser(userId);
 
         // Mock repository calls
-        Fixture.MockUserWriteRepository
+        Fixture.MockUserReadRepository
             .Setup(repo => repo.GetByIdAsync(userId, CancellationToken))
             .ReturnsAsync(user);
 

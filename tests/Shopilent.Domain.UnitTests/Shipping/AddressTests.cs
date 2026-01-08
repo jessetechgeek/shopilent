@@ -1,3 +1,4 @@
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Shipping.Enums;
 using Shopilent.Domain.Shipping.Events;
@@ -53,7 +54,7 @@ public class AddressTests
 
         // Act - Use CreateShipping instead of internal Create method
         var result = Address.CreateShipping(
-            user,
+            user.Id,
             postalAddress,
             phone,
             isDefault);
@@ -76,10 +77,10 @@ public class AddressTests
     }
 
     [Fact]
-    public void Create_WithNullUser_ShouldReturnFailure()
+    public void Create_WithEmptyUserId_ShouldReturnFailure()
     {
         // Arrange
-        User user = null;
+        var userId = Guid.Empty;
 
         var postalAddressResult = PostalAddress.Create(
             "123 Main St",
@@ -92,11 +93,11 @@ public class AddressTests
         var postalAddress = postalAddressResult.Value;
 
         // Act - Use CreateShipping instead of internal Create method
-        var result = Address.CreateShipping(user, postalAddress);
+        var result = Address.CreateShipping(userId, postalAddress);
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error.Code.Should().Be("User.NotFound");
+        result.Error.Code.Should().Be("Address.InvalidUserId");
     }
 
     [Fact]
@@ -107,7 +108,7 @@ public class AddressTests
         PostalAddress postalAddress = null;
 
         // Act - Use CreateShipping instead of internal Create method
-        var result = Address.CreateShipping(user, postalAddress);
+        var result = Address.CreateShipping(user.Id, postalAddress);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -139,7 +140,7 @@ public class AddressTests
 
         // Act
         var result = Address.CreateShipping(
-            user,
+            user.Id,
             postalAddress,
             phone,
             isDefault);
@@ -180,7 +181,7 @@ public class AddressTests
 
         // Act
         var result = Address.CreateBilling(
-            user,
+            user.Id,
             postalAddress,
             phone,
             isDefault);
@@ -221,7 +222,7 @@ public class AddressTests
 
         // Act
         var result = Address.CreateBoth(
-            user,
+            user.Id,
             postalAddress,
             phone,
             isDefault);
@@ -262,7 +263,7 @@ public class AddressTests
 
         // Act
         var result = Address.CreateBoth(
-            user,
+            user.Id,
             postalAddress,
             phone,
             isDefault);
@@ -294,7 +295,7 @@ public class AddressTests
         originalPostalAddressResult.IsSuccess.Should().BeTrue();
         var originalPostalAddress = originalPostalAddressResult.Value;
 
-        var addressResult = Address.CreateShipping(user, originalPostalAddress);
+        var addressResult = Address.CreateShipping(user.Id, originalPostalAddress);
         addressResult.IsSuccess.Should().BeTrue();
         var address = addressResult.Value;
 
@@ -345,7 +346,7 @@ public class AddressTests
         originalPostalAddressResult.IsSuccess.Should().BeTrue();
         var originalPostalAddress = originalPostalAddressResult.Value;
 
-        var addressResult = Address.CreateShipping(user, originalPostalAddress);
+        var addressResult = Address.CreateShipping(user.Id, originalPostalAddress);
         addressResult.IsSuccess.Should().BeTrue();
         var address = addressResult.Value;
 
@@ -375,7 +376,7 @@ public class AddressTests
         postalAddressResult.IsSuccess.Should().BeTrue();
         var postalAddress = postalAddressResult.Value;
 
-        var addressResult = Address.CreateShipping(user, postalAddress);
+        var addressResult = Address.CreateShipping(user.Id, postalAddress);
         addressResult.IsSuccess.Should().BeTrue();
         var address = addressResult.Value;
         address.AddressType.Should().Be(AddressType.Shipping);
@@ -407,7 +408,7 @@ public class AddressTests
         postalAddressResult.IsSuccess.Should().BeTrue();
         var postalAddress = postalAddressResult.Value;
 
-        var addressResult = Address.CreateShipping(user, postalAddress);
+        var addressResult = Address.CreateShipping(user.Id, postalAddress);
         addressResult.IsSuccess.Should().BeTrue();
         var address = addressResult.Value;
         address.IsDefault.Should().BeFalse();

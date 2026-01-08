@@ -1,5 +1,6 @@
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity.Enums;
 using Shopilent.Domain.Identity.Errors;
 using Shopilent.Domain.Identity.Events;
@@ -301,7 +302,7 @@ public class User : AggregateRoot
             return Result.Failure<Address>(AddressErrors.AddressLine1Required);
 
         var result = Address.Create(
-            this,
+            this.Id,
             postalAddress,
             addressType,
             phone,

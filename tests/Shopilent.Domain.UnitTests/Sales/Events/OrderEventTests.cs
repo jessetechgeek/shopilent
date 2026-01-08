@@ -18,15 +18,15 @@ public class OrderEventTests
     {
         var emailResult = Email.Create("test@example.com");
         emailResult.IsSuccess.Should().BeTrue();
-        
+
         var fullNameResult = FullName.Create("Test", "User");
         fullNameResult.IsSuccess.Should().BeTrue();
-        
+
         var userResult = User.Create(
             emailResult.Value,
             "hashed_password",
             fullNameResult.Value);
-            
+
         userResult.IsSuccess.Should().BeTrue();
         return userResult.Value;
     }
@@ -42,7 +42,7 @@ public class OrderEventTests
         postalAddressResult.IsSuccess.Should().BeTrue();
 
         var addressResult = Address.CreateShipping(
-            user,
+            user.Id,
             postalAddressResult.Value);
 
         addressResult.IsSuccess.Should().BeTrue();
@@ -58,10 +58,10 @@ public class OrderEventTests
 
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
 
@@ -89,16 +89,16 @@ public class OrderEventTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user,
             address,
@@ -106,7 +106,7 @@ public class OrderEventTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
         order.ClearDomainEvents(); // Clear the creation event
@@ -130,16 +130,16 @@ public class OrderEventTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user,
             address,
@@ -147,7 +147,7 @@ public class OrderEventTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
         order.ClearDomainEvents(); // Clear the creation event
@@ -171,16 +171,16 @@ public class OrderEventTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user,
             address,
@@ -188,7 +188,7 @@ public class OrderEventTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
         order.ClearDomainEvents(); // Clear the creation event
@@ -214,16 +214,16 @@ public class OrderEventTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.CreatePaidOrder(
             user,
             address,
@@ -231,7 +231,7 @@ public class OrderEventTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
         order.ClearDomainEvents(); // Clear previous events
@@ -253,16 +253,16 @@ public class OrderEventTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.CreatePaidOrder(
             user,
             address,
@@ -270,13 +270,13 @@ public class OrderEventTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
-        
+
         var shippedResult = order.MarkAsShipped();
         shippedResult.IsSuccess.Should().BeTrue();
-        
+
         order.ClearDomainEvents(); // Clear previous events
 
         // Act
@@ -296,16 +296,16 @@ public class OrderEventTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user,
             address,
@@ -313,7 +313,7 @@ public class OrderEventTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
         order.ClearDomainEvents(); // Clear the creation event

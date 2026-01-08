@@ -39,4 +39,8 @@ public static class AddressErrors
     public static Error InvalidAddressType => Error.Validation(
         code: "Address.InvalidAddressType",
         message: "Invalid address type specified.");
+
+    public static Error InvalidUserId => Error.Validation(
+        code: "Address.InvalidUserId",
+        message: "User ID cannot be empty.");
 }

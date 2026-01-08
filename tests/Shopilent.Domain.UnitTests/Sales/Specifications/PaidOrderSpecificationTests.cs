@@ -15,15 +15,15 @@ public class PaidOrderSpecificationTests
     {
         var emailResult = Email.Create("test@example.com");
         emailResult.IsSuccess.Should().BeTrue();
-        
+
         var fullNameResult = FullName.Create("Test", "User");
         fullNameResult.IsSuccess.Should().BeTrue();
-        
+
         var userResult = User.Create(
             emailResult.Value,
             "hashed_password",
             fullNameResult.Value);
-            
+
         userResult.IsSuccess.Should().BeTrue();
         return userResult.Value;
     }
@@ -36,13 +36,13 @@ public class PaidOrderSpecificationTests
             "State",
             "Country",
             "12345");
-            
+
         postalAddressResult.IsSuccess.Should().BeTrue();
-        
+
         var addressResult = Address.CreateShipping(
-            user,
+            user.Id,
             postalAddressResult.Value);
-            
+
         addressResult.IsSuccess.Should().BeTrue();
         return addressResult.Value;
     }
@@ -53,16 +53,16 @@ public class PaidOrderSpecificationTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.CreatePaidOrder(
             user,
             address,
@@ -70,10 +70,10 @@ public class PaidOrderSpecificationTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
-        
+
         var specification = new PaidOrderSpecification();
 
         // Act
@@ -89,16 +89,16 @@ public class PaidOrderSpecificationTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user,
             address,
@@ -106,10 +106,10 @@ public class PaidOrderSpecificationTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
-        
+
         var specification = new PaidOrderSpecification();
 
         // Act
@@ -125,16 +125,16 @@ public class PaidOrderSpecificationTests
         // Arrange
         var user = CreateTestUser();
         var address = CreateTestAddress(user);
-        
+
         var subtotalResult = Money.FromDollars(100);
         subtotalResult.IsSuccess.Should().BeTrue();
-        
+
         var taxResult = Money.FromDollars(10);
         taxResult.IsSuccess.Should().BeTrue();
-        
+
         var shippingCostResult = Money.FromDollars(5);
         shippingCostResult.IsSuccess.Should().BeTrue();
-        
+
         var orderResult = Order.Create(
             user,
             address,
@@ -142,14 +142,14 @@ public class PaidOrderSpecificationTests
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
-            
+
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
-        
+
         // Initial check
         var specification = new PaidOrderSpecification();
         specification.IsSatisfiedBy(order).Should().BeFalse();
-        
+
         // Mark as paid
         var paidResult = order.MarkAsPaid();
         paidResult.IsSuccess.Should().BeTrue();

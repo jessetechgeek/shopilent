@@ -5,6 +5,7 @@ using Shopilent.API.IntegrationTests.Common.TestData;
 using Shopilent.API.Common.Models;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Sales;
@@ -801,7 +802,7 @@ public class UpdateOrderStatusEndpointV1Tests : ApiIntegrationTestBase
             ).Value;
 
             var phoneNumber = PhoneNumber.Create("555-0123").Value;
-            var address = Domain.Shipping.Address.CreateShipping(user, postalAddress, phoneNumber, false).Value;
+            var address = Domain.Shipping.Address.CreateShipping(user.Id, postalAddress, phoneNumber, false).Value;
             context.Addresses.Add(address);
             await context.SaveChangesAsync();
 

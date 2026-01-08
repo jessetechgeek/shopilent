@@ -4,9 +4,8 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity.Repositories.Read;
-using Shopilent.Domain.Identity.Repositories.Write;
-using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Shipping.Enums;
 using Shopilent.Domain.Shipping.Repositories.Write;
@@ -17,20 +16,20 @@ namespace Shopilent.Application.Features.Shipping.Commands.CreateAddress.V1;
 internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddressCommandV1, CreateAddressResponseV1>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IUserWriteRepository _userWriteRepository;
+    private readonly IUserReadRepository _userReadRepository;
     private readonly IAddressWriteRepository _addressWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<CreateAddressCommandHandlerV1> _logger;
 
     public CreateAddressCommandHandlerV1(
         IUnitOfWork unitOfWork,
-        IUserWriteRepository userWriteRepository,
+        IUserReadRepository userReadRepository,
         IAddressWriteRepository addressWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<CreateAddressCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
-        _userWriteRepository = userWriteRepository;
+        _userReadRepository = userReadRepository;
         _addressWriteRepository = addressWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
@@ -51,7 +50,7 @@ internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddr
             var userId = _currentUserContext.UserId.Value;
 
             // Get user from repository
-            var user = await _userWriteRepository.GetByIdAsync(userId, cancellationToken);
+            var user = await _userReadRepository.GetByIdAsync(userId, cancellationToken);
             if (user == null)
             {
                 return Result.Failure<CreateAddressResponseV1>(
@@ -107,11 +106,11 @@ internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddr
             Result<Address> addressResult = request.AddressType switch
             {
                 AddressType.Shipping => Address.CreateShipping(
-                    user, postalAddressResult.Value, phoneNumber, request.IsDefault),
+                    user.Id, postalAddressResult.Value, phoneNumber, request.IsDefault),
                 AddressType.Billing => Address.CreateBilling(
-                    user, postalAddressResult.Value, phoneNumber, request.IsDefault),
+                    user.Id, postalAddressResult.Value, phoneNumber, request.IsDefault),
                 AddressType.Both => Address.CreateBoth(
-                    user, postalAddressResult.Value, phoneNumber, request.IsDefault),
+                    user.Id, postalAddressResult.Value, phoneNumber, request.IsDefault),
                 _ => Result.Failure<Address>(
                     Error.Validation("CreateAddress.InvalidAddressType", "Invalid address type specified."))
             };

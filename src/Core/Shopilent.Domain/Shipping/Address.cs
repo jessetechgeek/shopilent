@@ -1,8 +1,6 @@
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Identity;
-using Shopilent.Domain.Identity.Errors;
-using Shopilent.Domain.Identity.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Shipping.Enums;
 using Shopilent.Domain.Shipping.Errors;
 using Shopilent.Domain.Shipping.Events;
@@ -18,13 +16,13 @@ public class Address : AggregateRoot
     }
 
     private Address(
-        User user,
+        Guid userId,
         PostalAddress postalAddress,
         AddressType addressType = AddressType.Shipping,
         PhoneNumber phone = null,
         bool isDefault = false)
     {
-        UserId = user.Id;
+        UserId = userId;
         PostalAddress = postalAddress;
         Phone = phone;
         IsDefault = isDefault;
@@ -33,88 +31,69 @@ public class Address : AggregateRoot
 
     // Internal factory method for use by User aggregate
     internal static Address Create(
-        User user,
+        Guid userId,
         PostalAddress postalAddress,
         AddressType addressType = AddressType.Shipping,
         PhoneNumber phone = null,
         bool isDefault = false)
     {
-        if (user == null)
-            throw new ArgumentNullException(nameof(user));
+        if (userId == Guid.Empty)
+            throw new ArgumentException("User ID cannot be empty.", nameof(userId));
 
         if (postalAddress == null)
-            throw new ArgumentException("Postal address cannot be null", nameof(postalAddress));
+            throw new ArgumentNullException(nameof(postalAddress), "Postal address cannot be null");
 
-        var address = new Address(user, postalAddress, addressType, phone, isDefault);
-        address.AddDomainEvent(new AddressCreatedEvent(address.Id, user.Id));
+        var address = new Address(userId, postalAddress, addressType, phone, isDefault);
+        address.AddDomainEvent(new AddressCreatedEvent(address.Id, userId));
         return address;
-    }
-
-    // For use by the User aggregate which should validate inputs
-    internal static Result<Address> Create(
-        Result<User> userResult,
-        PostalAddress postalAddress,
-        AddressType addressType = AddressType.Shipping,
-        PhoneNumber phone = null,
-        bool isDefault = false)
-    {
-        if (userResult.IsFailure)
-            return Result.Failure<Address>(userResult.Error);
-
-        if (postalAddress == null)
-            return Result.Failure<Address>(AddressErrors.AddressLine1Required);
-
-        var address = new Address(userResult.Value, postalAddress, addressType, phone, isDefault);
-        address.AddDomainEvent(new AddressCreatedEvent(address.Id, userResult.Value.Id));
-        return Result.Success(address);
     }
 
     // Public factory methods that use the internal ones
     public static Result<Address> CreateShipping(
-        User user,
+        Guid userId,
         PostalAddress postalAddress,
         PhoneNumber phone = null,
         bool isDefault = false)
     {
-        if (user == null)
-            return Result.Failure<Address>(UserErrors.NotFound(Guid.Empty));
+        if (userId == Guid.Empty)
+            return Result.Failure<Address>(AddressErrors.InvalidUserId);
 
         if (postalAddress == null)
             return Result.Failure<Address>(AddressErrors.AddressLine1Required);
 
-        var address = Create(user, postalAddress, AddressType.Shipping, phone, isDefault);
+        var address = Create(userId, postalAddress, AddressType.Shipping, phone, isDefault);
         return Result.Success(address);
     }
 
     public static Result<Address> CreateBilling(
-        User user,
+        Guid userId,
         PostalAddress postalAddress,
         PhoneNumber phone = null,
         bool isDefault = false)
     {
-        if (user == null)
-            return Result.Failure<Address>(UserErrors.NotFound(Guid.Empty));
+        if (userId == Guid.Empty)
+            return Result.Failure<Address>(AddressErrors.InvalidUserId);
 
         if (postalAddress == null)
             return Result.Failure<Address>(AddressErrors.AddressLine1Required);
 
-        var address = Create(user, postalAddress, AddressType.Billing, phone, isDefault);
+        var address = Create(userId, postalAddress, AddressType.Billing, phone, isDefault);
         return Result.Success(address);
     }
 
     public static Result<Address> CreateBoth(
-        User user,
+        Guid userId,
         PostalAddress postalAddress,
         PhoneNumber phone = null,
         bool isDefault = false)
     {
-        if (user == null)
-            return Result.Failure<Address>(UserErrors.NotFound(Guid.Empty));
+        if (userId == Guid.Empty)
+            return Result.Failure<Address>(AddressErrors.InvalidUserId);
 
         if (postalAddress == null)
             return Result.Failure<Address>(AddressErrors.AddressLine1Required);
 
-        var address = Create(user, postalAddress, AddressType.Both, phone, isDefault);
+        var address = Create(userId, postalAddress, AddressType.Both, phone, isDefault);
         return Result.Success(address);
     }
 
@@ -171,7 +150,7 @@ public class Address : AggregateRoot
         AddDomainEvent(new AddressUpdatedEvent(Id));
         return Result.Success();
     }
-    
+
     public Result Delete()
     {
         AddDomainEvent(new AddressDeletedEvent(Id, UserId));
