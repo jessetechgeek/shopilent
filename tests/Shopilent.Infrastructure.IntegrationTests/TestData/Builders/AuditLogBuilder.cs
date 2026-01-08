@@ -120,7 +120,7 @@ public class AuditLogBuilder
             _entityType,
             _entityId,
             _action,
-            _user,
+            _user?.Id,
             _oldValues,
             _newValues,
             _ipAddress,

@@ -46,7 +46,7 @@ public class AuditLogTests
             entityType,
             entityId,
             action,
-            user,
+            user.Id,
             oldValues,
             newValues,
             ipAddress,
@@ -122,7 +122,7 @@ public class AuditLogTests
             entityType,
             entityId,
             values,
-            user,
+            user.Id,
             ipAddress,
             userAgent,
             appVersion);
@@ -160,7 +160,7 @@ public class AuditLogTests
             entityId,
             oldValues,
             newValues,
-            user,
+            user.Id,
             ipAddress,
             userAgent,
             appVersion);
@@ -196,7 +196,7 @@ public class AuditLogTests
             entityType,
             entityId,
             values,
-            user,
+            user.Id,
             ipAddress,
             userAgent,
             appVersion);
