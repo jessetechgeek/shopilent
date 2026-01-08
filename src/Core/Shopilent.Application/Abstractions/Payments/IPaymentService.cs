@@ -1,6 +1,6 @@
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Payments.Enums;
-using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Application.Abstractions.Payments;
 
