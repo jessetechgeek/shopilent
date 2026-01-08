@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Payments;
@@ -80,8 +81,8 @@ public class PaymentEventsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -105,8 +106,8 @@ public class PaymentEventsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -141,8 +142,8 @@ public class PaymentEventsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -174,8 +175,8 @@ public class PaymentEventsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -208,8 +209,8 @@ public class PaymentEventsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);

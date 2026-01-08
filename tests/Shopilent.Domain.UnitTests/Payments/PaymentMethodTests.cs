@@ -78,7 +78,7 @@ public class PaymentMethodTests
 
         // Assert
         paymentMethodResult.IsFailure.Should().BeTrue();
-        paymentMethodResult.Error.Code.Should().Be("User.NotFound");
+        paymentMethodResult.Error.Code.Should().Be("PaymentMethod.InvalidUserId");
     }
 
     [Fact]

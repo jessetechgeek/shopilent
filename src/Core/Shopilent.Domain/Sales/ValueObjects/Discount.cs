@@ -1,5 +1,6 @@
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Errors;
 

@@ -3,6 +3,7 @@ using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Domain.Shipping;

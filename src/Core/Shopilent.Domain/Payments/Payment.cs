@@ -1,12 +1,9 @@
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Identity;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Errors;
 using Shopilent.Domain.Payments.Events;
-using Shopilent.Domain.Sales;
-using Shopilent.Domain.Sales.Errors;
-using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Domain.Payments;
 
@@ -18,15 +15,15 @@ public class Payment : AggregateRoot
     }
 
     private Payment(
-        Order order,
-        User user,
+        Guid orderId,
+        Guid? userId,
         Money amount,
         PaymentMethodType methodType,
         PaymentProvider provider,
         string externalReference = null)
     {
-        OrderId = order.Id;
-        UserId = user?.Id;
+        OrderId = orderId;
+        UserId = userId;
         Amount = amount;
         Currency = amount.Currency; // Set currency from Money object to match DB schema
         MethodType = methodType;
@@ -38,15 +35,16 @@ public class Payment : AggregateRoot
 
     // Internal factory method for use by Order aggregate
     internal static Payment CreateInternal(
-        Order order,
-        User user,
+        Guid orderId,
+        Guid? userId,
         Money amount,
         PaymentMethodType methodType,
         PaymentProvider provider,
         string externalReference = null)
     {
-        if (order == null)
-            throw new ArgumentNullException(nameof(order));
+        if (orderId == Guid.Empty)
+            return Result.Failure<Payment>(PaymentErrors.InvalidOrderId);
+
 
         if (amount == null)
             throw new ArgumentException("Amount cannot be null", nameof(amount));
@@ -54,45 +52,22 @@ public class Payment : AggregateRoot
         if (amount.Amount < 0)
             throw new ArgumentException("Amount cannot be negative", nameof(amount));
 
-        var payment = new Payment(order, user, amount, methodType, provider, externalReference);
+        var payment = new Payment(orderId, userId, amount, methodType, provider, externalReference);
         payment.AddDomainEvent(new PaymentCreatedEvent(payment.Id));
         return payment;
     }
 
-    // For use by the Order aggregate which should validate inputs
-    internal static Result<Payment> CreateFromOrder(
-        Result<Order> orderResult,
-        User user,
-        Money amount,
-        PaymentMethodType methodType,
-        PaymentProvider provider,
-        string externalReference = null)
-    {
-        if (orderResult.IsFailure)
-            return Result.Failure<Payment>(orderResult.Error);
-
-        if (amount == null)
-            return Result.Failure<Payment>(PaymentErrors.NegativeAmount);
-
-        if (amount.Amount < 0)
-            return Result.Failure<Payment>(PaymentErrors.NegativeAmount);
-
-        var payment = new Payment(orderResult.Value, user, amount, methodType, provider, externalReference);
-        payment.AddDomainEvent(new PaymentCreatedEvent(payment.Id));
-        return Result.Success(payment);
-    }
-
     // Public factory methods that call the internal ones
     public static Result<Payment> Create(
-        Order order,
-        User user,
+        Guid orderId,
+        Guid? userId,
         Money amount,
         PaymentMethodType methodType,
         PaymentProvider provider,
         string externalReference = null)
     {
-        if (order == null)
-            return Result.Failure<Payment>(OrderErrors.NotFound(Guid.Empty));
+        if (orderId == Guid.Empty)
+            return Result.Failure<Payment>(PaymentErrors.InvalidOrderId);
 
         if (amount == null)
             return Result.Failure<Payment>(PaymentErrors.NegativeAmount);
@@ -100,20 +75,20 @@ public class Payment : AggregateRoot
         if (amount.Amount < 0)
             return Result.Failure<Payment>(PaymentErrors.NegativeAmount);
 
-        var payment = CreateInternal(order, user, amount, methodType, provider, externalReference);
+        var payment = CreateInternal(orderId, userId, amount, methodType, provider, externalReference);
         return Result.Success(payment);
     }
 
     // With PaymentMethod entity reference
     internal static Payment CreateInternalWithPaymentMethod(
-        Order order,
-        User user,
+        Guid orderId,
+        Guid? userId,
         Money amount,
         PaymentMethod paymentMethod,
         string externalReference = null)
     {
-        if (order == null)
-            throw new ArgumentNullException(nameof(order));
+        if (orderId == Guid.Empty)
+            return Result.Failure<Payment>(PaymentErrors.InvalidOrderId);
 
         if (amount == null || amount.Amount <= 0)
             throw new ArgumentException("Amount must be positive", nameof(amount));
@@ -125,8 +100,8 @@ public class Payment : AggregateRoot
             throw new ArgumentException("Payment method is not active", nameof(paymentMethod));
 
         var payment = new Payment(
-            order,
-            user,
+            orderId,
+            userId,
             amount,
             paymentMethod.Type,
             paymentMethod.Provider,
@@ -138,14 +113,14 @@ public class Payment : AggregateRoot
     }
 
     public static Result<Payment> CreateWithPaymentMethod(
-        Order order,
-        User user,
+        Guid orderId,
+        Guid? userId,
         Money amount,
         PaymentMethod paymentMethod,
         string externalReference = null)
     {
-        if (order == null)
-            return Result.Failure<Payment>(OrderErrors.NotFound(Guid.Empty));
+        if (orderId == Guid.Empty)
+            return Result.Failure<Payment>(PaymentErrors.InvalidOrderId);
 
         if (amount == null || amount.Amount <= 0)
             return Result.Failure<Payment>(PaymentErrors.NegativeAmount);
@@ -156,7 +131,7 @@ public class Payment : AggregateRoot
         if (!paymentMethod.IsActive)
             return Result.Failure<Payment>(PaymentMethodErrors.InactivePaymentMethod);
 
-        var payment = CreateInternalWithPaymentMethod(order, user, amount, paymentMethod, externalReference);
+        var payment = CreateInternalWithPaymentMethod(orderId, userId, amount, paymentMethod, externalReference);
         return Result.Success(payment);
     }
 

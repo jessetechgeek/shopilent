@@ -4,12 +4,11 @@ using Shopilent.Application.Abstractions.Imaging;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Abstractions.S3Storage;
-using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Sales.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 
 namespace Shopilent.Application.Features.Catalog.Commands.UpdateVariant.V1;
 

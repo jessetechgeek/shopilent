@@ -5,6 +5,7 @@ using Shopilent.Application.Abstractions.Payments;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments;
@@ -16,7 +17,6 @@ using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Errors;
 using Shopilent.Domain.Sales.Repositories.Write;
-using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Application.Features.Payments.Commands.ProcessOrderPayment.V1;
 
@@ -179,8 +179,8 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
                 {
                     // Create failed payment record
                     var failedPayment = Payment.Create(
-                        order,
-                        user,
+                        order.Id,
+                        user.Id,
                         orderAmount.Value,
                         request.MethodType,
                         request.Provider);
@@ -204,8 +204,8 @@ internal sealed class ProcessOrderPaymentCommandHandlerV1
 
             // Create payment record
             var payment = Payment.Create(
-                order,
-                user,
+                order.Id,
+                user.Id,
                 orderAmount.Value,
                 request.MethodType,
                 request.Provider,

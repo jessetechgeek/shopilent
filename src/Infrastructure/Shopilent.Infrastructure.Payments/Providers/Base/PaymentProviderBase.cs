@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Payments;
+using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Payments.Enums;
-using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Infrastructure.Payments.Abstractions;
 using Shopilent.Infrastructure.Payments.Models;
 
@@ -40,7 +41,7 @@ public abstract class PaymentProviderBase : IPaymentProvider
         CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Result.Failure<string>(
-            Domain.Common.Errors.Error.Failure(
+            Error.Failure(
                 code: "CustomerManagement.NotSupported",
                 message: $"Customer management is not supported by {Provider} provider")));
     }
@@ -51,7 +52,7 @@ public abstract class PaymentProviderBase : IPaymentProvider
         CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Result.Failure<string>(
-            Domain.Common.Errors.Error.Failure(
+            Error.Failure(
                 code: "CustomerManagement.NotSupported",
                 message: $"Payment method attachment is not supported by {Provider} provider")));
     }
@@ -63,7 +64,7 @@ public abstract class PaymentProviderBase : IPaymentProvider
         CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Result.Failure<WebhookResult>(
-            Domain.Common.Errors.Error.Failure(
+            Error.Failure(
                 code: "Webhook.NotSupported",
                 message: $"Webhook processing is not supported by {Provider} provider")));
     }
@@ -75,7 +76,7 @@ public abstract class PaymentProviderBase : IPaymentProvider
         CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Result.Failure<SetupIntentResult>(
-            Domain.Common.Errors.Error.Failure(
+            Error.Failure(
                 code: "SetupIntent.NotSupported",
                 message: $"Setup intent is not supported by {Provider} provider")));
     }
@@ -86,7 +87,7 @@ public abstract class PaymentProviderBase : IPaymentProvider
         CancellationToken cancellationToken = default)
     {
         return Task.FromResult(Result.Failure<SetupIntentResult>(
-            Domain.Common.Errors.Error.Failure(
+            Error.Failure(
                 code: "SetupIntent.NotSupported",
                 message: $"Setup intent confirmation is not supported by {Provider} provider")));
     }

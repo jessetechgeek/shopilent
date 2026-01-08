@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Repositories.Read;

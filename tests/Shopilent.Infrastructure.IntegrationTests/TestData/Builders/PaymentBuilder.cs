@@ -1,9 +1,9 @@
 using Bogus;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Payments;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Sales;
-using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -98,9 +98,10 @@ public class PaymentBuilder
 
         if (_paymentMethod != null)
         {
-            return Payment.CreateWithPaymentMethod(_order, _user, _amount, _paymentMethod, _externalReference).Value;
+            return Payment.CreateWithPaymentMethod(_order.Id, _user.Id, _amount, _paymentMethod, _externalReference)
+                .Value;
         }
 
-        return Payment.Create(_order, _user, _amount, _methodType, _provider, _externalReference).Value;
+        return Payment.Create(_order.Id, _user.Id, _amount, _methodType, _provider, _externalReference).Value;
     }
 }

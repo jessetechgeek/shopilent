@@ -1,10 +1,11 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shopilent.Application.Abstractions.Payments;
+using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Payments.Enums;
-using Shopilent.Domain.Sales.ValueObjects;
-using Shopilent.Infrastructure.Payments.Abstractions;
+using Shopilent.Domain.Payments.Errors;
 using Shopilent.Infrastructure.Payments.Models;
 using Shopilent.Infrastructure.Payments.Providers.Base;
 using Shopilent.Infrastructure.Payments.Providers.Stripe.Handlers;
@@ -33,7 +34,8 @@ internal class StripePaymentProvider : PaymentProviderBase
         StripeWebhookHandlerFactory webhookHandlerFactory) : base(logger)
     {
         _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
-        _webhookHandlerFactory = webhookHandlerFactory ?? throw new ArgumentNullException(nameof(webhookHandlerFactory));
+        _webhookHandlerFactory =
+            webhookHandlerFactory ?? throw new ArgumentNullException(nameof(webhookHandlerFactory));
 
         StripeConfiguration.ApiKey = _settings.SecretKey;
 
@@ -66,10 +68,7 @@ internal class StripePaymentProvider : PaymentProviderBase
                 // Enable 3D Secure authentication when needed
                 PaymentMethodOptions = new PaymentIntentPaymentMethodOptionsOptions
                 {
-                    Card = new PaymentIntentPaymentMethodOptionsCardOptions
-                    {
-                        RequestThreeDSecure = "automatic"
-                    }
+                    Card = new PaymentIntentPaymentMethodOptionsCardOptions { RequestThreeDSecure = "automatic" }
                 }
             };
 
@@ -101,7 +100,7 @@ internal class StripePaymentProvider : PaymentProviderBase
         {
             Logger.LogError(ex, "Unexpected error processing Stripe payment");
             return Result.Failure<PaymentResult>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -117,8 +116,7 @@ internal class StripePaymentProvider : PaymentProviderBase
 
             var options = new RefundCreateOptions
             {
-                PaymentIntent = transactionId,
-                Reason = ConvertRefundReason(reason)
+                PaymentIntent = transactionId, Reason = ConvertRefundReason(reason)
             };
 
             if (amount != null)
@@ -136,13 +134,13 @@ internal class StripePaymentProvider : PaymentProviderBase
         {
             Logger.LogError(stripeEx, "Stripe refund failed: {ErrorMessage}", stripeEx.Message);
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(stripeEx.Message));
+                PaymentErrors.ProcessingFailed(stripeEx.Message));
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Unexpected error processing Stripe refund");
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -167,13 +165,13 @@ internal class StripePaymentProvider : PaymentProviderBase
         {
             Logger.LogError(stripeEx, "Failed to get Stripe payment status: {ErrorMessage}", stripeEx.Message);
             return Result.Failure<PaymentStatus>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(stripeEx.Message));
+                PaymentErrors.ProcessingFailed(stripeEx.Message));
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Unexpected error getting Stripe payment status");
             return Result.Failure<PaymentStatus>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -242,11 +240,7 @@ internal class StripePaymentProvider : PaymentProviderBase
 
             var options = new CustomerCreateOptions
             {
-                Email = email,
-                Metadata = new Dictionary<string, string>
-                {
-                    ["user_id"] = userId
-                }
+                Email = email, Metadata = new Dictionary<string, string> { ["user_id"] = userId }
             };
 
             if (metadata != null)
@@ -257,10 +251,7 @@ internal class StripePaymentProvider : PaymentProviderBase
                 }
             }
 
-            var requestOptions = new RequestOptions
-            {
-                IdempotencyKey = $"customer_create_{userId}"
-            };
+            var requestOptions = new RequestOptions { IdempotencyKey = $"customer_create_{userId}" };
 
             var customer = await _customerService.CreateAsync(
                 options,
@@ -276,13 +267,13 @@ internal class StripePaymentProvider : PaymentProviderBase
             Logger.LogError(stripeEx, "Stripe customer creation failed: {ErrorType} - {ErrorMessage}",
                 stripeEx.StripeError?.Type, stripeEx.Message);
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(stripeEx.Message));
+                PaymentErrors.ProcessingFailed(stripeEx.Message));
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Unexpected error creating Stripe customer");
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -296,10 +287,7 @@ internal class StripePaymentProvider : PaymentProviderBase
             Logger.LogInformation("Attaching payment method {PaymentMethodToken} to customer {CustomerId}",
                 paymentMethodToken, customerId);
 
-            var options = new PaymentMethodAttachOptions
-            {
-                Customer = customerId
-            };
+            var options = new PaymentMethodAttachOptions { Customer = customerId };
 
             var paymentMethod = await _paymentMethodService.AttachAsync(
                 paymentMethodToken,
@@ -315,13 +303,13 @@ internal class StripePaymentProvider : PaymentProviderBase
         {
             Logger.LogError(stripeEx, "Stripe payment method attachment failed: {ErrorMessage}", stripeEx.Message);
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(stripeEx.Message));
+                PaymentErrors.ProcessingFailed(stripeEx.Message));
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Unexpected error attaching payment method to customer");
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -374,61 +362,61 @@ internal class StripePaymentProvider : PaymentProviderBase
         return result;
     }
 
-    private Domain.Common.Errors.Error HandleStripeException(StripeException stripeEx)
+    private Error HandleStripeException(StripeException stripeEx)
     {
         return stripeEx.StripeError?.Type switch
         {
             "card_error" => HandleCardError(stripeEx.StripeError),
-            "validation_error" => Domain.Payments.Errors.PaymentErrors.ProcessingFailed(stripeEx.Message),
-            "api_error" => Domain.Payments.Errors.PaymentErrors.ProcessingFailed(
+            "validation_error" => PaymentErrors.ProcessingFailed(stripeEx.Message),
+            "api_error" => PaymentErrors.ProcessingFailed(
                 "Payment service temporarily unavailable"),
-            "authentication_error" => Domain.Payments.Errors.PaymentErrors.ProcessingFailed(
+            "authentication_error" => PaymentErrors.ProcessingFailed(
                 "Payment authentication failed"),
-            "rate_limit_error" => Domain.Payments.Errors.PaymentErrors.ProcessingFailed(
+            "rate_limit_error" => PaymentErrors.ProcessingFailed(
                 "Too many requests, please try again later"),
-            "idempotency_error" => Domain.Payments.Errors.PaymentErrors.ProcessingFailed("Duplicate payment request"),
-            _ => Domain.Payments.Errors.PaymentErrors.ProcessingFailed(stripeEx.Message)
+            "idempotency_error" => PaymentErrors.ProcessingFailed("Duplicate payment request"),
+            _ => PaymentErrors.ProcessingFailed(stripeEx.Message)
         };
     }
 
-    private Domain.Common.Errors.Error HandleCardError(StripeError error)
+    private Error HandleCardError(StripeError error)
     {
         return error.Code switch
         {
             "card_declined" => DetermineDeclineReason(error.DeclineCode),
-            "expired_card" => Domain.Payments.Errors.PaymentErrors.ExpiredCard,
-            "insufficient_funds" => Domain.Payments.Errors.PaymentErrors.InsufficientFunds,
-            "incorrect_cvc" => Domain.Payments.Errors.PaymentErrors.InvalidCard,
-            "incorrect_number" => Domain.Payments.Errors.PaymentErrors.InvalidCard,
-            "invalid_cvc" => Domain.Payments.Errors.PaymentErrors.InvalidCard,
-            "invalid_expiry_month" => Domain.Payments.Errors.PaymentErrors.InvalidCard,
-            "invalid_expiry_year" => Domain.Payments.Errors.PaymentErrors.InvalidCard,
-            "invalid_number" => Domain.Payments.Errors.PaymentErrors.InvalidCard,
-            "processing_error" => Domain.Payments.Errors.PaymentErrors.ProcessingFailed("Payment processing error"),
-            "authentication_required" => Domain.Payments.Errors.PaymentErrors.AuthenticationRequired,
-            _ => Domain.Payments.Errors.PaymentErrors.CardDeclined(error.Message ?? "Unknown reason")
+            "expired_card" => PaymentErrors.ExpiredCard,
+            "insufficient_funds" => PaymentErrors.InsufficientFunds,
+            "incorrect_cvc" => PaymentErrors.InvalidCard,
+            "incorrect_number" => PaymentErrors.InvalidCard,
+            "invalid_cvc" => PaymentErrors.InvalidCard,
+            "invalid_expiry_month" => PaymentErrors.InvalidCard,
+            "invalid_expiry_year" => PaymentErrors.InvalidCard,
+            "invalid_number" => PaymentErrors.InvalidCard,
+            "processing_error" => PaymentErrors.ProcessingFailed("Payment processing error"),
+            "authentication_required" => PaymentErrors.AuthenticationRequired,
+            _ => PaymentErrors.CardDeclined(error.Message ?? "Unknown reason")
         };
     }
 
-    private Domain.Common.Errors.Error DetermineDeclineReason(string declineCode)
+    private Error DetermineDeclineReason(string declineCode)
     {
         return declineCode switch
         {
-            "insufficient_funds" => Domain.Payments.Errors.PaymentErrors.InsufficientFunds,
-            "fraudulent" => Domain.Payments.Errors.PaymentErrors.FraudSuspected,
-            "stolen_card" => Domain.Payments.Errors.PaymentErrors.FraudSuspected,
-            "lost_card" => Domain.Payments.Errors.PaymentErrors.FraudSuspected,
-            "pickup_card" => Domain.Payments.Errors.PaymentErrors.FraudSuspected,
-            "restricted_card" => Domain.Payments.Errors.PaymentErrors.FraudSuspected,
-            "security_violation" => Domain.Payments.Errors.PaymentErrors.FraudSuspected,
-            "expired_card" => Domain.Payments.Errors.PaymentErrors.ExpiredCard,
-            "incorrect_cvc" => Domain.Payments.Errors.PaymentErrors.InvalidCard,
-            "processing_error" => Domain.Payments.Errors.PaymentErrors.ProcessingFailed("Payment processing error"),
-            "issuer_not_available" => Domain.Payments.Errors.PaymentErrors.ProcessingFailed(
+            "insufficient_funds" => PaymentErrors.InsufficientFunds,
+            "fraudulent" => PaymentErrors.FraudSuspected,
+            "stolen_card" => PaymentErrors.FraudSuspected,
+            "lost_card" => PaymentErrors.FraudSuspected,
+            "pickup_card" => PaymentErrors.FraudSuspected,
+            "restricted_card" => PaymentErrors.FraudSuspected,
+            "security_violation" => PaymentErrors.FraudSuspected,
+            "expired_card" => PaymentErrors.ExpiredCard,
+            "incorrect_cvc" => PaymentErrors.InvalidCard,
+            "processing_error" => PaymentErrors.ProcessingFailed("Payment processing error"),
+            "issuer_not_available" => PaymentErrors.ProcessingFailed(
                 "Card issuer temporarily unavailable"),
-            "try_again_later" => Domain.Payments.Errors.PaymentErrors.ProcessingFailed("Please try again later"),
-            "risk_threshold" => Domain.Payments.Errors.PaymentErrors.RiskLevelTooHigh,
-            _ => Domain.Payments.Errors.PaymentErrors.CardDeclined(declineCode ?? "Unknown decline reason")
+            "try_again_later" => PaymentErrors.ProcessingFailed("Please try again later"),
+            "risk_threshold" => PaymentErrors.RiskLevelTooHigh,
+            _ => PaymentErrors.CardDeclined(declineCode ?? "Unknown decline reason")
         };
     }
 
@@ -470,7 +458,7 @@ internal class StripePaymentProvider : PaymentProviderBase
                 {
                     Logger.LogError(ex, "Stripe webhook signature verification failed");
                     return Result.Failure<WebhookResult>(
-                        Domain.Payments.Errors.PaymentErrors.ProcessingFailed("Invalid webhook signature"));
+                        PaymentErrors.ProcessingFailed("Invalid webhook signature"));
                 }
             }
             else
@@ -485,7 +473,7 @@ internal class StripePaymentProvider : PaymentProviderBase
                 {
                     Logger.LogError(ex, "Failed to parse Stripe webhook payload");
                     return Result.Failure<WebhookResult>(
-                        Domain.Payments.Errors.PaymentErrors.ProcessingFailed("Invalid webhook payload"));
+                        PaymentErrors.ProcessingFailed("Invalid webhook payload"));
                 }
             }
 
@@ -498,7 +486,7 @@ internal class StripePaymentProvider : PaymentProviderBase
         {
             Logger.LogError(ex, "Unexpected error processing Stripe webhook");
             return Result.Failure<WebhookResult>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -588,7 +576,7 @@ internal class StripePaymentProvider : PaymentProviderBase
         {
             Logger.LogError(ex, "Unexpected error creating Stripe setup intent");
             return Result.Failure<SetupIntentResult>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -629,7 +617,7 @@ internal class StripePaymentProvider : PaymentProviderBase
         {
             Logger.LogError(ex, "Unexpected error confirming Stripe setup intent");
             return Result.Failure<SetupIntentResult>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 

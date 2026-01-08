@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Payments;
@@ -6,7 +6,6 @@ using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Specifications;
 using Shopilent.Domain.Payments.ValueObjects;
 using Shopilent.Domain.Sales;
-using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Shipping.ValueObjects;
 
@@ -184,8 +183,8 @@ public class PaymentSpecificationsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -214,8 +213,8 @@ public class PaymentSpecificationsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -242,8 +241,8 @@ public class PaymentSpecificationsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -273,8 +272,8 @@ public class PaymentSpecificationsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -303,8 +302,8 @@ public class PaymentSpecificationsTests
         amountResult.IsSuccess.Should().BeTrue();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amountResult.Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);

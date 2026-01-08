@@ -3,9 +3,9 @@ using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.Errors;
 using Shopilent.Domain.Sales.Repositories.Write;
-using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Application.Features.Sales.Commands.ProcessOrderPartialRefund.V1;
 

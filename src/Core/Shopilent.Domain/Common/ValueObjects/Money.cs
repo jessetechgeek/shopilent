@@ -1,8 +1,7 @@
-using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Sales.Errors;
 
-namespace Shopilent.Domain.Sales.ValueObjects;
+namespace Shopilent.Domain.Common.ValueObjects;
 
 public class Money : ValueObject
 {

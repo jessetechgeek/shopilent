@@ -7,6 +7,7 @@ using Shopilent.Application.UnitTests.Common;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Application.UnitTests.Features.Catalog.Commands.V1;

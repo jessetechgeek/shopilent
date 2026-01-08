@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.ValueObjects;
 
