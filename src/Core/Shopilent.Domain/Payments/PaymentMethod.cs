@@ -1,7 +1,5 @@
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Identity;
-using Shopilent.Domain.Identity.Errors;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Errors;
 using Shopilent.Domain.Payments.Events;
@@ -64,7 +62,7 @@ public class PaymentMethod : AggregateRoot
     {
         if (userId == Guid.Empty)
         {
-            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
+            return Result.Failure<PaymentMethod>(PaymentMethodErrors.InvalidUserId);
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -82,35 +80,6 @@ public class PaymentMethod : AggregateRoot
         return paymentMethod;
     }
 
-    // For use by the User aggregate which should validate inputs
-    // internal static Result<PaymentMethod> CreateFromUser(
-    //     Result<User> userResult,
-    //     PaymentMethodType type,
-    //     PaymentProvider provider,
-    //     string token,
-    //     string displayName,
-    //     bool isDefault = false)
-    // {
-    //     if (userResult.IsFailure)
-    //     {
-    //         return Result.Failure<PaymentMethod>(userResult.Error);
-    //     }
-    //
-    //     if (string.IsNullOrWhiteSpace(token))
-    //     {
-    //         return Result.Failure<PaymentMethod>(PaymentMethodErrors.TokenRequired);
-    //     }
-    //
-    //     if (string.IsNullOrWhiteSpace(displayName))
-    //     {
-    //         return Result.Failure<PaymentMethod>(PaymentMethodErrors.DisplayNameRequired);
-    //     }
-    //
-    //     var paymentMethod = new PaymentMethod(userResult.Value, type, provider, token, displayName, isDefault);
-    //     paymentMethod.AddDomainEvent(new PaymentMethodCreatedEvent(paymentMethod.Id, userResult.Value.Id));
-    //     return Result.Success(paymentMethod);
-    // }
-
     // Public factory methods that call the internal ones
     public static Result<PaymentMethod> Create(
         Guid userId,
@@ -122,7 +91,7 @@ public class PaymentMethod : AggregateRoot
     {
         if (userId == Guid.Empty)
         {
-            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
+            return Result.Failure<PaymentMethod>(PaymentMethodErrors.InvalidUserId);
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -148,7 +117,7 @@ public class PaymentMethod : AggregateRoot
     {
         if (userId == Guid.Empty)
         {
-            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
+            return Result.Failure<PaymentMethod>(PaymentMethodErrors.InvalidUserId);
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -177,7 +146,7 @@ public class PaymentMethod : AggregateRoot
     {
         if (userId == Guid.Empty)
         {
-            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
+            return Result.Failure<PaymentMethod>(PaymentMethodErrors.InvalidUserId);
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -207,7 +176,7 @@ public class PaymentMethod : AggregateRoot
     {
         if (userId == Guid.Empty)
         {
-            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
+            return Result.Failure<PaymentMethod>(PaymentMethodErrors.InvalidUserId);
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -236,7 +205,7 @@ public class PaymentMethod : AggregateRoot
     {
         if (userId == Guid.Empty)
         {
-            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
+            return Result.Failure<PaymentMethod>(PaymentMethodErrors.InvalidUserId);
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -246,7 +215,7 @@ public class PaymentMethod : AggregateRoot
 
         if (string.IsNullOrWhiteSpace(email))
         {
-            return Result.Failure<PaymentMethod>(UserErrors.EmailRequired);
+            return Result.Failure<PaymentMethod>(PaymentMethodErrors.EmailRequired);
         }
 
         PaymentMethod paymentMethod = CreateInternalPayPalMethod(userId, token, email, isDefault);

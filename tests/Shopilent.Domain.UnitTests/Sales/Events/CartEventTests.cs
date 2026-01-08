@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Sales;

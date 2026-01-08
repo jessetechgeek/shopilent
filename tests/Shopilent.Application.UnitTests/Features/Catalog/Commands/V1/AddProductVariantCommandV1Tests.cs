@@ -9,6 +9,7 @@ using Shopilent.Domain.Catalog.DTOs;
 using Shopilent.Domain.Catalog.Enums;
 using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.ValueObjects;
 using DomainAttribute = Shopilent.Domain.Catalog.Attribute;
 using CommandProductAttributeDto =

@@ -2,8 +2,8 @@ using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.Errors;
-using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Domain.Sales;
 
@@ -26,9 +26,7 @@ public class OrderItem : Entity
         // Create snapshot of product data
         ProductData = new Dictionary<string, object>
         {
-            { "name", product.Name },
-            { "sku", product.Sku },
-            { "slug", product.Slug?.Value }
+            { "name", product.Name }, { "sku", product.Sku }, { "slug", product.Slug?.Value }
         };
 
         if (variant != null)
@@ -39,41 +37,44 @@ public class OrderItem : Entity
     }
 
     // Internal factory method for use by Order aggregate
-    internal static OrderItem Create(Order order, Product product, int quantity, Money unitPrice, ProductVariant variant = null)
+    internal static OrderItem Create(Order order, Product product, int quantity, Money unitPrice,
+        ProductVariant variant = null)
     {
         if (order == null)
             throw new ArgumentNullException(nameof(order));
-            
+
         if (product == null)
             throw new ArgumentNullException(nameof(product));
-            
+
         if (quantity <= 0)
             throw new ArgumentException("Quantity must be positive", nameof(quantity));
-            
+
         if (unitPrice == null || unitPrice.Amount < 0)
             throw new ArgumentException("Unit price must be valid and non-negative", nameof(unitPrice));
-            
+
         if (variant != null && variant.StockQuantity < quantity)
-            throw new ArgumentException($"Insufficient stock. Available: {variant.StockQuantity}, Requested: {quantity}", nameof(quantity));
+            throw new ArgumentException(
+                $"Insufficient stock. Available: {variant.StockQuantity}, Requested: {quantity}", nameof(quantity));
 
         return new OrderItem(order, product, quantity, unitPrice, variant);
     }
 
     // For use by the Order aggregate which should validate inputs
-    internal static Result<OrderItem> Create(Result<Order> orderResult, Product product, int quantity, Money unitPrice, ProductVariant variant = null)
+    internal static Result<OrderItem> Create(Result<Order> orderResult, Product product, int quantity, Money unitPrice,
+        ProductVariant variant = null)
     {
         if (orderResult.IsFailure)
             return Result.Failure<OrderItem>(orderResult.Error);
-            
+
         if (product == null)
             return Result.Failure<OrderItem>(ProductErrors.NotFound(Guid.Empty));
-            
+
         if (quantity <= 0)
             return Result.Failure<OrderItem>(OrderErrors.InvalidQuantity);
-            
+
         if (unitPrice == null || unitPrice.Amount < 0)
             return Result.Failure<OrderItem>(OrderErrors.NegativeAmount);
-            
+
         if (variant != null && variant.StockQuantity < quantity)
             return Result.Failure<OrderItem>(ProductVariantErrors.InsufficientStock(quantity, variant.StockQuantity));
 
@@ -87,17 +88,17 @@ public class OrderItem : Entity
     public Money UnitPrice { get; private set; }
     public Money TotalPrice { get; private set; }
     public Dictionary<string, object> ProductData { get; private set; } = new();
-    
+
     // Internal method for Order aggregate to update quantity
     internal Result UpdateQuantity(int quantity)
     {
         if (quantity <= 0)
             return Result.Failure(OrderErrors.InvalidQuantity);
-            
+
         var oldQuantity = Quantity;
         Quantity = quantity;
         TotalPrice = UnitPrice.Multiply(quantity);
-        
+
         return Result.Success();
     }
 }

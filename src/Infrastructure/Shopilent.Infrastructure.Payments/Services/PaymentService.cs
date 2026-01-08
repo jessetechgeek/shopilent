@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Payments;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Payments.Enums;
-using Shopilent.Domain.Sales.ValueObjects;
+using Shopilent.Domain.Payments.Errors;
 using Shopilent.Infrastructure.Payments.Abstractions;
 using Shopilent.Infrastructure.Payments.Models;
 
@@ -36,7 +37,7 @@ internal class PaymentService : IPaymentService
             {
                 _logger.LogError("Payment provider not configured: {Provider}", provider);
                 return Result.Failure<PaymentResult>(
-                    Domain.Payments.Errors.PaymentErrors.InvalidProvider);
+                    PaymentErrors.InvalidProvider);
             }
 
             var request = new PaymentRequest
@@ -55,7 +56,7 @@ internal class PaymentService : IPaymentService
         {
             _logger.LogError(ex, "Error processing payment with provider {Provider}", provider);
             return Result.Failure<PaymentResult>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -79,13 +80,13 @@ internal class PaymentService : IPaymentService
             }
 
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed("No provider could process the refund"));
+                PaymentErrors.ProcessingFailed("No provider could process the refund"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing refund for transaction {TransactionId}", transactionId);
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -107,13 +108,13 @@ internal class PaymentService : IPaymentService
             }
 
             return Result.Failure<PaymentStatus>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed("No provider could get the payment status"));
+                PaymentErrors.ProcessingFailed("No provider could get the payment status"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting payment status for transaction {TransactionId}", transactionId);
             return Result.Failure<PaymentStatus>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -130,7 +131,7 @@ internal class PaymentService : IPaymentService
             {
                 _logger.LogError("Payment provider not configured: {Provider}", provider);
                 return Result.Failure<string>(
-                    Domain.Payments.Errors.PaymentErrors.InvalidProvider);
+                    PaymentErrors.InvalidProvider);
             }
 
             return await paymentProvider.GetOrCreateCustomerAsync(userId, email, metadata, cancellationToken);
@@ -139,7 +140,7 @@ internal class PaymentService : IPaymentService
         {
             _logger.LogError(ex, "Error creating customer with provider {Provider}", provider);
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -155,7 +156,7 @@ internal class PaymentService : IPaymentService
             {
                 _logger.LogError("Payment provider not configured: {Provider}", provider);
                 return Result.Failure<string>(
-                    Domain.Payments.Errors.PaymentErrors.InvalidProvider);
+                    PaymentErrors.InvalidProvider);
             }
 
             return await paymentProvider.AttachPaymentMethodToCustomerAsync(paymentMethodToken, customerId,
@@ -165,7 +166,7 @@ internal class PaymentService : IPaymentService
         {
             _logger.LogError(ex, "Error attaching payment method to customer with provider {Provider}", provider);
             return Result.Failure<string>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -182,7 +183,7 @@ internal class PaymentService : IPaymentService
             {
                 _logger.LogError("Payment provider not configured: {Provider}", provider);
                 return Result.Failure<WebhookResult>(
-                    Domain.Payments.Errors.PaymentErrors.InvalidProvider);
+                    PaymentErrors.InvalidProvider);
             }
 
             var result =
@@ -202,7 +203,7 @@ internal class PaymentService : IPaymentService
         {
             _logger.LogError(ex, "Error processing webhook with provider {Provider}", provider);
             return Result.Failure<WebhookResult>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -219,16 +220,17 @@ internal class PaymentService : IPaymentService
             {
                 _logger.LogError("Payment provider not configured: {Provider}", provider);
                 return Result.Failure<SetupIntentResult>(
-                    Domain.Payments.Errors.PaymentErrors.InvalidProvider);
+                    PaymentErrors.InvalidProvider);
             }
 
-            return await paymentProvider.CreateSetupIntentAsync(customerId, paymentMethodToken, metadata, cancellationToken);
+            return await paymentProvider.CreateSetupIntentAsync(customerId, paymentMethodToken, metadata,
+                cancellationToken);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating setup intent with provider {Provider}", provider);
             return Result.Failure<SetupIntentResult>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 
@@ -244,7 +246,7 @@ internal class PaymentService : IPaymentService
             {
                 _logger.LogError("Payment provider not configured: {Provider}", provider);
                 return Result.Failure<SetupIntentResult>(
-                    Domain.Payments.Errors.PaymentErrors.InvalidProvider);
+                    PaymentErrors.InvalidProvider);
             }
 
             return await paymentProvider.ConfirmSetupIntentAsync(setupIntentId, paymentMethodToken, cancellationToken);
@@ -253,7 +255,7 @@ internal class PaymentService : IPaymentService
         {
             _logger.LogError(ex, "Error confirming setup intent with provider {Provider}", provider);
             return Result.Failure<SetupIntentResult>(
-                Domain.Payments.Errors.PaymentErrors.ProcessingFailed(ex.Message));
+                PaymentErrors.ProcessingFailed(ex.Message));
         }
     }
 }

@@ -1,5 +1,5 @@
 using Shopilent.Domain.Common;
-using Shopilent.Domain.Sales.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 
 namespace Shopilent.Domain.Statistics;
 

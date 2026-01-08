@@ -1,5 +1,6 @@
 using Bogus;
 using Shopilent.Domain.Catalog;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Infrastructure.IntegrationTests.TestData.Builders;

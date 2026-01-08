@@ -1,6 +1,7 @@
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Specifications;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Domain.Tests.Common;

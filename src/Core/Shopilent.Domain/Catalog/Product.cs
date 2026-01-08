@@ -5,7 +5,7 @@ using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Events;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Sales.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 
 namespace Shopilent.Domain.Catalog;
 

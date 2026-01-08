@@ -8,6 +8,7 @@ using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Shipping.ValueObjects;
 using Shopilent.Domain.Payments.Enums;
 

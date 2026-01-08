@@ -1,4 +1,4 @@
-using Shopilent.Domain.Sales.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 
 namespace Shopilent.Infrastructure.Payments.Utilities;
 

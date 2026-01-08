@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -7,11 +8,11 @@ using Shopilent.Application.Features.Payments.Commands.ProcessWebhook.V1;
 using Shopilent.Application.UnitTests.Common;
 using Shopilent.Application.UnitTests.Testing.Builders;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Payments;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Errors;
 using Shopilent.Domain.Sales.Enums;
-using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Application.UnitTests.Features.Payments.Commands.V1;
 
@@ -37,7 +38,7 @@ public class ProcessWebhookCommandV1Tests : TestBase
         });
 
         // Register validator
-        services.AddTransient<FluentValidation.IValidator<ProcessWebhookCommandV1>, ProcessWebhookCommandValidatorV1>();
+        services.AddTransient<IValidator<ProcessWebhookCommandV1>, ProcessWebhookCommandValidatorV1>();
 
         var provider = services.BuildServiceProvider();
         _mediator = provider.GetRequiredService<IMediator>();
@@ -77,8 +78,8 @@ public class ProcessWebhookCommandV1Tests : TestBase
             .Build();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             Money.Create(100.00m, "USD").Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe,
@@ -241,8 +242,8 @@ public class ProcessWebhookCommandV1Tests : TestBase
             .Build();
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             Money.Create(100.00m, "USD").Value,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe,

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Payments;
@@ -84,8 +85,8 @@ public class PaymentTests
 
         // Act
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             methodType,
             provider,
@@ -113,7 +114,7 @@ public class PaymentTests
     public void Create_WithNullOrder_ShouldReturnFailure()
     {
         // Arrange
-        Order order = null;
+        var orderId = Guid.Empty;
         var user = CreateTestUser();
         var amountResult = Money.Create(115, "USD");
         amountResult.IsSuccess.Should().BeTrue();
@@ -123,15 +124,15 @@ public class PaymentTests
 
         // Act
         var paymentResult = Payment.Create(
-            order,
-            user,
+            orderId,
+            user.Id,
             amount,
             methodType,
             provider);
 
         // Assert
         paymentResult.IsFailure.Should().BeTrue();
-        paymentResult.Error.Code.Should().Be("Order.NotFound");
+        paymentResult.Error.Code.Should().Be("Payment.InvalidOrderId");
     }
 
     [Fact]
@@ -147,8 +148,8 @@ public class PaymentTests
 
         // Act
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             methodType,
             provider);
@@ -175,8 +176,8 @@ public class PaymentTests
 
         // Act
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             methodType,
             provider);
@@ -210,8 +211,8 @@ public class PaymentTests
 
         // Act
         var paymentResult = Payment.CreateWithPaymentMethod(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             paymentMethod);
 
@@ -242,8 +243,8 @@ public class PaymentTests
 
         // Act
         var paymentResult = Payment.CreateWithPaymentMethod(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             paymentMethod);
 
@@ -264,8 +265,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -299,8 +300,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -334,8 +335,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -370,8 +371,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -407,8 +408,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -441,8 +442,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -478,8 +479,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -518,8 +519,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -550,8 +551,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -580,8 +581,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -610,8 +611,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -642,8 +643,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -673,8 +674,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);
@@ -714,8 +715,8 @@ public class PaymentTests
         var amount = amountResult.Value;
 
         var paymentResult = Payment.Create(
-            order,
-            user,
+            order.Id,
+            user.Id,
             amount,
             PaymentMethodType.CreditCard,
             PaymentProvider.Stripe);

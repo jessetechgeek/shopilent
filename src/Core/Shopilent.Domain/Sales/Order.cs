@@ -1,15 +1,16 @@
+using System.Text.Json;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
-using Shopilent.Domain.Sales.Enums;
-using Shopilent.Domain.Sales.Events;
-using Shopilent.Domain.Sales.ValueObjects;
-using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Errors;
+using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Errors;
+using Shopilent.Domain.Sales.Events;
+using Shopilent.Domain.Shipping;
 
 namespace Shopilent.Domain.Sales;
 
@@ -244,7 +245,8 @@ public class Order : AggregateRoot
 
         // Only delivered orders can be marked as returned
         if (Status != OrderStatus.Delivered)
-            return Result.Failure(OrderErrors.InvalidOrderStatus("mark as returned - only delivered orders can be returned"));
+            return Result.Failure(
+                OrderErrors.InvalidOrderStatus("mark as returned - only delivered orders can be returned"));
 
         var oldStatus = Status;
         Status = OrderStatus.Returned;
@@ -270,7 +272,9 @@ public class Order : AggregateRoot
         {
             // Customers can only cancel orders that are Pending or Processing
             if (Status != OrderStatus.Pending && Status != OrderStatus.Processing)
-                return Result.Failure(OrderErrors.InvalidOrderStatus("cancel - only pending or processing orders can be cancelled by customers"));
+                return Result.Failure(
+                    OrderErrors.InvalidOrderStatus(
+                        "cancel - only pending or processing orders can be cancelled by customers"));
         }
         else
         {
@@ -428,10 +432,10 @@ public class Order : AggregateRoot
                 {
                     refunds = list;
                 }
-                else if (existingRefunds is System.Text.Json.JsonElement jsonElement)
+                else if (existingRefunds is JsonElement jsonElement)
                 {
                     // Deserialize from JsonElement
-                    refunds = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(
+                    refunds = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(
                         jsonElement.GetRawText()) ?? new List<Dictionary<string, object>>();
                 }
                 else
@@ -488,7 +492,6 @@ public class Order : AggregateRoot
             _items.Remove(item);
             AddDomainEvent(new OrderItemRemovedEvent(Id, itemId));
             return Result.Failure(OrderErrors.InvalidQuantity);
-
         }
         else
         {

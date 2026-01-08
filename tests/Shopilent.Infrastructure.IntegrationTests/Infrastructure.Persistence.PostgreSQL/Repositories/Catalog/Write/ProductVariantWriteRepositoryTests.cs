@@ -4,6 +4,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Catalog.Repositories.Read;
 using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Exceptions;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;

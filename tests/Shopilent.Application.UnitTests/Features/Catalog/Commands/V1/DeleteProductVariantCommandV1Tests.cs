@@ -5,6 +5,7 @@ using Moq;
 using Shopilent.Application.Features.Catalog.Commands.DeleteProductVariant.V1;
 using Shopilent.Application.UnitTests.Common;
 using Shopilent.Domain.Catalog;
+using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Application.UnitTests.Features.Catalog.Commands.V1;

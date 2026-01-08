@@ -11,7 +11,7 @@ using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Sales.ValueObjects;
+using Shopilent.Domain.Common.ValueObjects;
 
 namespace Shopilent.Application.Features.Catalog.Commands.AddProductVariant.V1;
 
