@@ -33,7 +33,7 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
         {
             // Load cart items
             const string itemsSql = @"
-                SELECT 
+                SELECT
                     ci.id AS Id,
                     ci.cart_id AS CartId,
                     ci.product_id AS ProductId,
@@ -51,7 +51,8 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                 FROM cart_items ci
                 JOIN products p ON ci.product_id = p.id
                 LEFT JOIN product_variants pv ON ci.variant_id = pv.id
-                WHERE ci.cart_id = @CartId";
+                WHERE ci.cart_id = @CartId
+                ORDER BY ci.created_at DESC";
 
             cart.Items = (await Connection.QueryAsync<CartItemDto>(
                 itemsSql, new { CartId = id })).ToList();
@@ -82,7 +83,7 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
         {
             // Load cart items
             const string itemsSql = @"
-                SELECT 
+                SELECT
                     ci.id AS Id,
                     ci.cart_id AS CartId,
                     ci.product_id AS ProductId,
@@ -100,7 +101,8 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                 FROM cart_items ci
                 JOIN products p ON ci.product_id = p.id
                 LEFT JOIN product_variants pv ON ci.variant_id = pv.id
-                WHERE ci.cart_id = @CartId";
+                WHERE ci.cart_id = @CartId
+                ORDER BY ci.created_at DESC";
 
             cart.Items = (await Connection.QueryAsync<CartItemDto>(
                 itemsSql, new { CartId = cart.Id })).ToList();
@@ -133,7 +135,7 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
         {
             // Load cart items
             const string itemsSql = @"
-                SELECT 
+                SELECT
                     ci.id AS Id,
                     ci.cart_id AS CartId,
                     ci.product_id AS ProductId,
@@ -151,7 +153,8 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                 FROM cart_items ci
                 JOIN products p ON ci.product_id = p.id
                 LEFT JOIN product_variants pv ON ci.variant_id = pv.id
-                WHERE ci.cart_id = @CartId";
+                WHERE ci.cart_id = @CartId
+                ORDER BY ci.created_at DESC";
 
             cart.Items = (await Connection.QueryAsync<CartItemDto>(
                 itemsSql, new { CartId = cart.Id })).ToList();
@@ -190,7 +193,7 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
         {
             // Load cart items
             const string itemsSql = @"
-                SELECT 
+                SELECT
                     ci.id AS Id,
                     ci.cart_id AS CartId,
                     ci.product_id AS ProductId,
@@ -208,7 +211,8 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                 FROM cart_items ci
                 JOIN products p ON ci.product_id = p.id
                 LEFT JOIN product_variants pv ON ci.variant_id = pv.id
-                WHERE ci.cart_id = @CartId";
+                WHERE ci.cart_id = @CartId
+                ORDER BY ci.created_at DESC";
 
             cart.Items = (await Connection.QueryAsync<CartItemDto>(
                 itemsSql, new { CartId = cart.Id })).ToList();
