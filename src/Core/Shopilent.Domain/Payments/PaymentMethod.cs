@@ -17,14 +17,14 @@ public class PaymentMethod : AggregateRoot
     }
 
     private PaymentMethod(
-        User user,
+        Guid userId,
         PaymentMethodType type,
         PaymentProvider provider,
         string token,
         string displayName,
         bool isDefault = false)
     {
-        UserId = user.Id;
+        UserId = userId;
         Type = type;
         Provider = provider;
         Token = token;
@@ -36,14 +36,14 @@ public class PaymentMethod : AggregateRoot
     }
 
     private PaymentMethod(
-        User user,
+        Guid userId,
         PaymentMethodType type,
         PaymentProvider provider,
         string token,
         string displayName,
         PaymentCardDetails cardDetails,
         bool isDefault = false)
-        : this(user, type, provider, token, displayName, isDefault)
+        : this(userId, type, provider, token, displayName, isDefault)
     {
         if (cardDetails != null)
         {
@@ -55,16 +55,16 @@ public class PaymentMethod : AggregateRoot
 
     // Internal factory method for use by User aggregate
     internal static PaymentMethod CreateInternal(
-        User user,
+        Guid userId,
         PaymentMethodType type,
         PaymentProvider provider,
         string token,
         string displayName,
         bool isDefault = false)
     {
-        if (user == null)
+        if (userId == Guid.Empty)
         {
-            throw new ArgumentNullException(nameof(user));
+            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -77,52 +77,52 @@ public class PaymentMethod : AggregateRoot
             throw new ArgumentException("Display name cannot be empty", nameof(displayName));
         }
 
-        var paymentMethod = new PaymentMethod(user, type, provider, token, displayName, isDefault);
-        paymentMethod.AddDomainEvent(new PaymentMethodCreatedEvent(paymentMethod.Id, user.Id));
+        var paymentMethod = new PaymentMethod(userId, type, provider, token, displayName, isDefault);
+        paymentMethod.AddDomainEvent(new PaymentMethodCreatedEvent(paymentMethod.Id, userId));
         return paymentMethod;
     }
 
     // For use by the User aggregate which should validate inputs
-    internal static Result<PaymentMethod> CreateFromUser(
-        Result<User> userResult,
-        PaymentMethodType type,
-        PaymentProvider provider,
-        string token,
-        string displayName,
-        bool isDefault = false)
-    {
-        if (userResult.IsFailure)
-        {
-            return Result.Failure<PaymentMethod>(userResult.Error);
-        }
-
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            return Result.Failure<PaymentMethod>(PaymentMethodErrors.TokenRequired);
-        }
-
-        if (string.IsNullOrWhiteSpace(displayName))
-        {
-            return Result.Failure<PaymentMethod>(PaymentMethodErrors.DisplayNameRequired);
-        }
-
-        var paymentMethod = new PaymentMethod(userResult.Value, type, provider, token, displayName, isDefault);
-        paymentMethod.AddDomainEvent(new PaymentMethodCreatedEvent(paymentMethod.Id, userResult.Value.Id));
-        return Result.Success(paymentMethod);
-    }
+    // internal static Result<PaymentMethod> CreateFromUser(
+    //     Result<User> userResult,
+    //     PaymentMethodType type,
+    //     PaymentProvider provider,
+    //     string token,
+    //     string displayName,
+    //     bool isDefault = false)
+    // {
+    //     if (userResult.IsFailure)
+    //     {
+    //         return Result.Failure<PaymentMethod>(userResult.Error);
+    //     }
+    //
+    //     if (string.IsNullOrWhiteSpace(token))
+    //     {
+    //         return Result.Failure<PaymentMethod>(PaymentMethodErrors.TokenRequired);
+    //     }
+    //
+    //     if (string.IsNullOrWhiteSpace(displayName))
+    //     {
+    //         return Result.Failure<PaymentMethod>(PaymentMethodErrors.DisplayNameRequired);
+    //     }
+    //
+    //     var paymentMethod = new PaymentMethod(userResult.Value, type, provider, token, displayName, isDefault);
+    //     paymentMethod.AddDomainEvent(new PaymentMethodCreatedEvent(paymentMethod.Id, userResult.Value.Id));
+    //     return Result.Success(paymentMethod);
+    // }
 
     // Public factory methods that call the internal ones
     public static Result<PaymentMethod> Create(
-        User user,
+        Guid userId,
         PaymentMethodType type,
         PaymentProvider provider,
         string token,
         string displayName,
         bool isDefault = false)
     {
-        if (user == null)
+        if (userId == Guid.Empty)
         {
-            return Result.Failure<PaymentMethod>(UserErrors.NotFound(Guid.Empty));
+            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -135,20 +135,20 @@ public class PaymentMethod : AggregateRoot
             return Result.Failure<PaymentMethod>(PaymentMethodErrors.DisplayNameRequired);
         }
 
-        PaymentMethod paymentMethod = CreateInternal(user, type, provider, token, displayName, isDefault);
+        PaymentMethod paymentMethod = CreateInternal(userId, type, provider, token, displayName, isDefault);
         return Result.Success(paymentMethod);
     }
 
     internal static PaymentMethod CreateInternalWithCardDetails(
-        User user,
+        Guid userId,
         PaymentProvider provider,
         string token,
         PaymentCardDetails cardDetails,
         bool isDefault = false)
     {
-        if (user == null)
+        if (userId == Guid.Empty)
         {
-            throw new ArgumentNullException(nameof(user));
+            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -162,21 +162,22 @@ public class PaymentMethod : AggregateRoot
         }
 
         string displayName = $"{cardDetails.Brand} ending in {cardDetails.LastFourDigits}";
-        var paymentMethod = new PaymentMethod(user, PaymentMethodType.CreditCard, provider, token, displayName, cardDetails, isDefault);
-        paymentMethod.AddDomainEvent(new PaymentMethodCreatedEvent(paymentMethod.Id, user.Id));
+        var paymentMethod = new PaymentMethod(userId, PaymentMethodType.CreditCard, provider, token, displayName,
+            cardDetails, isDefault);
+        paymentMethod.AddDomainEvent(new PaymentMethodCreatedEvent(paymentMethod.Id, userId));
         return paymentMethod;
     }
 
     public static Result<PaymentMethod> CreateCardMethod(
-        User user,
+        Guid userId,
         PaymentProvider provider,
         string token,
         PaymentCardDetails cardDetails,
         bool isDefault = false)
     {
-        if (user == null)
+        if (userId == Guid.Empty)
         {
-            return Result.Failure<PaymentMethod>(UserErrors.NotFound(Guid.Empty));
+            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -194,19 +195,19 @@ public class PaymentMethod : AggregateRoot
             return Result.Failure<PaymentMethod>(PaymentMethodErrors.ExpiredCard);
         }
 
-        PaymentMethod paymentMethod = CreateInternalWithCardDetails(user, provider, token, cardDetails, isDefault);
+        PaymentMethod paymentMethod = CreateInternalWithCardDetails(userId, provider, token, cardDetails, isDefault);
         return Result.Success(paymentMethod);
     }
 
     internal static PaymentMethod CreateInternalPayPalMethod(
-        User user,
+        Guid userId,
         string token,
         string email,
         bool isDefault = false)
     {
-        if (user == null)
+        if (userId == Guid.Empty)
         {
-            throw new ArgumentNullException(nameof(user));
+            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -220,21 +221,22 @@ public class PaymentMethod : AggregateRoot
         }
 
         string displayName = $"PayPal ({email})";
-        var paymentMethod = new PaymentMethod(user, PaymentMethodType.PayPal, PaymentProvider.PayPal, token, displayName, isDefault);
+        var paymentMethod = new PaymentMethod(userId, PaymentMethodType.PayPal, PaymentProvider.PayPal, token,
+            displayName, isDefault);
         paymentMethod.UpdateMetadata("email", email);
-        paymentMethod.AddDomainEvent(new PaymentMethodCreatedEvent(paymentMethod.Id, user.Id));
+        paymentMethod.AddDomainEvent(new PaymentMethodCreatedEvent(paymentMethod.Id, userId));
         return paymentMethod;
     }
 
     public static Result<PaymentMethod> CreatePayPalMethod(
-        User user,
+        Guid userId,
         string token,
         string email,
         bool isDefault = false)
     {
-        if (user == null)
+        if (userId == Guid.Empty)
         {
-            return Result.Failure<PaymentMethod>(UserErrors.NotFound(Guid.Empty));
+            return Result.Failure<PaymentMethod>(UserErrors.NotFound(userId));
         }
 
         if (string.IsNullOrWhiteSpace(token))
@@ -247,7 +249,7 @@ public class PaymentMethod : AggregateRoot
             return Result.Failure<PaymentMethod>(UserErrors.EmailRequired);
         }
 
-        PaymentMethod paymentMethod = CreateInternalPayPalMethod(user, token, email, isDefault);
+        PaymentMethod paymentMethod = CreateInternalPayPalMethod(userId, token, email, isDefault);
         return Result.Success(paymentMethod);
     }
 
@@ -283,7 +285,7 @@ public class PaymentMethod : AggregateRoot
         }
 
         IsDefault = isDefault;
-        
+
         if (isDefault)
         {
             AddDomainEvent(new DefaultPaymentMethodChangedEvent(Id, UserId));
@@ -350,7 +352,7 @@ public class PaymentMethod : AggregateRoot
         LastFourDigits = cardDetails.LastFourDigits;
         ExpiryDate = cardDetails.ExpiryDate;
         DisplayName = $"{cardDetails.Brand} ending in {cardDetails.LastFourDigits}";
-        
+
         AddDomainEvent(new PaymentMethodUpdatedEvent(Id));
         return Result.Success();
     }
@@ -363,11 +365,11 @@ public class PaymentMethod : AggregateRoot
         }
 
         Metadata[key] = value;
-        
+
         AddDomainEvent(new PaymentMethodUpdatedEvent(Id));
         return Result.Success();
     }
-    
+
     public Result Delete()
     {
         //TODO: Handler Payment Method Deletion
@@ -376,7 +378,7 @@ public class PaymentMethod : AggregateRoot
         {
             // Either prevent deletion or handle setting a new default
         }
-    
+
         AddDomainEvent(new PaymentMethodDeletedEvent(Id, UserId));
         return Result.Success();
     }

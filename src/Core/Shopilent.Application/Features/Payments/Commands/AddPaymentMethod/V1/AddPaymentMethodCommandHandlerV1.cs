@@ -274,7 +274,7 @@ internal sealed class
 
         // Use the correct factory method
         return PaymentMethod.CreateCardMethod(
-            user,
+            user.Id,
             provider,
             request.PaymentMethodToken,
             cardDetailsResult.Value,
@@ -287,7 +287,7 @@ internal sealed class
         PaymentProvider provider)
     {
         return PaymentMethod.CreatePayPalMethod(
-            user,
+            user.Id,
             request.PaymentMethodToken,
             request.Email,
             request.IsDefault);

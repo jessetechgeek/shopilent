@@ -27,79 +27,79 @@ public class PaymentMethodBuilder
         _id = id;
         return this;
     }
-    
+
     public PaymentMethodBuilder WithUser(User user)
     {
         _user = user;
         _userId = user.Id;
         return this;
     }
-    
+
     public PaymentMethodBuilder WithUserId(Guid userId)
     {
         _userId = userId;
         return this;
     }
-    
+
     public PaymentMethodBuilder WithType(PaymentMethodType type)
     {
         _type = type;
         return this;
     }
-    
+
     public PaymentMethodBuilder WithProvider(PaymentProvider provider)
     {
         _provider = provider;
         return this;
     }
-    
+
     public PaymentMethodBuilder WithToken(string token)
     {
         _token = token;
         return this;
     }
-    
+
     public PaymentMethodBuilder WithDisplayName(string displayName)
     {
         _displayName = displayName;
         return this;
     }
-    
+
     public PaymentMethodBuilder WithCardDetails(string brand, string lastFourDigits, int expiryMonth, int expiryYear)
     {
         var expiryDate = new DateTime(expiryYear, expiryMonth, 1).AddMonths(1).AddDays(-1); // Last day of expiry month
         var cardDetailsResult = PaymentCardDetails.Create(brand, lastFourDigits, expiryDate);
         if (cardDetailsResult.IsFailure)
             throw new InvalidOperationException($"Invalid card details: {cardDetailsResult.Error.Message}");
-            
+
         _cardDetails = cardDetailsResult.Value;
         return this;
     }
-    
+
     public PaymentMethodBuilder IsDefault()
     {
         _isDefault = true;
         return this;
     }
-    
+
     public PaymentMethodBuilder IsInactive()
     {
         _isActive = false;
         return this;
     }
-    
+
     public PaymentMethodBuilder WithExpiryDate(DateTime expiryDate)
     {
         _expiryDate = expiryDate;
         return this;
     }
-    
+
     public PaymentMethodBuilder CreatedAt(DateTime createdAt)
     {
         _createdAt = createdAt;
         return this;
     }
-    
+
     public PaymentMethodBuilder WithMetadata(string key, object value)
     {
         _metadata[key] = value;
@@ -116,39 +116,39 @@ public class PaymentMethodBuilder
         }
 
         var paymentMethodResult = _cardDetails != null
-            ? PaymentMethod.CreateCardMethod(_user, _provider, _token, _cardDetails, _isDefault)
-            : PaymentMethod.Create(_user, _type, _provider, _token, _displayName, _isDefault);
-            
+            ? PaymentMethod.CreateCardMethod(_user.Id, _provider, _token, _cardDetails, _isDefault)
+            : PaymentMethod.Create(_user.Id, _type, _provider, _token, _displayName, _isDefault);
+
         if (paymentMethodResult.IsFailure)
             throw new InvalidOperationException($"Failed to create payment method: {paymentMethodResult.Error.Message}");
-            
+
         var paymentMethod = paymentMethodResult.Value;
-        
+
         // Use reflection to set private properties
         SetPrivatePropertyValue(paymentMethod, "Id", _id);
         SetPrivatePropertyValue(paymentMethod, "CreatedAt", _createdAt);
         SetPrivatePropertyValue(paymentMethod, "UpdatedAt", _updatedAt);
-        
+
         if (_expiryDate.HasValue)
         {
             SetPrivatePropertyValue(paymentMethod, "ExpiryDate", _expiryDate.Value);
         }
-        
+
         // Set metadata
         foreach (var metadata in _metadata)
         {
             paymentMethod.Metadata[metadata.Key] = metadata.Value;
         }
-        
+
         // Set inactive if needed
         if (!_isActive)
         {
             paymentMethod.Deactivate();
         }
-        
+
         return paymentMethod;
     }
-    
+
     private static void SetPrivatePropertyValue<T>(object obj, string propertyName, T value)
     {
         var propertyInfo = obj.GetType().GetProperty(propertyName);
@@ -158,10 +158,10 @@ public class PaymentMethodBuilder
         }
         else
         {
-            var fieldInfo = obj.GetType().GetField(propertyName, 
-                System.Reflection.BindingFlags.NonPublic | 
+            var fieldInfo = obj.GetType().GetField(propertyName,
+                System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance);
-                
+
             if (fieldInfo != null)
             {
                 fieldInfo.SetValue(obj, value);
