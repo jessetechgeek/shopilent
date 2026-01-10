@@ -31,32 +31,32 @@ public class OrderBuilder
         _id = id;
         return this;
     }
-    
+
     public OrderBuilder WithUser(User user)
     {
         _user = user;
         _userId = user?.Id;
         return this;
     }
-    
+
     public OrderBuilder WithUserId(Guid userId)
     {
         _userId = userId;
         return this;
     }
-    
+
     public OrderBuilder WithShippingAddress(Address address)
     {
         _shippingAddress = address;
         return this;
     }
-    
+
     public OrderBuilder WithBillingAddress(Address address)
     {
         _billingAddress = address;
         return this;
     }
-    
+
     public OrderBuilder WithPricing(decimal subtotal, decimal tax, decimal shippingCost, string currency = "USD")
     {
         _subtotal = subtotal;
@@ -65,31 +65,31 @@ public class OrderBuilder
         _currency = currency;
         return this;
     }
-    
+
     public OrderBuilder WithShippingMethod(string shippingMethod)
     {
         _shippingMethod = shippingMethod;
         return this;
     }
-    
+
     public OrderBuilder WithStatus(OrderStatus status)
     {
         _status = status;
         return this;
     }
-    
+
     public OrderBuilder WithPaymentStatus(PaymentStatus paymentStatus)
     {
         _paymentStatus = paymentStatus;
         return this;
     }
-    
+
     public OrderBuilder CreatedAt(DateTime createdAt)
     {
         _createdAt = createdAt;
         return this;
     }
-    
+
     public OrderBuilder WithMetadata(string key, object value)
     {
         _metadata[key] = value;
@@ -101,7 +101,7 @@ public class OrderBuilder
         var subtotal = Money.Create(_subtotal, _currency);
         var tax = Money.Create(_tax, _currency);
         var shippingCost = Money.Create(_shippingCost, _currency);
-        
+
         if (subtotal.IsFailure)
             throw new InvalidOperationException($"Invalid subtotal: {_subtotal} {_currency}");
         if (tax.IsFailure)
@@ -120,57 +120,57 @@ public class OrderBuilder
         {
             _shippingAddress = new AddressBuilder().WithUser(_user).WithAddressType(Domain.Shipping.Enums.AddressType.Shipping).Build();
         }
-        
+
         if (_billingAddress == null)
         {
             _billingAddress = new AddressBuilder().WithUser(_user).WithAddressType(Domain.Shipping.Enums.AddressType.Billing).Build();
         }
 
         var orderResult = Order.Create(
-            _user,
-            _shippingAddress, 
-            _billingAddress,
+            _user.Id,
+            _shippingAddress.Id,
+            _billingAddress.Id,
             subtotal.Value,
             tax.Value,
             shippingCost.Value,
             _shippingMethod);
-            
+
         if (orderResult.IsFailure)
             throw new InvalidOperationException($"Failed to create order: {orderResult.Error.Message}");
-            
+
         var order = orderResult.Value;
-        
+
         // Use reflection to set private properties
         SetPrivatePropertyValue(order, "Id", _id);
         SetPrivatePropertyValue(order, "CreatedAt", _createdAt);
         SetPrivatePropertyValue(order, "UpdatedAt", _updatedAt);
-        
+
         if (_userId.HasValue && _user == null)
         {
             SetPrivatePropertyValue(order, "UserId", _userId.Value);
         }
-        
+
         // Set metadata
         foreach (var metadata in _metadata)
         {
             order.Metadata[metadata.Key] = metadata.Value;
         }
-        
+
         // Set status if different from default
         if (_status != OrderStatus.Pending)
         {
             // Use reflection since status changes might have complex logic
             SetPrivatePropertyValue(order, "Status", _status);
         }
-        
+
         if (_paymentStatus != PaymentStatus.Pending)
         {
             SetPrivatePropertyValue(order, "PaymentStatus", _paymentStatus);
         }
-        
+
         return order;
     }
-    
+
     private static void SetPrivatePropertyValue<T>(object obj, string propertyName, T value)
     {
         var propertyInfo = obj.GetType().GetProperty(propertyName);
@@ -180,10 +180,10 @@ public class OrderBuilder
         }
         else
         {
-            var fieldInfo = obj.GetType().GetField(propertyName, 
-                System.Reflection.BindingFlags.NonPublic | 
+            var fieldInfo = obj.GetType().GetField(propertyName,
+                System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance);
-                
+
             if (fieldInfo != null)
             {
                 fieldInfo.SetValue(obj, value);

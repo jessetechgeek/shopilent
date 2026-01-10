@@ -676,9 +676,9 @@ public class MarkOrderAsReturnedEndpointV1Tests : ApiIntegrationTestBase
 
             // Create order
             var order = Order.Create(
-                user: user,
-                shippingAddress: address,
-                billingAddress: address,
+                userId: user.Id,
+                shippingAddressId: address.Id,
+                billingAddressId: address.Id,
                 subtotal: Money.Create(99.99m, "USD").Value,
                 tax: Money.Create(8.00m, "USD").Value,
                 shippingCost: Money.Create(5.00m, "USD").Value,

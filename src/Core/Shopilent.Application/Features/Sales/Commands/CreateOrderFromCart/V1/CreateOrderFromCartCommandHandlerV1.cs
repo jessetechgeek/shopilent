@@ -180,9 +180,9 @@ internal sealed class
 
             // Create order
             var orderResult = Order.Create(
-                user,
-                shippingAddress,
-                billingAddress,
+                user.Id,
+                shippingAddress.Id,
+                billingAddress.Id,
                 subtotal,
                 tax,
                 shippingCost,

@@ -75,9 +75,9 @@ public class OrderTests
 
         // Act
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotal,
             tax,
             shippingCost,
@@ -125,9 +125,9 @@ public class OrderTests
 
         // Act
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotal,
             tax,
             shippingCost);
@@ -157,9 +157,9 @@ public class OrderTests
 
         // Act
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotal,
             tax,
             shippingCost);
@@ -189,9 +189,9 @@ public class OrderTests
 
         // Act
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotal,
             tax,
             shippingCost);
@@ -223,9 +223,9 @@ public class OrderTests
 
         // Act
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotal,
             tax,
             shippingCost);
@@ -262,9 +262,9 @@ public class OrderTests
         var shippingCost = shippingCostResult.Value;
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotal,
             tax,
             shippingCost);
@@ -337,9 +337,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -375,9 +375,9 @@ public class OrderTests
         var money = moneyResult.Value;
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             money,
             money,
             money);
@@ -430,9 +430,9 @@ public class OrderTests
         var shippingCost = shippingCostResult.Value;
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotal,
             tax,
             shippingCost);
@@ -494,9 +494,9 @@ public class OrderTests
         var shippingCost = shippingCostResult.Value;
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotal,
             tax,
             shippingCost);
@@ -568,9 +568,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -607,9 +607,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -646,9 +646,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -687,9 +687,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -729,9 +729,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -770,9 +770,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -808,9 +808,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -853,9 +853,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -894,9 +894,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -932,9 +932,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -979,9 +979,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1019,9 +1019,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1057,9 +1057,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1100,9 +1100,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1145,9 +1145,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1185,9 +1185,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1227,9 +1227,9 @@ public class OrderTests
         var shippingCost = shippingCostResult.Value;
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotal,
             tax,
             shippingCost);
@@ -1300,9 +1300,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1338,9 +1338,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1376,9 +1376,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1417,9 +1417,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1458,9 +1458,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1502,9 +1502,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -1551,9 +1551,9 @@ public class OrderTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            shippingAddress,
-            billingAddress,
+            user.Id,
+            shippingAddress.Id,
+            billingAddress.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);

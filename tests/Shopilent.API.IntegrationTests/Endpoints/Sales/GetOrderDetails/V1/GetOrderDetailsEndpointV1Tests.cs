@@ -586,9 +586,9 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
             var product3 = await CreateTestProductAsync(context, "Product 3", 19.99m);
 
             var order = Order.Create(
-                user: user,
-                shippingAddress: address,
-                billingAddress: address,
+                userId: user.Id,
+                shippingAddressId: address.Id,
+                billingAddressId: address.Id,
                 subtotal: Money.Create(99.97m, "USD").Value,
                 tax: Money.Create(8.00m, "USD").Value,
                 shippingCost: Money.Create(5.00m, "USD").Value,
@@ -623,9 +623,9 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
             var product = await CreateTestProductAsync(context, "Test Product", 99.99m);
 
             var order = Order.Create(
-                user: user,
-                shippingAddress: address,
-                billingAddress: address,
+                userId: user.Id,
+                shippingAddressId: address.Id,
+                billingAddressId: address.Id,
                 subtotal: Money.Create(99.99m, "USD").Value,
                 tax: Money.Create(8.00m, "USD").Value,
                 shippingCost: Money.Create(5.00m, "USD").Value,
@@ -667,9 +667,9 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
             var product = await CreateTestProductAsync(context, "Test Product", 99.99m);
 
             var order = Order.Create(
-                user: user,
-                shippingAddress: address,
-                billingAddress: address,
+                userId: user.Id,
+                shippingAddressId: address.Id,
+                billingAddressId: address.Id,
                 subtotal: Money.Create(99.99m, "USD").Value,
                 tax: Money.Create(8.00m, "USD").Value,
                 shippingCost: Money.Create(5.00m, "USD").Value,
@@ -767,9 +767,9 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
             await context.ProductVariants.AddAsync(variant);
 
             var order = Order.Create(
-                user: user,
-                shippingAddress: address,
-                billingAddress: address,
+                userId: user.Id,
+                shippingAddressId: address.Id,
+                billingAddressId: address.Id,
                 subtotal: Money.Create(99.99m, "USD").Value,
                 tax: Money.Create(8.00m, "USD").Value,
                 shippingCost: Money.Create(5.00m, "USD").Value,

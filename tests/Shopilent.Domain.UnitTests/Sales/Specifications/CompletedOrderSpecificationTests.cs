@@ -65,9 +65,9 @@ public class CompletedOrderSpecificationTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            address,
-            address,
+            user.Id,
+            address.Id,
+            address.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -107,9 +107,9 @@ public class CompletedOrderSpecificationTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            address,
-            address,
+            user.Id,
+            address.Id,
+            address.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -146,9 +146,9 @@ public class CompletedOrderSpecificationTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.CreatePaidOrder(
-            user,
-            address,
-            address,
+            user.Id,
+            address.Id,
+            address.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -185,9 +185,9 @@ public class CompletedOrderSpecificationTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            address,
-            address,
+            user.Id,
+            address.Id,
+            address.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
