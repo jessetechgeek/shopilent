@@ -138,8 +138,12 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
         // Add items to order
         var unitPrice1 = Money.Create(19.99m, "USD").Value;
         var unitPrice2 = Money.Create(29.99m, "USD").Value;
-        order.AddItem(product1, 2, unitPrice1);
-        order.AddItem(product2, 1, unitPrice2);
+
+        var snapshot1 = ProductSnapshot.Create(product1.Name, product1.Sku, product1.Slug?.Value).Value;
+        order.AddItem(product1.Id, null, 2, unitPrice1, snapshot1);
+
+        var snapshot2 = ProductSnapshot.Create(product2.Name, product2.Sku, product2.Slug?.Value).Value;
+        order.AddItem(product2.Id, null, 1, unitPrice2, snapshot2);
 
         // Act
         await _orderWriteRepository.AddAsync(order);
@@ -605,7 +609,8 @@ public class OrderWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         var unitPrice = Money.Create(29.99m, "USD").Value;
-        order.AddItem(product, 2, unitPrice);
+        var snapshot = ProductSnapshot.Create(product.Name, product.Sku, product.Slug?.Value).Value;
+        order.AddItem(product.Id, null, 2, unitPrice, snapshot);
 
         await _orderWriteRepository.AddAsync(order);
         await _unitOfWork.CommitAsync();

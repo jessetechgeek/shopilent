@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.Enums;
 
@@ -72,7 +73,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnName("payment_status")
             .HasColumnType("varchar(50)")
             .HasConversion<string>()
-            .HasDefaultValue(Domain.Payments.Enums.PaymentStatus.Pending)
+            .HasDefaultValue(PaymentStatus.Pending)
             .IsRequired();
 
         builder.Property(o => o.ShippingMethod)

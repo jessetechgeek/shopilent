@@ -89,4 +89,20 @@ public static class OrderErrors
     public static Error CannotReturnNonDeliveredOrder => Error.Validation(
         code: "Order.CannotReturnNonDeliveredOrder",
         message: "Only delivered orders can be marked as returned.");
+
+    public static Error ProductIdRequired => Error.Validation(
+        code: "Order.ProductIdRequired",
+        message: "Product ID is required.");
+
+    public static Error ProductSnapshotRequired => Error.Validation(
+        code: "Order.ProductSnapshotRequired",
+        message: "Product snapshot is required.");
+
+    public static Error OrderRequired => Error.Validation(
+        code: "OrderItem.OrderRequired",
+        message: "Order is required.");
+
+    public static Error PaymentMethodNotFound(Guid paymentMethodId) => Error.NotFound(
+        code: "Order.PaymentMethodNotFound",
+        message: $"Payment method with ID {paymentMethodId} was not found.");
 }

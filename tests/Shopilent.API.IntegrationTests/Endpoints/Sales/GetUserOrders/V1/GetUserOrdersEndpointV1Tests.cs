@@ -644,7 +644,13 @@ public class GetUserOrdersEndpointV1Tests : ApiIntegrationTestBase
                 shippingMethod: "Standard"
             ).Value;
 
-            order.AddItem(product, 1, Money.Create(99.99m, "USD").Value);
+            var productSnapshot = ProductSnapshot.Create(
+                name: product.Name,
+                sku: product.Sku,
+                slug: product.Slug.Value
+            ).Value;
+
+            order.AddItem(product.Id, null, 1, Money.Create(99.99m, "USD").Value, productSnapshot);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();
@@ -720,7 +726,13 @@ public class GetUserOrdersEndpointV1Tests : ApiIntegrationTestBase
                 order.UpdateMetadata(kvp.Key, kvp.Value);
             }
 
-            order.AddItem(product, 1, Money.Create(99.99m, "USD").Value);
+            var productSnapshot = ProductSnapshot.Create(
+                name: product.Name,
+                sku: product.Sku,
+                slug: product.Slug.Value
+            ).Value;
+
+            order.AddItem(product.Id, null, 1, Money.Create(99.99m, "USD").Value, productSnapshot);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();
@@ -757,9 +769,27 @@ public class GetUserOrdersEndpointV1Tests : ApiIntegrationTestBase
                 shippingMethod: "Standard"
             ).Value;
 
-            order.AddItem(product1, 1, Money.Create(29.99m, "USD").Value);
-            order.AddItem(product2, 1, Money.Create(49.99m, "USD").Value);
-            order.AddItem(product3, 1, Money.Create(19.99m, "USD").Value);
+            var productSnapshot1 = ProductSnapshot.Create(
+                name: product1.Name,
+                sku: product1.Sku,
+                slug: product1.Slug.Value
+            ).Value;
+
+            var productSnapshot2 = ProductSnapshot.Create(
+                name: product2.Name,
+                sku: product2.Sku,
+                slug: product2.Slug.Value
+            ).Value;
+
+            var productSnapshot3 = ProductSnapshot.Create(
+                name: product3.Name,
+                sku: product3.Sku,
+                slug: product3.Slug.Value
+            ).Value;
+
+            order.AddItem(product1.Id, null, 1, Money.Create(29.99m, "USD").Value, productSnapshot1);
+            order.AddItem(product2.Id, null, 1, Money.Create(49.99m, "USD").Value, productSnapshot2);
+            order.AddItem(product3.Id, null, 1, Money.Create(19.99m, "USD").Value, productSnapshot3);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();
@@ -826,7 +856,13 @@ public class GetUserOrdersEndpointV1Tests : ApiIntegrationTestBase
                     shippingMethod: "Express"
                 ).Value;
 
-                order.AddItem(product, 1, Money.Create(49.99m, "USD").Value);
+                var productSnapshot = ProductSnapshot.Create(
+                    name: product.Name,
+                    sku: product.Sku,
+                    slug: product.Slug.Value
+                ).Value;
+
+                order.AddItem(product.Id, null, 1, Money.Create(49.99m, "USD").Value, productSnapshot);
 
                 context.Orders.Add(order);
                 await context.SaveChangesAsync();

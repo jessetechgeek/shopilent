@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Shopilent.Application.Features.Sales.Queries.GetRecentOrders.V1;
 using Shopilent.Application.UnitTests.Common;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Sales.DTOs;
 using Shopilent.Domain.Sales.Enums;

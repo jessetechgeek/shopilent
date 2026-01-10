@@ -14,6 +14,7 @@ using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.DTOs;
 using Shopilent.Domain.Sales.Errors;
 using Shopilent.Domain.Sales.Repositories.Write;
+using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Shipping.Errors;
 using Shopilent.Domain.Shipping.Repositories.Write;
@@ -233,11 +234,35 @@ internal sealed class
                 // Determine unit price (variant price takes precedence over product base price)
                 var unitPrice = variant?.Price ?? product.BasePrice;
 
+                // Convert variant attributes to dictionary
+                Dictionary<string, object> variantAttributesDict = null;
+                if (variant?.VariantAttributes != null && variant.VariantAttributes.Any())
+                {
+                    variantAttributesDict = variant.VariantAttributes
+                        .ToDictionary(
+                            va => va.AttributeId.ToString(),
+                            va => va.Value as object
+                        );
+                }
+
+                // Create product snapshot
+                var snapshotResult = ProductSnapshot.Create(
+                    product.Name,
+                    product.Sku,
+                    product.Slug?.Value,
+                    variant?.Sku,
+                    variantAttributesDict
+                );
+
+                if (snapshotResult.IsFailure)
+                    return Result.Failure<CreateOrderFromCartResponseV1>(snapshotResult.Error);
+
                 var addItemResult = order.AddItem(
-                    product,
+                    product.Id,
+                    variant?.Id,
                     cartItem.Quantity,
                     unitPrice,
-                    variant
+                    snapshotResult.Value
                 );
 
                 if (addItemResult.IsFailure)

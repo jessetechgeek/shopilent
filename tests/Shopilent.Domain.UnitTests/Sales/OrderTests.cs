@@ -8,6 +8,7 @@ using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Shipping.ValueObjects;
 using Shopilent.Domain.Payments.Enums;
@@ -134,7 +135,7 @@ public class OrderTests
 
         // Assert
         orderResult.IsFailure.Should().BeTrue();
-        orderResult.Error.Code.Should().Be("Payment.NegativeAmount");
+        orderResult.Error.Code.Should().Be("Order.NegativeAmount");
     }
 
     [Fact]
@@ -166,7 +167,7 @@ public class OrderTests
 
         // Assert
         orderResult.IsFailure.Should().BeTrue();
-        orderResult.Error.Code.Should().Be("Payment.NegativeAmount");
+        orderResult.Error.Code.Should().Be("Order.NegativeAmount");
     }
 
     [Fact]
@@ -198,7 +199,7 @@ public class OrderTests
 
         // Assert
         orderResult.IsFailure.Should().BeTrue();
-        orderResult.Error.Code.Should().Be("Payment.NegativeAmount");
+        orderResult.Error.Code.Should().Be("Order.NegativeAmount");
     }
 
     [Fact]
@@ -293,7 +294,9 @@ public class OrderTests
         var unitPrice = unitPriceResult.Value;
 
         // Act
-        var orderItemResult = order.AddItem(product, quantity, unitPrice);
+        var snapshotResult = ProductSnapshot.Create(product.Name, product.Sku, product.Slug.Value);
+        snapshotResult.IsSuccess.Should().BeTrue();
+        var orderItemResult = order.AddItem(product.Id, null, quantity, unitPrice, snapshotResult.Value);
 
         // Assert
         orderItemResult.IsSuccess.Should().BeTrue();
@@ -347,19 +350,23 @@ public class OrderTests
         orderResult.IsSuccess.Should().BeTrue();
         var order = orderResult.Value;
 
-        Product product = null;
+        var emptyProductId = Guid.Empty;
         var quantity = 1;
 
         var unitPriceResult = Money.Create(50, "USD");
         unitPriceResult.IsSuccess.Should().BeTrue();
         var unitPrice = unitPriceResult.Value;
 
-        // Act
-        var orderItemResult = order.AddItem(product, quantity, unitPrice);
+        // Create a snapshot (we need valid data for the snapshot itself)
+        var snapshotResult = ProductSnapshot.Create("Test", "TEST-SKU", "test-slug");
+        snapshotResult.IsSuccess.Should().BeTrue();
+
+        // Act - Try to add item with empty product ID
+        var orderItemResult = order.AddItem(emptyProductId, null, quantity, unitPrice, snapshotResult.Value);
 
         // Assert
         orderItemResult.IsFailure.Should().BeTrue();
-        orderItemResult.Error.Code.Should().Be("Product.NotFound");
+        orderItemResult.Error.Code.Should().Be("Order.ProductIdRequired");
     }
 
     [Fact]
@@ -402,7 +409,9 @@ public class OrderTests
         var quantity = 0;
 
         // Act
-        var orderItemResult = order.AddItem(product, quantity, priceResult.Value);
+        var snapshotResult = ProductSnapshot.Create(product.Name, product.Sku, product.Slug.Value);
+        snapshotResult.IsSuccess.Should().BeTrue();
+        var orderItemResult = order.AddItem(product.Id, null, quantity, priceResult.Value, snapshotResult.Value);
 
         // Assert
         orderItemResult.IsFailure.Should().BeTrue();
@@ -466,7 +475,9 @@ public class OrderTests
         var quantity = 1;
 
         // Act
-        var orderItemResult = order.AddItem(product, quantity, priceResult.Value);
+        var snapshotResult = ProductSnapshot.Create(product.Name, product.Sku, product.Slug.Value);
+        snapshotResult.IsSuccess.Should().BeTrue();
+        var orderItemResult = order.AddItem(product.Id, null, quantity, priceResult.Value, snapshotResult.Value);
 
         // Assert
         orderItemResult.IsFailure.Should().BeTrue();
@@ -534,7 +545,9 @@ public class OrderTests
         var unitPrice = variantPriceResult.Value;
 
         // Act
-        var orderItemResult = order.AddItem(product, quantity, unitPrice, variant);
+        var snapshotResult = ProductSnapshot.Create(product.Name, product.Sku, product.Slug.Value, variant.Sku, null);
+        snapshotResult.IsSuccess.Should().BeTrue();
+        var orderItemResult = order.AddItem(product.Id, variant.Id, quantity, unitPrice, snapshotResult.Value);
 
         // Assert
         orderItemResult.IsSuccess.Should().BeTrue();
@@ -1243,7 +1256,7 @@ public class OrderTests
         var priceResult1 = Money.FromDollars(50);
         priceResult1.IsSuccess.Should().BeTrue();
 
-        var productResult1 = Product.Create("Product 1", slugResult1.Value, priceResult1.Value);
+        var productResult1 = Product.Create("Product 1", slugResult1.Value, priceResult1.Value, "SKU-1");
         productResult1.IsSuccess.Should().BeTrue();
         var product1 = productResult1.Value;
 
@@ -1253,7 +1266,7 @@ public class OrderTests
         var priceResult2 = Money.FromDollars(75);
         priceResult2.IsSuccess.Should().BeTrue();
 
-        var productResult2 = Product.Create("Product 2", slugResult2.Value, priceResult2.Value);
+        var productResult2 = Product.Create("Product 2", slugResult2.Value, priceResult2.Value, "SKU-2");
         productResult2.IsSuccess.Should().BeTrue();
         var product2 = productResult2.Value;
 
@@ -1263,14 +1276,19 @@ public class OrderTests
         var priceResult3 = Money.FromDollars(25);
         priceResult3.IsSuccess.Should().BeTrue();
 
-        var productResult3 = Product.Create("Product 3", slugResult3.Value, priceResult3.Value);
+        var productResult3 = Product.Create("Product 3", slugResult3.Value, priceResult3.Value, "SKU-3");
         productResult3.IsSuccess.Should().BeTrue();
         var product3 = productResult3.Value;
 
         // Act
-        order.AddItem(product1, 2, priceResult1.Value); // $100
-        order.AddItem(product2, 1, priceResult2.Value); // $75
-        order.AddItem(product3, 3, priceResult3.Value); // $75
+        var snapshot1 = ProductSnapshot.Create(product1.Name, product1.Sku, product1.Slug.Value).Value;
+        order.AddItem(product1.Id, null, 2, priceResult1.Value, snapshot1); // $100
+
+        var snapshot2 = ProductSnapshot.Create(product2.Name, product2.Sku, product2.Slug.Value).Value;
+        order.AddItem(product2.Id, null, 1, priceResult2.Value, snapshot2); // $75
+
+        var snapshot3 = ProductSnapshot.Create(product3.Name, product3.Sku, product3.Slug.Value).Value;
+        order.AddItem(product3.Id, null, 3, priceResult3.Value, snapshot3); // $75
 
         // Assert
         order.Items.Count.Should().Be(3);

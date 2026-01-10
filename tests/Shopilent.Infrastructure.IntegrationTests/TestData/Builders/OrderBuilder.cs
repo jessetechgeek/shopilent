@@ -1,4 +1,5 @@
 using Bogus;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Sales;

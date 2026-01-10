@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Extensions.Logging;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Payments;
 using Shopilent.Domain.Payments.DTOs;
 using Shopilent.Domain.Payments.Enums;

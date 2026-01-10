@@ -5,6 +5,7 @@ using Moq;
 using Shopilent.Application.Features.Sales.Commands.ProcessOrderRefund.V1;
 using Shopilent.Application.UnitTests.Common;
 using Shopilent.Application.UnitTests.Testing.Builders;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.Enums;

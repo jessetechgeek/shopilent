@@ -15,6 +15,7 @@ using Stripe;
 using System.Net;
 using System.Text;
 using DotNetEnv;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.ValueObjects;
 using File = System.IO.File;
 

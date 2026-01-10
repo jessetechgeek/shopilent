@@ -1,3 +1,4 @@
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Payments.Enums;
 
 namespace Shopilent.API.Endpoints.Payments.ProcessWebhook.V1;

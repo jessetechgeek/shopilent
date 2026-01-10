@@ -7,6 +7,7 @@ using Shopilent.Application.Abstractions.Payments;
 using Shopilent.Application.Features.Payments.Commands.ProcessWebhook.V1;
 using Shopilent.Application.UnitTests.Common;
 using Shopilent.Application.UnitTests.Testing.Builders;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Payments;

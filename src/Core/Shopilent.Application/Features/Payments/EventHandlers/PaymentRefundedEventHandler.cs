@@ -4,6 +4,7 @@ using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Events;
 using Shopilent.Domain.Payments.Repositories.Read;

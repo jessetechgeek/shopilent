@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Payments;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Payments.Enums;
