@@ -88,7 +88,7 @@ public class CartBuilder
         if (_metadata.Any() && _user != null)
         {
             // Use CreateWithMetadata when we have both metadata and a user
-            var cartResult = Cart.CreateWithMetadata(_user, _metadata);
+            var cartResult = Cart.CreateWithMetadata(_user.Id, _metadata);
             if (cartResult.IsFailure)
                 throw new InvalidOperationException($"Failed to create cart with metadata: {cartResult.Error}");
             cart = cartResult.Value;
@@ -96,7 +96,7 @@ public class CartBuilder
         else
         {
             // Create regular cart (can be anonymous or with user)
-            var cartResult = Cart.Create(_user);
+            var cartResult = Cart.Create(_user?.Id);
             if (cartResult.IsFailure)
                 throw new InvalidOperationException($"Failed to create cart: {cartResult.Error}");
             cart = cartResult.Value;
@@ -114,7 +114,7 @@ public class CartBuilder
         // Add items to cart
         foreach (var (product, quantity, variant) in _items)
         {
-            var addResult = cart.AddItem(product, quantity, variant);
+            var addResult = cart.AddItem(product.Id, quantity, variant?.Id);
             if (addResult.IsFailure)
                 throw new InvalidOperationException($"Failed to add item to cart: {addResult.Error}");
         }

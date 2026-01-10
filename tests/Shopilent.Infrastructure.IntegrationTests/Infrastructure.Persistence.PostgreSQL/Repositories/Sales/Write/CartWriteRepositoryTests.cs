@@ -194,7 +194,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
 
         // Act - Load fresh entity and add item
         var existingCart = await _cartWriteRepository.GetByIdAsync(cart.Id);
-        existingCart!.AddItem(product2, 2);
+        existingCart!.AddItem(product2.Id, 2);
 
         await _cartWriteRepository.UpdateAsync(existingCart);
         await _unitOfWork.CommitAsync();
@@ -464,7 +464,7 @@ public class CartWriteRepositoryTests : IntegrationTestBase
 
 
         // Act - Assign cart to user (both entities are already tracked)
-        anonymousCart.AssignToUser(user);
+        anonymousCart.AssignToUser(user.Id);
 
         await _cartWriteRepository.UpdateAsync(anonymousCart);
         await _unitOfWork.CommitAsync();

@@ -56,7 +56,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var product = new ProductBuilder().Build();
 
         // Add an item to the cart so we can update its quantity
-        var addItemResult = cart.AddItem(product, 1);
+        var addItemResult = cart.AddItem(product.Id, 1);
         addItemResult.IsSuccess.Should().BeTrue("Failed to add item to cart for test setup");
         var cartItem = addItemResult.Value;
 
@@ -105,7 +105,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var product = new ProductBuilder().Build();
 
         // Add an item to the cart so we can update its quantity
-        var addItemResult = cart.AddItem(product, 1);
+        var addItemResult = cart.AddItem(product.Id, 1);
         addItemResult.IsSuccess.Should().BeTrue("Failed to add item to cart for test setup");
         var cartItem = addItemResult.Value;
 
@@ -228,7 +228,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var product = new ProductBuilder().Build();
 
         // Add an item to the cart so we can update its quantity
-        var addItemResult = cart.AddItem(product, 1);
+        var addItemResult = cart.AddItem(product.Id, 1);
         addItemResult.IsSuccess.Should().BeTrue("Failed to add item to cart for test setup");
         var cartItem = addItemResult.Value;
 
@@ -277,7 +277,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var product = new ProductBuilder().Build();
 
         // Add an item to the cart so we can update its quantity
-        var addItemResult = cart.AddItem(product, 1);
+        var addItemResult = cart.AddItem(product.Id, 1);
         addItemResult.IsSuccess.Should().BeTrue("Failed to add item to cart for test setup");
         var cartItem = addItemResult.Value;
 

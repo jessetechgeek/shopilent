@@ -1,9 +1,5 @@
-using Shopilent.Domain.Catalog;
-using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
-using Shopilent.Domain.Identity;
-using Shopilent.Domain.Identity.Errors;
 using Shopilent.Domain.Sales.Errors;
 using Shopilent.Domain.Sales.Events;
 
@@ -16,31 +12,29 @@ public class Cart : AggregateRoot
         // Required by EF Core
     }
 
-    private Cart(User user = null)
+    private Cart(Guid? userId = null)
     {
-        if (user != null)
-            UserId = user.Id;
-
+        UserId = userId;
         Metadata = new Dictionary<string, object>();
         _items = new List<CartItem>();
     }
 
-    public static Result<Cart> Create(User user = null)
+    public static Result<Cart> Create(Guid? userId = null)
     {
-        var cart = new Cart(user);
+        var cart = new Cart(userId);
         cart.AddDomainEvent(new CartCreatedEvent(cart.Id));
         return Result.Success(cart);
     }
 
-    public static Result<Cart> CreateWithMetadata(User user, Dictionary<string, object> metadata)
+    public static Result<Cart> CreateWithMetadata(Guid userId, Dictionary<string, object> metadata)
     {
-        if (user == null)
-            return Result.Failure<Cart>(UserErrors.NotFound(Guid.Empty));
+        if (userId == Guid.Empty)
+            return Result.Failure<Cart>(CartErrors.InvalidUserId);
 
         if (metadata == null)
             return Result.Failure<Cart>(CartErrors.InvalidMetadata);
 
-        var result = Create(user);
+        var result = Create(userId);
         if (result.IsFailure)
             return result;
 
@@ -59,34 +53,28 @@ public class Cart : AggregateRoot
     private readonly List<CartItem> _items = new();
     public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();
 
-    public Result AssignToUser(User user)
+    public Result AssignToUser(Guid userId)
     {
-        if (user == null)
-            return Result.Failure(UserErrors.NotFound(Guid.Empty));
+        if (userId == Guid.Empty)
+            return Result.Failure<Cart>(CartErrors.InvalidUserId);
 
-        UserId = user.Id;
-        AddDomainEvent(new CartAssignedToUserEvent(Id, user.Id));
+        UserId = userId;
+        AddDomainEvent(new CartAssignedToUserEvent(Id, userId));
         return Result.Success();
     }
 
-    public Result<CartItem> AddItem(Product product, int quantity = 1, ProductVariant variant = null)
+    public Result<CartItem> AddItem(Guid productId, int quantity = 1, Guid? variantId = null)
     {
-        if (product == null)
-            return Result.Failure<CartItem>(ProductErrors.NotFound(Guid.Empty));
+        if (productId == Guid.Empty)
+            return Result.Failure<CartItem>(CartErrors.InvalidProductId);
 
         if (quantity <= 0)
             return Result.Failure<CartItem>(CartErrors.InvalidQuantity);
 
-        if (!product.IsActive)
-            return Result.Failure<CartItem>(CartErrors.ProductUnavailable(product.Id));
-
-        if (variant != null && !variant.IsActive)
-            return Result.Failure<CartItem>(CartErrors.ProductVariantNotAvailable(variant.Id));
-
         // Check if the item already exists
         var existingItem = _items.Find(i =>
-            i.ProductId == product.Id &&
-            ((variant == null && i.VariantId == null) || (variant != null && i.VariantId == variant.Id)));
+            i.ProductId == productId &&
+            ((variantId == null && i.VariantId == null) || i.VariantId == variantId));
 
         if (existingItem != null)
         {
@@ -98,7 +86,7 @@ public class Cart : AggregateRoot
             return Result.Success(existingItem);
         }
 
-        var item = CartItem.Create(this, product, quantity, variant);
+        var item = CartItem.Create(Id, productId, quantity, variantId);
         _items.Add(item);
 
         AddDomainEvent(new CartItemAddedEvent(Id, item.Id));
@@ -150,7 +138,7 @@ public class Cart : AggregateRoot
         Metadata[key] = value;
         return Result.Success();
     }
-    
+
     public Result MarkAsExpired()
     {
         AddDomainEvent(new CartExpiredEvent(Id));

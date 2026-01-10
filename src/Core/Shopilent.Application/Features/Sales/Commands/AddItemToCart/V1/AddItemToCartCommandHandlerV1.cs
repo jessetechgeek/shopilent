@@ -74,7 +74,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
                     if (cart.UserId == null)
                     {
                         // Assign anonymous cart to authenticated user
-                        var assignResult = cart.AssignToUser(user);
+                        var assignResult = cart.AssignToUser(user.Id);
                         if (assignResult.IsFailure)
                         {
                             _logger.LogError("Failed to assign cart to user: {Error}", assignResult.Error);
@@ -105,7 +105,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
 
                 if (cart == null)
                 {
-                    var cartResult = Cart.Create(user);
+                    var cartResult = Cart.Create(user?.Id);
                     if (cartResult.IsFailure)
                     {
                         _logger.LogError("Failed to create cart: {Error}", cartResult.Error);
@@ -151,7 +151,7 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
             }
 
             // Add item to cart
-            var addItemResult = cart.AddItem(product, request.Quantity, variant);
+            var addItemResult = cart.AddItem(product.Id, request.Quantity, variant?.Id);
             if (addItemResult.IsFailure)
             {
                 _logger.LogError("Failed to add item to cart: {Error}", addItemResult.Error);

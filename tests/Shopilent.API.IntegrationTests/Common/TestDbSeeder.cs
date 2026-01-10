@@ -210,7 +210,7 @@ public static class TestDbSeeder
     {
         return await executeDbContext(async context =>
         {
-            var cart = Cart.Create(user).Value;
+            var cart = Cart.Create(user.Id).Value;
             context.Carts.Add(cart);
             await context.SaveChangesAsync();
             return cart;
@@ -227,7 +227,7 @@ public static class TestDbSeeder
     {
         return await executeDbContext(async context =>
         {
-            var cart = Cart.Create(null).Value;
+            var cart = Cart.Create().Value;
             context.Carts.Add(cart);
             await context.SaveChangesAsync();
             return cart;
@@ -249,7 +249,7 @@ public static class TestDbSeeder
         return await executeDbContext(async context =>
         {
             // Create cart
-            var cart = Cart.Create(user).Value;
+            var cart = Cart.Create(user?.Id).Value;
 
             context.Carts.Add(cart);
             await context.SaveChangesAsync();
@@ -273,7 +273,7 @@ public static class TestDbSeeder
                 await context.SaveChangesAsync();
 
                 var quantity = _faker.Random.Int(1, 5);
-                cart.AddItem(product, quantity);
+                cart.AddItem(product.Id, quantity);
             }
 
             await context.SaveChangesAsync();
@@ -299,7 +299,7 @@ public static class TestDbSeeder
                 throw new InvalidOperationException($"User with ID {userId} not found.");
             }
 
-            var cart = Cart.Create(user).Value;
+            var cart = Cart.Create(user.Id).Value;
             context.Carts.Add(cart);
             await context.SaveChangesAsync();
             return cart;
@@ -334,7 +334,7 @@ public static class TestDbSeeder
                 throw new InvalidOperationException($"Product with ID {productId} not found.");
             }
 
-            var addResult = cart.AddItem(product, quantity);
+            var addResult = cart.AddItem(product.Id, quantity);
             if (addResult.IsFailure)
             {
                 throw new InvalidOperationException($"Failed to add item to cart: {addResult.Error}");
@@ -389,7 +389,7 @@ public static class TestDbSeeder
                 throw new InvalidOperationException($"Product variant with ID {variantId} not found.");
             }
 
-            var addResult = cart.AddItem(product, quantity, variant);
+            var addResult = cart.AddItem(product.Id, quantity, variant?.Id);
             if (addResult.IsFailure)
             {
                 throw new InvalidOperationException($"Failed to add item with variant to cart: {addResult.Error}");
@@ -442,7 +442,7 @@ public static class TestDbSeeder
             await context.SaveChangesAsync();
 
             // Add item to cart
-            var addResult = cart.AddItem(product, initialQuantity, null);
+            var addResult = cart.AddItem(product.Id, initialQuantity, null);
             if (addResult.IsFailure)
             {
                 throw new InvalidOperationException($"Failed to add item to cart: {addResult.Error}");
@@ -509,7 +509,7 @@ public static class TestDbSeeder
             await context.SaveChangesAsync();
 
             // Add item with variant to cart
-            var addResult = cart.AddItem(product, initialQuantity, variant);
+            var addResult = cart.AddItem(product.Id, initialQuantity, variant?.Id);
             if (addResult.IsFailure)
             {
                 throw new InvalidOperationException($"Failed to add item to cart: {addResult.Error}");
@@ -561,7 +561,7 @@ public static class TestDbSeeder
                 context.Products.Add(product);
                 await context.SaveChangesAsync();
 
-                var addResult = cart.AddItem(product, initialQuantity, null);
+                var addResult = cart.AddItem(product.Id, initialQuantity, null);
                 if (addResult.IsFailure)
                 {
                     throw new InvalidOperationException($"Failed to add item to cart: {addResult.Error}");
@@ -612,12 +612,12 @@ public static class TestDbSeeder
             await context.SaveChangesAsync();
 
             // Create cart for customer
-            var cart = Cart.Create(user).Value;
+            var cart = Cart.Create(user.Id).Value;
             context.Carts.Add(cart);
             await context.SaveChangesAsync();
 
             // Add item to cart
-            var addResult = cart.AddItem(product, initialQuantity, null);
+            var addResult = cart.AddItem(product.Id, initialQuantity, null);
             if (addResult.IsFailure)
             {
                 throw new InvalidOperationException($"Failed to add item to cart: {addResult.Error}");
@@ -667,12 +667,12 @@ public static class TestDbSeeder
             await context.SaveChangesAsync();
 
             // Create cart for admin
-            var cart = Cart.Create(user).Value;
+            var cart = Cart.Create(user.Id).Value;
             context.Carts.Add(cart);
             await context.SaveChangesAsync();
 
             // Add item to cart
-            var addResult = cart.AddItem(product, initialQuantity, null);
+            var addResult = cart.AddItem(product.Id, initialQuantity, null);
             if (addResult.IsFailure)
             {
                 throw new InvalidOperationException($"Failed to add item to cart: {addResult.Error}");
@@ -1135,7 +1135,7 @@ public static class TestDbSeeder
             }
 
             // Create cart for user
-            var cart = Cart.Create(user).Value;
+            var cart = Cart.Create(user.Id).Value;
             context.Carts.Add(cart);
             await context.SaveChangesAsync();
 
@@ -1148,7 +1148,7 @@ public static class TestDbSeeder
                     throw new InvalidOperationException($"Product with ID {productId} not found.");
                 }
 
-                var addResult = cart.AddItem(product, quantityPerItem, null);
+                var addResult = cart.AddItem(product.Id, quantityPerItem, null);
                 if (addResult.IsFailure)
                 {
                     throw new InvalidOperationException($"Failed to add item to cart: {addResult.Error}");
@@ -1185,7 +1185,7 @@ public static class TestDbSeeder
             }
 
             // Create cart for user
-            var cart = Cart.Create(user).Value;
+            var cart = Cart.Create(user.Id).Value;
             context.Carts.Add(cart);
             await context.SaveChangesAsync();
 
@@ -1205,7 +1205,7 @@ public static class TestDbSeeder
                     throw new InvalidOperationException($"Variant with ID {variantId} not found.");
                 }
 
-                var addResult = cart.AddItem(product, quantityPerItem, variant);
+                var addResult = cart.AddItem(product.Id, quantityPerItem, variant?.Id);
                 if (addResult.IsFailure)
                 {
                     throw new InvalidOperationException($"Failed to add variant item to cart: {addResult.Error}");
@@ -1246,7 +1246,7 @@ public static class TestDbSeeder
             await context.SaveChangesAsync();
 
             // Create cart for the different user
-            var cart = Cart.Create(user).Value;
+            var cart = Cart.Create(user.Id).Value;
             context.Carts.Add(cart);
             await context.SaveChangesAsync();
 
@@ -1254,7 +1254,7 @@ public static class TestDbSeeder
             var product = await context.Products.FindAsync(productId);
             if (product != null)
             {
-                cart.AddItem(product, 1, null);
+                cart.AddItem(product.Id, 1, null);
                 await context.SaveChangesAsync();
             }
 
