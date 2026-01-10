@@ -94,11 +94,11 @@ internal sealed class CreateCartCommandHandlerV1 : IRequestHandler<CreateCartCom
         Result<Cart> cartResult;
         if (request.Metadata != null)
         {
-            cartResult = Cart.CreateWithMetadata(user, request.Metadata);
+            cartResult = Cart.CreateWithMetadata(user.Id, request.Metadata);
         }
         else
         {
-            cartResult = Cart.Create(user);
+            cartResult = Cart.Create(user.Id);
         }
 
         if (cartResult.IsFailure)

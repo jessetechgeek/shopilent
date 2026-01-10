@@ -68,7 +68,7 @@ public class CreateOrderFromCartCommandV1Tests : TestBase
 
         // Add a test item to the cart so it's not empty
         var testProduct = new ProductBuilder().Build();
-        var addItemResult = cart.AddItem(testProduct, 1);
+        var addItemResult = cart.AddItem(testProduct.Id, 1);
         if (addItemResult.IsFailure)
             throw new InvalidOperationException($"Failed to add item to cart: {addItemResult.Error.Message}");
 

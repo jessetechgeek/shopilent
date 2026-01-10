@@ -492,7 +492,7 @@ public class AssignCartToUserEndpointV1Tests : ApiIntegrationTestBase
             var cart = Cart.Create(null).Value;
 
             // Add item to cart
-            cart.AddItem(product, 1, variant);
+            cart.AddItem(product.Id, 1, variant?.Id);
 
             await context.Carts.AddAsync(cart);
             await context.SaveChangesAsync();
@@ -528,7 +528,7 @@ public class AssignCartToUserEndpointV1Tests : ApiIntegrationTestBase
             }
 
             // Create cart for user
-            var cart = Cart.Create(user).Value;
+            var cart = Cart.Create(user.Id).Value;
 
             await context.Carts.AddAsync(cart);
             await context.SaveChangesAsync();

@@ -17,26 +17,26 @@ public class CartBuilder
         _id = id;
         return this;
     }
-    
+
     public CartBuilder WithUser(User user)
     {
         _user = user;
         _userId = user?.Id;
         return this;
     }
-    
+
     public CartBuilder WithUserId(Guid? userId)
     {
         _userId = userId;
         return this;
     }
-    
+
     public CartBuilder CreatedAt(DateTime createdAt)
     {
         _createdAt = createdAt;
         return this;
     }
-    
+
     public CartBuilder WithMetadata(string key, object value)
     {
         _metadata[key] = value;
@@ -45,32 +45,32 @@ public class CartBuilder
 
     public Cart Build()
     {
-        var cartResult = Cart.Create(_user);
-        
+        var cartResult = Cart.Create(_user?.Id);
+
         if (cartResult.IsFailure)
             throw new InvalidOperationException($"Failed to create cart: {cartResult.Error.Message}");
-            
+
         var cart = cartResult.Value;
-        
+
         // Use reflection to set private properties
         SetPrivatePropertyValue(cart, "Id", _id);
         SetPrivatePropertyValue(cart, "CreatedAt", _createdAt);
         SetPrivatePropertyValue(cart, "UpdatedAt", _updatedAt);
-        
+
         if (_userId.HasValue && _user == null)
         {
             SetPrivatePropertyValue(cart, "UserId", _userId.Value);
         }
-        
+
         // Set metadata
         foreach (var metadata in _metadata)
         {
             cart.Metadata[metadata.Key] = metadata.Value;
         }
-        
+
         return cart;
     }
-    
+
     private static void SetPrivatePropertyValue<T>(object obj, string propertyName, T value)
     {
         var propertyInfo = obj.GetType().GetProperty(propertyName);
@@ -80,10 +80,10 @@ public class CartBuilder
         }
         else
         {
-            var fieldInfo = obj.GetType().GetField(propertyName, 
-                System.Reflection.BindingFlags.NonPublic | 
+            var fieldInfo = obj.GetType().GetField(propertyName,
+                System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance);
-                
+
             if (fieldInfo != null)
             {
                 fieldInfo.SetValue(obj, value);

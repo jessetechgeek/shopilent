@@ -16,15 +16,15 @@ public class CartEventTests
     {
         var emailResult = Email.Create("test@example.com");
         emailResult.IsSuccess.Should().BeTrue();
-        
+
         var fullNameResult = FullName.Create("Test", "User");
         fullNameResult.IsSuccess.Should().BeTrue();
-        
+
         var userResult = User.Create(
             emailResult.Value,
             "hashed_password",
             fullNameResult.Value);
-            
+
         userResult.IsSuccess.Should().BeTrue();
         return userResult.Value;
     }
@@ -33,15 +33,15 @@ public class CartEventTests
     {
         var slugResult = Slug.Create("test-product");
         slugResult.IsSuccess.Should().BeTrue();
-        
+
         var priceResult = Money.FromDollars(100);
         priceResult.IsSuccess.Should().BeTrue();
-        
+
         var productResult = Product.Create(
             "Test Product",
             slugResult.Value,
             priceResult.Value);
-            
+
         productResult.IsSuccess.Should().BeTrue();
         return productResult.Value;
     }
@@ -68,12 +68,12 @@ public class CartEventTests
         var cartResult = Cart.Create();
         cartResult.IsSuccess.Should().BeTrue();
         var cart = cartResult.Value;
-        
+
         var user = CreateTestUser();
         cart.ClearDomainEvents(); // Clear the creation event
 
         // Act
-        var assignResult = cart.AssignToUser(user);
+        var assignResult = cart.AssignToUser(user.Id);
 
         // Assert
         assignResult.IsSuccess.Should().BeTrue();
@@ -91,12 +91,12 @@ public class CartEventTests
         var cartResult = Cart.Create();
         cartResult.IsSuccess.Should().BeTrue();
         var cart = cartResult.Value;
-        
+
         var product = CreateTestProduct();
         cart.ClearDomainEvents(); // Clear the creation event
 
         // Act
-        var cartItemResult = cart.AddItem(product, 2);
+        var cartItemResult = cart.AddItem(product.Id, 2);
 
         // Assert
         cartItemResult.IsSuccess.Should().BeTrue();
@@ -115,12 +115,12 @@ public class CartEventTests
         var cartResult = Cart.Create();
         cartResult.IsSuccess.Should().BeTrue();
         var cart = cartResult.Value;
-        
+
         var product = CreateTestProduct();
-        var cartItemResult = cart.AddItem(product, 1);
+        var cartItemResult = cart.AddItem(product.Id, 1);
         cartItemResult.IsSuccess.Should().BeTrue();
         var cartItem = cartItemResult.Value;
-        
+
         cart.ClearDomainEvents(); // Clear previous events
 
         // Act
@@ -142,12 +142,12 @@ public class CartEventTests
         var cartResult = Cart.Create();
         cartResult.IsSuccess.Should().BeTrue();
         var cart = cartResult.Value;
-        
+
         var product = CreateTestProduct();
-        var cartItemResult = cart.AddItem(product, 1);
+        var cartItemResult = cart.AddItem(product.Id, 1);
         cartItemResult.IsSuccess.Should().BeTrue();
         var cartItem = cartItemResult.Value;
-        
+
         cart.ClearDomainEvents(); // Clear previous events
 
         // Act
@@ -169,21 +169,21 @@ public class CartEventTests
         var cartResult = Cart.Create();
         cartResult.IsSuccess.Should().BeTrue();
         var cart = cartResult.Value;
-        
+
         var product1 = CreateTestProduct();
-        
+
         var slugResult = Slug.Create("product-2");
         slugResult.IsSuccess.Should().BeTrue();
-        
+
         var priceResult = Money.FromDollars(200);
         priceResult.IsSuccess.Should().BeTrue();
-        
+
         var product2Result = Product.Create("Product 2", slugResult.Value, priceResult.Value);
         product2Result.IsSuccess.Should().BeTrue();
         var product2 = product2Result.Value;
 
-        cart.AddItem(product1, 1);
-        cart.AddItem(product2, 1);
+        cart.AddItem(product1.Id, 1);
+        cart.AddItem(product2.Id, 1);
 
         cart.ClearDomainEvents(); // Clear previous events
 

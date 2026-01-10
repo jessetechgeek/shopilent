@@ -65,7 +65,7 @@ public class CartTests
         var user = CreateTestUser();
 
         // Act
-        var cartResult = Cart.Create(user);
+        var cartResult = Cart.Create(user.Id);
 
         // Assert
         cartResult.IsSuccess.Should().BeTrue();
@@ -88,7 +88,7 @@ public class CartTests
         };
 
         // Act
-        var cartResult = Cart.CreateWithMetadata(user, metadata);
+        var cartResult = Cart.CreateWithMetadata(user.Id, metadata);
 
         // Assert
         cartResult.IsSuccess.Should().BeTrue();
@@ -113,7 +113,7 @@ public class CartTests
         var user = CreateTestUser();
 
         // Act
-        var assignResult = cart.AssignToUser(user);
+        var assignResult = cart.AssignToUser(user.Id);
 
         // Assert
         assignResult.IsSuccess.Should().BeTrue();
@@ -128,14 +128,14 @@ public class CartTests
         var cartResult = Cart.Create();
         cartResult.IsSuccess.Should().BeTrue();
         var cart = cartResult.Value;
-        User user = null;
+        var userId = Guid.Empty;
 
         // Act
-        var assignResult = cart.AssignToUser(user);
+        var assignResult = cart.AssignToUser(userId);
 
         // Assert
         assignResult.IsFailure.Should().BeTrue();
-        assignResult.Error.Code.Should().Be("User.NotFound");
+        assignResult.Error.Code.Should().Be("Cart.InvalidUserId");
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class CartTests
         var quantity = 2;
 
         // Act
-        var cartItemResult = cart.AddItem(product, quantity);
+        var cartItemResult = cart.AddItem(product.Id, quantity);
 
         // Assert
         cartItemResult.IsSuccess.Should().BeTrue();
@@ -174,7 +174,7 @@ public class CartTests
 
         // Add first item
         var initialQuantity = 2;
-        var cartItemResult = cart.AddItem(product, initialQuantity);
+        var cartItemResult = cart.AddItem(product.Id, initialQuantity);
         cartItemResult.IsSuccess.Should().BeTrue();
         var cartItem = cartItemResult.Value;
         cartItem.Quantity.Should().Be(initialQuantity);
@@ -183,7 +183,7 @@ public class CartTests
         var additionalQuantity = 3;
 
         // Act
-        var updatedItemResult = cart.AddItem(product, additionalQuantity);
+        var updatedItemResult = cart.AddItem(product.Id, additionalQuantity);
 
         // Assert
         updatedItemResult.IsSuccess.Should().BeTrue();
@@ -213,7 +213,7 @@ public class CartTests
         var quantity = 1;
 
         // Act
-        var cartItemResult = cart.AddItem(product, quantity, variant);
+        var cartItemResult = cart.AddItem(product.Id, quantity, variant?.Id);
 
         // Assert
         cartItemResult.IsSuccess.Should().BeTrue();
@@ -233,15 +233,15 @@ public class CartTests
         cartResult.IsSuccess.Should().BeTrue();
         var cart = cartResult.Value;
 
-        Product product = null;
+        var productId = Guid.Empty;
         var quantity = 1;
 
         // Act
-        var cartItemResult = cart.AddItem(product, quantity);
+        var cartItemResult = cart.AddItem(productId, quantity);
 
         // Assert
         cartItemResult.IsFailure.Should().BeTrue();
-        cartItemResult.Error.Code.Should().Be("Product.NotFound");
+        cartItemResult.Error.Code.Should().Be("Cart.InvalidProductId");
     }
 
     [Fact]
@@ -256,7 +256,7 @@ public class CartTests
         var quantity = 0;
 
         // Act
-        var cartItemResult = cart.AddItem(product, quantity);
+        var cartItemResult = cart.AddItem(product.Id, quantity);
 
         // Assert
         cartItemResult.IsFailure.Should().BeTrue();
@@ -273,7 +273,7 @@ public class CartTests
 
         var product = CreateTestProduct();
         var initialQuantity = 1;
-        var cartItemResult = cart.AddItem(product, initialQuantity);
+        var cartItemResult = cart.AddItem(product.Id, initialQuantity);
         cartItemResult.IsSuccess.Should().BeTrue();
         var cartItem = cartItemResult.Value;
 
@@ -298,7 +298,7 @@ public class CartTests
         var cart = cartResult.Value;
 
         var product = CreateTestProduct();
-        var cartItemResult = cart.AddItem(product, 2);
+        var cartItemResult = cart.AddItem(product.Id, 2);
         cartItemResult.IsSuccess.Should().BeTrue();
         cart.Items.Should().HaveCount(1);
 
@@ -339,7 +339,7 @@ public class CartTests
         var cart = cartResult.Value;
 
         var product = CreateTestProduct();
-        var cartItemResult = cart.AddItem(product, 1);
+        var cartItemResult = cart.AddItem(product.Id, 1);
         cartItemResult.IsSuccess.Should().BeTrue();
         cart.Items.Should().HaveCount(1);
 
@@ -360,9 +360,9 @@ public class CartTests
         cartResult.IsSuccess.Should().BeTrue();
         var cart = cartResult.Value;
 
-        cart.AddItem(CreateTestProduct("Product 1"), 1);
-        cart.AddItem(CreateTestProduct("Product 2"), 2);
-        cart.AddItem(CreateTestProduct("Product 3"), 3);
+        cart.AddItem(CreateTestProduct("Product 1").Id, 1);
+        cart.AddItem(CreateTestProduct("Product 2").Id, 2);
+        cart.AddItem(CreateTestProduct("Product 3").Id, 3);
         cart.Items.Should().HaveCount(3);
 
         // Act

@@ -626,12 +626,12 @@ public class CreateOrderFromCartEndpointV1Tests : ApiIntegrationTestBase
                 throw new InvalidOperationException("Admin user not found");
             }
 
-            var adminCart = Cart.Create(adminUser).Value;
+            var adminCart = Cart.Create(adminUser.Id).Value;
             context.Carts.Add(adminCart);
             await context.SaveChangesAsync();
 
             var productEntity = await context.Products.FindAsync(product.Id);
-            adminCart.AddItem(productEntity!, 1, null);
+            adminCart.AddItem(productEntity!.Id, 1, null);
             await context.SaveChangesAsync();
 
             var postalAddress = PostalAddress.Create(

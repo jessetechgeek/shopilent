@@ -54,7 +54,7 @@ public class RemoveItemFromCartCommandV1Tests : TestBase
         var product = new ProductBuilder().Build();
 
         // Add an item to the cart so we can remove it
-        var addItemResult = cart.AddItem(product, 1);
+        var addItemResult = cart.AddItem(product.Id, 1);
         addItemResult.IsSuccess.Should().BeTrue("Failed to add item to cart for test setup");
         var cartItem = addItemResult.Value;
 
@@ -97,7 +97,7 @@ public class RemoveItemFromCartCommandV1Tests : TestBase
         var product = new ProductBuilder().Build();
 
         // Add an item to the cart so we can remove it
-        var addItemResult = cart.AddItem(product, 1);
+        var addItemResult = cart.AddItem(product.Id, 1);
         addItemResult.IsSuccess.Should().BeTrue("Failed to add item to cart for test setup");
         var cartItem = addItemResult.Value;
 
@@ -212,7 +212,7 @@ public class RemoveItemFromCartCommandV1Tests : TestBase
         var product = new ProductBuilder().Build();
 
         // Add an item to the cart so we can remove it
-        var addItemResult = cart.AddItem(product, 1);
+        var addItemResult = cart.AddItem(product.Id, 1);
         addItemResult.IsSuccess.Should().BeTrue("Failed to add item to cart for test setup");
         var cartItem = addItemResult.Value;
 

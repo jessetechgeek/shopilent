@@ -90,7 +90,7 @@ internal sealed class AssignCartToUserCommandHandlerV1 : ICommandHandler<AssignC
             }
 
             // Assign the cart to the user
-            var assignResult = cart.AssignToUser(user);
+            var assignResult = cart.AssignToUser(user.Id);
             if (assignResult.IsFailure)
             {
                 _logger.LogWarning("Failed to assign cart {CartId} to user {UserId}: {Error}",
