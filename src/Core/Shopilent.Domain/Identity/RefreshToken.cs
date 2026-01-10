@@ -11,9 +11,10 @@ public class RefreshToken : Entity
         // Required by EF Core
     }
 
-    private RefreshToken(User user, string token, DateTime expiresAt, string ipAddress = null, string userAgent = null)
+    private RefreshToken(Guid userId, string token, DateTime expiresAt, string ipAddress = null,
+        string userAgent = null)
     {
-        UserId = user.Id;
+        UserId = userId;
         Token = token;
         ExpiresAt = expiresAt;
         IssuedAt = DateTime.UtcNow;
@@ -22,11 +23,11 @@ public class RefreshToken : Entity
         UserAgent = userAgent;
     }
 
-    internal static RefreshToken Create(User user, string token, DateTime expiresAt, string ipAddress = null,
+    internal static RefreshToken Create(Guid userId, string token, DateTime expiresAt, string ipAddress = null,
         string userAgent = null)
     {
-        if (user == null)
-            throw new ArgumentNullException(nameof(user));
+        if (userId == Guid.Empty)
+            throw new ArgumentNullException(nameof(userId));
 
         if (string.IsNullOrWhiteSpace(token))
             throw new ArgumentException("Token cannot be empty", nameof(token));
@@ -34,34 +35,19 @@ public class RefreshToken : Entity
         if (expiresAt <= DateTime.UtcNow)
             throw new ArgumentException("Expiry date must be in the future", nameof(expiresAt));
 
-        return new RefreshToken(user, token, expiresAt, ipAddress, userAgent);
+        return new RefreshToken(userId, token, expiresAt, ipAddress, userAgent);
     }
 
-    internal static Result<RefreshToken> Create(Result<User> userResult, string token, DateTime expiresAt,
-        string ipAddress = null, string userAgent = null)
-    {
-        if (userResult.IsFailure)
-            return Result.Failure<RefreshToken>(userResult.Error);
-
-        if (string.IsNullOrWhiteSpace(token))
-            return Result.Failure<RefreshToken>(RefreshTokenErrors.EmptyToken);
-
-        if (expiresAt <= DateTime.UtcNow)
-            return Result.Failure<RefreshToken>(RefreshTokenErrors.InvalidExpiry);
-
-        return Result.Success(new RefreshToken(userResult.Value, token, expiresAt, ipAddress, userAgent));
-    }
-
-    internal static Result<RefreshToken> CreateWithStandardExpiry(User user, string token, string ipAddress = null,
+    internal static Result<RefreshToken> CreateWithStandardExpiry(Guid userId, string token, string ipAddress = null,
         string userAgent = null)
     {
-        if (user == null)
+        if (userId == Guid.Empty)
             return Result.Failure<RefreshToken>(UserErrors.NotFound(Guid.Empty));
 
         if (string.IsNullOrWhiteSpace(token))
             return Result.Failure<RefreshToken>(RefreshTokenErrors.EmptyToken);
 
-        return Result.Success(new RefreshToken(user, token, DateTime.UtcNow.AddDays(7), ipAddress, userAgent));
+        return Result.Success(new RefreshToken(userId, token, DateTime.UtcNow.AddDays(7), ipAddress, userAgent));
     }
 
     public Guid UserId { get; private set; }

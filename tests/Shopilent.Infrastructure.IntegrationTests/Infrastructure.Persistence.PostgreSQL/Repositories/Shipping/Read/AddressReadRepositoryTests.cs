@@ -2,6 +2,7 @@ using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Shipping.Enums;
 using Shopilent.Domain.Shipping.Repositories.Read;
+using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -12,7 +13,8 @@ public class AddressReadRepositoryTests : IntegrationTestBase
 {
     private IUnitOfWork _unitOfWork = null!;
     private IUserWriteRepository _userWriteRepository = null!;
-    private IAddressReadRepository _addressReadRepository;
+    private IAddressWriteRepository _addressWriteRepository = null!;
+    private IAddressReadRepository _addressReadRepository = null!;
 
     public AddressReadRepositoryTests(IntegrationTestFixture fixture) : base(fixture) { }
 
@@ -20,6 +22,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
     {
         _unitOfWork = GetService<IUnitOfWork>();
         _userWriteRepository = GetService<IUserWriteRepository>();
+        _addressWriteRepository = GetService<IAddressWriteRepository>();
         _addressReadRepository = GetService<IAddressReadRepository>();
         return Task.CompletedTask;
     }
@@ -37,6 +40,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -108,7 +112,9 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user1);
+        await _addressWriteRepository.AddAsync(address1);
         await _userWriteRepository.AddAsync(user2);
+        await _addressWriteRepository.AddAsync(address2);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -146,7 +152,10 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user1);
+        await _addressWriteRepository.AddAsync(address1);
         await _userWriteRepository.AddAsync(user2);
+        await _addressWriteRepository.AddAsync(address2);
+        await _addressWriteRepository.AddAsync(address3);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -198,6 +207,8 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(defaultAddress);
+        await _addressWriteRepository.AddAsync(nonDefaultAddress);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -225,6 +236,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(defaultAddress);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -252,6 +264,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(defaultBothAddress);
         await _unitOfWork.CommitAsync();
 
         // Act - Should return the "Both" address for shipping requests
@@ -310,7 +323,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .IsDefault()
             .Build();
 
-        // Create second default "Shipping" address (should become the only default)
+        // Create second default "Shipping" address
         var defaultShippingAddress = new AddressBuilder()
             .WithUser(user)
             .WithUniqueData()
@@ -319,12 +332,20 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(defaultBothAddress);
+        await _addressWriteRepository.AddAsync(defaultShippingAddress);
         await _unitOfWork.CommitAsync();
 
-        // Act - Request default address for shipping
+        // Act - Manually unset the previous default (this would be done in application layer)
+        var bothAddress = await _addressWriteRepository.GetByIdAsync(defaultBothAddress.Id);
+        bothAddress!.SetDefault(false);
+        await _addressWriteRepository.UpdateAsync(bothAddress);
+        await _unitOfWork.CommitAsync();
+
+        // Request default address for shipping
         var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
 
-        // Assert - Should return the latest default address (Shipping), not the Both address
+        // Assert - Should return the Shipping address
         result.Should().NotBeNull();
         result!.AddressType.Should().Be(AddressType.Shipping);
         result.Id.Should().Be(defaultShippingAddress.Id);
@@ -364,6 +385,9 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(billingAddress);
+        await _addressWriteRepository.AddAsync(bothAddress);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -408,6 +432,9 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(billingAddress);
+        await _addressWriteRepository.AddAsync(bothAddress);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -451,6 +478,9 @@ public class AddressReadRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(billingAddress);
+        await _addressWriteRepository.AddAsync(bothAddress);
         await _unitOfWork.CommitAsync();
 
         // Act

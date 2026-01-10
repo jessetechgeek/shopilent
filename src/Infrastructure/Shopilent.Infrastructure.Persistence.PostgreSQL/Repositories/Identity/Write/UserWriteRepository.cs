@@ -18,7 +18,6 @@ public class UserWriteRepository : AggregateWriteRepositoryBase<User>, IUserWrit
     {
         return await DbContext.Users
             .Include(u => u.RefreshTokens)
-            .Include(u => u.Addresses)
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
 

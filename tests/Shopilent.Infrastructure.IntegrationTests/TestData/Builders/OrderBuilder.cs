@@ -23,6 +23,11 @@ public class OrderBuilder
     private PaymentStatus _paymentStatus = PaymentStatus.Pending;
     private readonly Faker _faker = new();
 
+    // Expose addresses so tests can persist them
+    public Address ShippingAddress => _shippingAddress;
+    public Address BillingAddress => _billingAddress;
+    public User User => _user;
+
     public OrderBuilder()
     {
         // Set default values

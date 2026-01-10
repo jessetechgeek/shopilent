@@ -173,7 +173,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         // Relationships
         builder.HasOne<Domain.Identity.User>()
-            .WithMany(u => u.Orders)
+            .WithMany()
             .HasForeignKey(o => o.UserId)
             .OnDelete(DeleteBehavior.SetNull);
 

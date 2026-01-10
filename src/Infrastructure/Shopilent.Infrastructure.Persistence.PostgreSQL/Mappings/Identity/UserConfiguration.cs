@@ -137,25 +137,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         });
 
         // Relationships
-        builder.HasMany(u => u.Addresses)
-            .WithOne()
-            .HasForeignKey("UserId")
-            .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasMany(u => u.RefreshTokens)
             .WithOne()
             .HasForeignKey("UserId")
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasMany(u => u.Carts)
-            .WithOne()
-            .HasForeignKey("UserId")
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasMany(u => u.Orders)
-            .WithOne()
-            .HasForeignKey("UserId")
-            .OnDelete(DeleteBehavior.SetNull);
 
         // Optimistic Concurrency
         builder.Property(u => u.Version)

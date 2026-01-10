@@ -5,11 +5,6 @@ using Shopilent.Domain.Identity.Enums;
 using Shopilent.Domain.Identity.Errors;
 using Shopilent.Domain.Identity.Events;
 using Shopilent.Domain.Identity.ValueObjects;
-using Shopilent.Domain.Sales;
-using Shopilent.Domain.Shipping;
-using Shopilent.Domain.Shipping.Enums;
-using Shopilent.Domain.Shipping.Errors;
-using Shopilent.Domain.Shipping.ValueObjects;
 
 namespace Shopilent.Domain.Identity;
 
@@ -30,9 +25,7 @@ public class User : AggregateRoot
         EmailVerified = false;
         FailedLoginAttempts = 0;
 
-        _addresses = new List<Address>();
         _refreshTokens = new List<RefreshToken>();
-        _orders = new List<Order>();
     }
 
     public static Result<User> Create(Email email, string passwordHash, FullName fullName,
@@ -92,17 +85,8 @@ public class User : AggregateRoot
     public int FailedLoginAttempts { get; private set; }
     public DateTime? LastFailedAttempt { get; private set; }
 
-    private readonly List<Address> _addresses = new();
-    public IReadOnlyCollection<Address> Addresses => _addresses.AsReadOnly();
-
     private readonly List<RefreshToken> _refreshTokens = new();
     public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
-
-    private readonly List<Cart> _carts = new();
-    public IReadOnlyCollection<Cart> Carts => _carts.AsReadOnly();
-
-    private readonly List<Order> _orders = new();
-    public IReadOnlyCollection<Order> Orders => _orders.AsReadOnly();
 
     public Result UpdatePersonalInfo(FullName fullName, PhoneNumber phone = null)
     {
@@ -147,7 +131,6 @@ public class User : AggregateRoot
     public Result SetRole(UserRole role)
     {
         Role = role;
-        Console.WriteLine(Role);
         AddDomainEvent(new UserRoleChangedEvent(Id, role));
         return Result.Success();
     }
@@ -192,6 +175,7 @@ public class User : AggregateRoot
                 return Activate();
             }
         }
+
         return Result.Success();
     }
 
@@ -260,7 +244,7 @@ public class User : AggregateRoot
         if (expiresAt <= DateTime.UtcNow)
             return Result.Failure<RefreshToken>(RefreshTokenErrors.InvalidExpiry);
 
-        var refreshToken = RefreshToken.Create(this, token, expiresAt, ipAddress, userAgent);
+        var refreshToken = RefreshToken.Create(Id, token, expiresAt, ipAddress, userAgent);
         _refreshTokens.Add(refreshToken);
         return Result.Success(refreshToken);
     }
@@ -289,45 +273,6 @@ public class User : AggregateRoot
             token.Revoke(reason);
         }
 
-        return Result.Success();
-    }
-
-    public Result<Address> AddAddress(
-        PostalAddress postalAddress,
-        AddressType addressType = AddressType.Shipping,
-        PhoneNumber phone = null,
-        bool isDefault = false)
-    {
-        if (postalAddress == null)
-            return Result.Failure<Address>(AddressErrors.AddressLine1Required);
-
-        var result = Address.Create(
-            this.Id,
-            postalAddress,
-            addressType,
-            phone,
-            isDefault);
-
-        if (isDefault)
-        {
-            // Update all other default addresses (only one default address allowed per user)
-            foreach (var existingAddress in _addresses.FindAll(a => a.IsDefault))
-            {
-                existingAddress.SetDefault(false);
-            }
-        }
-
-        _addresses.Add(result);
-        return Result.Success(result);
-    }
-
-    public Result RemoveAddress(Guid addressId)
-    {
-        var address = _addresses.Find(a => a.Id == addressId);
-        if (address == null)
-            return Result.Failure(AddressErrors.NotFound(addressId));
-
-        _addresses.Remove(address);
         return Result.Success();
     }
 }

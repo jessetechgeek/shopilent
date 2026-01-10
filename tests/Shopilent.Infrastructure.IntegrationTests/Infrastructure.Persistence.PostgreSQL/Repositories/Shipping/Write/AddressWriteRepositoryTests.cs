@@ -50,6 +50,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address);
         await _unitOfWork.CommitAsync();
 
         // Assert
@@ -85,6 +86,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address);
         await _unitOfWork.CommitAsync();
 
         // Assert
@@ -108,6 +110,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address);
         await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
@@ -158,6 +161,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address);
         await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
@@ -192,6 +196,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address);
         await _unitOfWork.CommitAsync();
 
         // Detach to simulate real-world scenario
@@ -225,6 +230,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -249,6 +255,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -294,6 +301,8 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address1);
+        await _addressWriteRepository.AddAsync(address2);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -344,6 +353,8 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(defaultAddress);
+        await _addressWriteRepository.AddAsync(nonDefaultAddress);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -396,7 +407,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .IsDefault()
             .Build();
 
-        // Create second default "Shipping" address (should become the only default)
+        // Create second default "Shipping" address
         var defaultShippingAddress = new AddressBuilder()
             .WithUser(user)
             .WithUniqueData()
@@ -405,12 +416,24 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(defaultBothAddress);
+        await _addressWriteRepository.AddAsync(defaultShippingAddress);
         await _unitOfWork.CommitAsync();
 
-        // Act - Request default address for shipping
+        // Detach entities to simulate real-world scenario
+        DbContext.Entry(defaultBothAddress).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+        DbContext.Entry(defaultShippingAddress).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+
+        // Act - Manually unset the previous default (this would be done in application layer)
+        var bothAddress = await _addressWriteRepository.GetByIdAsync(defaultBothAddress.Id);
+        bothAddress!.SetDefault(false);
+        await _addressWriteRepository.UpdateAsync(bothAddress);
+        await _unitOfWork.CommitAsync();
+
+        // Request default address for shipping
         var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
 
-        // Assert - Should return the latest default address (Shipping), not the Both address
+        // Assert - Should return the Shipping address
         result.Should().NotBeNull();
         result!.AddressType.Should().Be(AddressType.Shipping);
         result.Id.Should().Be(defaultShippingAddress.Id);
@@ -435,6 +458,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(address);
         await _unitOfWork.CommitAsync();
 
         // Act - Simulate concurrent access with two service scopes
@@ -487,6 +511,9 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         // Act - Add user with multiple addresses
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(addresses[0]);
+        await _addressWriteRepository.AddAsync(addresses[1]);
+        await _addressWriteRepository.AddAsync(addresses[2]);
         await _unitOfWork.CommitAsync();
 
         // Assert - All addresses should be persisted
@@ -528,6 +555,9 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         // Act
         await _userWriteRepository.AddAsync(user);
+        await _addressWriteRepository.AddAsync(shippingAddress);
+        await _addressWriteRepository.AddAsync(billingAddress);
+        await _addressWriteRepository.AddAsync(bothAddress);
         await _unitOfWork.CommitAsync();
 
         // Assert
