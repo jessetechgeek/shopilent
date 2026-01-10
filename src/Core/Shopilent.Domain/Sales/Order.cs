@@ -4,13 +4,11 @@ using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Common.ValueObjects;
-using Shopilent.Domain.Identity;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Errors;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Errors;
 using Shopilent.Domain.Sales.Events;
-using Shopilent.Domain.Shipping;
 
 namespace Shopilent.Domain.Sales;
 
@@ -24,17 +22,17 @@ public class Order : AggregateRoot
     }
 
     private Order(
-        User user,
-        Address shippingAddress,
-        Address billingAddress,
+        Guid userId,
+        Guid shippingAddressId,
+        Guid billingAddressId,
         Money subtotal,
         Money tax,
         Money shippingCost,
         string shippingMethod = null)
     {
-        UserId = user?.Id;
-        ShippingAddressId = shippingAddress?.Id;
-        BillingAddressId = billingAddress?.Id;
+        UserId = userId;
+        ShippingAddressId = shippingAddressId;
+        BillingAddressId = billingAddressId;
         Subtotal = subtotal;
         Tax = tax;
         ShippingCost = shippingCost;
@@ -49,9 +47,9 @@ public class Order : AggregateRoot
     }
 
     public static Result<Order> Create(
-        User user,
-        Address shippingAddress,
-        Address billingAddress,
+        Guid userId,
+        Guid shippingAddressId,
+        Guid billingAddressId,
         Money subtotal,
         Money tax,
         Money shippingCost,
@@ -66,24 +64,24 @@ public class Order : AggregateRoot
         if (shippingCost == null)
             return Result.Failure<Order>(PaymentErrors.NegativeAmount);
 
-        if (shippingAddress == null)
+        if (shippingAddressId == Guid.Empty)
             return Result.Failure<Order>(OrderErrors.ShippingAddressRequired);
 
-        var order = new Order(user, shippingAddress, billingAddress, subtotal, tax, shippingCost, shippingMethod);
+        var order = new Order(userId, shippingAddressId, billingAddressId, subtotal, tax, shippingCost, shippingMethod);
         order.AddDomainEvent(new OrderCreatedEvent(order.Id));
         return Result.Success(order);
     }
 
     public static Result<Order> CreatePaidOrder(
-        User user,
-        Address shippingAddress,
-        Address billingAddress,
+        Guid userId,
+        Guid shippingAddressId,
+        Guid billingAddressId,
         Money subtotal,
         Money tax,
         Money shippingCost,
         string shippingMethod = null)
     {
-        var result = Create(user, shippingAddress, billingAddress, subtotal, tax, shippingCost, shippingMethod);
+        var result = Create(userId, shippingAddressId, billingAddressId, subtotal, tax, shippingCost, shippingMethod);
         if (result.IsFailure)
             return result;
 

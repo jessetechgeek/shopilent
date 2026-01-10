@@ -145,8 +145,8 @@ public class OrderBuilder
 
         // Create the order with appropriate factory method
         var orderResult = _status == OrderStatus.Processing && _paymentStatus == PaymentStatus.Succeeded
-            ? Order.CreatePaidOrder(_user, _shippingAddress, _billingAddress, _subtotal, _tax, _shippingCost, _shippingMethod)
-            : Order.Create(_user, _shippingAddress, _billingAddress, _subtotal, _tax, _shippingCost, _shippingMethod);
+            ? Order.CreatePaidOrder(_user.Id, _shippingAddress.Id, _billingAddress.Id, _subtotal, _tax, _shippingCost, _shippingMethod)
+            : Order.Create(_user.Id, _shippingAddress.Id, _billingAddress.Id, _subtotal, _tax, _shippingCost, _shippingMethod);
 
         if (orderResult.IsFailure)
             throw new InvalidOperationException($"Failed to create order: {orderResult.Error}");

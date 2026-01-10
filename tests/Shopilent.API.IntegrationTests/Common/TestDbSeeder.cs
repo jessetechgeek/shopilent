@@ -740,9 +740,9 @@ public static class TestDbSeeder
 
             // Create order
             var order = Order.Create(
-                user: user,
-                shippingAddress: shippingAddress,
-                billingAddress: billingAddress ?? shippingAddress,
+                userId: user.Id,
+                shippingAddressId: shippingAddress.Id,
+                billingAddressId: billingAddress?.Id ?? shippingAddress.Id,
                 subtotal: Money.Create(subtotal, "USD").Value,
                 tax: tax,
                 shippingCost: shippingCost
@@ -1011,9 +1011,9 @@ public static class TestDbSeeder
             var shippingCost = Money.Create(9.99m, "USD").Value;
 
             var order = Order.Create(
-                user: user,
-                shippingAddress: shippingAddress,
-                billingAddress: shippingAddress,
+                userId: user.Id,
+                shippingAddressId: shippingAddress.Id,
+                billingAddressId: shippingAddress.Id,
                 subtotal: Money.Create(subtotal, "USD").Value,
                 tax: tax,
                 shippingCost: shippingCost

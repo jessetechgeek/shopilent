@@ -1,10 +1,8 @@
-using FluentAssertions;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
 using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.Specifications;
-using Shopilent.Domain.Sales.ValueObjects;
 using Shopilent.Domain.Shipping;
 using Shopilent.Domain.Shipping.ValueObjects;
 
@@ -65,9 +63,9 @@ public class OrderByUserSpecificationTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user,
-            address,
-            address,
+            user.Id,
+            address.Id,
+            address.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -102,9 +100,9 @@ public class OrderByUserSpecificationTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            user1,
-            address,
-            address,
+            user1.Id,
+            address.Id,
+            address.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
@@ -138,9 +136,9 @@ public class OrderByUserSpecificationTests
         shippingCostResult.IsSuccess.Should().BeTrue();
 
         var orderResult = Order.Create(
-            null,
-            address,
-            address,
+            Guid.Empty,
+            address.Id,
+            address.Id,
             subtotalResult.Value,
             taxResult.Value,
             shippingCostResult.Value);
