@@ -758,7 +758,13 @@ public class MarkOrderAsShippedEndpointV1Tests : ApiIntegrationTestBase
             ).Value;
 
             // Add an item to the order
-            order.AddItem(product, 1, productPrice);
+            var productSnapshot = ProductSnapshot.Create(
+                name: product.Name,
+                sku: product.Sku,
+                slug: product.Slug.Value
+            ).Value;
+
+            order.AddItem(product.Id, null, 1, productPrice, productSnapshot);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();

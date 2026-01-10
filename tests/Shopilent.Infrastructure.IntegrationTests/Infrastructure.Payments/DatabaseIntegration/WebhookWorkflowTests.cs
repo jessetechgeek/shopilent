@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
 using Shopilent.Application.Features.Payments.Commands.ProcessWebhook.V1;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Identity.Repositories.Read;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments.Enums;

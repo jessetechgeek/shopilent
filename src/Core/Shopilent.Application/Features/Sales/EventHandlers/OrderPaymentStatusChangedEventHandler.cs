@@ -4,8 +4,8 @@ using Shopilent.Application.Abstractions.Caching;
 using Shopilent.Application.Abstractions.Email;
 using Shopilent.Application.Abstractions.Outbox;
 using Shopilent.Application.Common.Models;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Identity.Repositories.Read;
-using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Sales.Events;
 using Shopilent.Domain.Sales.Repositories.Read;
 

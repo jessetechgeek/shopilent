@@ -1,4 +1,5 @@
 using Shopilent.Domain.Common;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.Specifications;
 using Shopilent.Domain.Payments.Enums;
 

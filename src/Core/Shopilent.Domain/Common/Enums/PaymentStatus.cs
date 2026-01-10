@@ -1,4 +1,4 @@
-namespace Shopilent.Domain.Payments.Enums;
+namespace Shopilent.Domain.Common.Enums;
 
 public enum PaymentStatus
 {

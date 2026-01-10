@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Payments;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Common.ValueObjects;

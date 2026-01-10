@@ -675,7 +675,8 @@ public class CancelOrderEndpointV1Tests : ApiIntegrationTestBase
             ).Value;
 
             // Add an item to the order
-            order.AddItem(product, 1, productPrice);
+            var snapshot = ProductSnapshot.Create(product.Name, product.Sku, product.Slug?.Value).Value;
+            order.AddItem(product.Id, null, 1, productPrice, snapshot);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();

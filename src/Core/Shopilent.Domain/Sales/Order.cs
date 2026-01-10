@@ -1,14 +1,12 @@
 using System.Text.Json;
-using Shopilent.Domain.Catalog;
-using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Common;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Common.ValueObjects;
-using Shopilent.Domain.Payments.Enums;
-using Shopilent.Domain.Payments.Errors;
 using Shopilent.Domain.Sales.Enums;
 using Shopilent.Domain.Sales.Errors;
 using Shopilent.Domain.Sales.Events;
+using Shopilent.Domain.Sales.ValueObjects;
 
 namespace Shopilent.Domain.Sales;
 
@@ -56,13 +54,13 @@ public class Order : AggregateRoot
         string shippingMethod = null)
     {
         if (subtotal == null)
-            return Result.Failure<Order>(PaymentErrors.NegativeAmount);
+            return Result.Failure<Order>(OrderErrors.NegativeAmount);
 
         if (tax == null)
-            return Result.Failure<Order>(PaymentErrors.NegativeAmount);
+            return Result.Failure<Order>(OrderErrors.NegativeAmount);
 
         if (shippingCost == null)
-            return Result.Failure<Order>(PaymentErrors.NegativeAmount);
+            return Result.Failure<Order>(OrderErrors.NegativeAmount);
 
         if (shippingAddressId == Guid.Empty)
             return Result.Failure<Order>(OrderErrors.ShippingAddressRequired);
@@ -122,10 +120,15 @@ public class Order : AggregateRoot
             RefundedAmount = Money.Zero("USD");
     }
 
-    public Result<OrderItem> AddItem(Product product, int quantity, Money unitPrice, ProductVariant variant = null)
+    public Result<OrderItem> AddItem(
+        Guid productId,
+        Guid? variantId,
+        int quantity,
+        Money unitPrice,
+        ProductSnapshot productSnapshot)
     {
-        if (product == null)
-            return Result.Failure<OrderItem>(ProductErrors.NotFound(Guid.Empty));
+        if (productId == Guid.Empty)
+            return Result.Failure<OrderItem>(OrderErrors.ProductIdRequired);
 
         if (quantity <= 0)
             return Result.Failure<OrderItem>(OrderErrors.InvalidQuantity);
@@ -133,10 +136,17 @@ public class Order : AggregateRoot
         if (unitPrice == null)
             return Result.Failure<OrderItem>(OrderErrors.NegativeAmount);
 
+        if (productSnapshot == null)
+            return Result.Failure<OrderItem>(OrderErrors.ProductSnapshotRequired);
+
         if (Status != OrderStatus.Pending)
             return Result.Failure<OrderItem>(OrderErrors.InvalidOrderStatus("add item"));
 
-        var item = OrderItem.Create(this, product, quantity, unitPrice, variant);
+        var itemResult = OrderItem.Create(this, productId, variantId, quantity, unitPrice, productSnapshot);
+        if (itemResult.IsFailure)
+            return Result.Failure<OrderItem>(itemResult.Error);
+
+        var item = itemResult.Value;
         _items.Add(item);
 
         RecalculateOrderTotals();
@@ -304,7 +314,7 @@ public class Order : AggregateRoot
     public Result SetPaymentMethod(Guid paymentMethodId)
     {
         if (paymentMethodId == Guid.Empty)
-            return Result.Failure(PaymentErrors.PaymentMethodNotFound(paymentMethodId));
+            return Result.Failure(OrderErrors.PaymentMethodNotFound(paymentMethodId));
 
         PaymentMethodId = paymentMethodId;
         return Result.Success();

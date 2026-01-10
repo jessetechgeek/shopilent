@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Payments;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Repositories.Write;

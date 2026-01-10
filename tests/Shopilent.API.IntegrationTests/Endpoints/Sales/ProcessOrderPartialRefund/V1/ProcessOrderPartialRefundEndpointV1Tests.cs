@@ -5,6 +5,7 @@ using Shopilent.API.IntegrationTests.Common.TestData;
 using Shopilent.API.Common.Models;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
@@ -1055,7 +1056,13 @@ public class ProcessOrderPartialRefundEndpointV1Tests : ApiIntegrationTestBase
             ).Value;
 
             // Add an item to the order
-            order.AddItem(product, 1, productPrice);
+            var productSnapshot = ProductSnapshot.Create(
+                name: product.Name,
+                sku: product.Sku,
+                slug: product.Slug.Value
+            ).Value;
+
+            order.AddItem(product.Id, null, 1, productPrice, productSnapshot);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();

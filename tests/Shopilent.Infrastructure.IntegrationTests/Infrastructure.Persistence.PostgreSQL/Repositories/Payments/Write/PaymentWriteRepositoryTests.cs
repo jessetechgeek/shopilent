@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity.Repositories.Write;

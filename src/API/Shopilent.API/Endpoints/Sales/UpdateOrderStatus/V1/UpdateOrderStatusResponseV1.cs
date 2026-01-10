@@ -1,3 +1,4 @@
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Sales.Enums;
 

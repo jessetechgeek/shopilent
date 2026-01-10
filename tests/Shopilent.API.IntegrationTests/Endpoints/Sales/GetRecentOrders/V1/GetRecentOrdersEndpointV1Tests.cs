@@ -716,7 +716,13 @@ public class GetRecentOrdersEndpointV1Tests : ApiIntegrationTestBase
                 shippingMethod: "Standard"
             ).Value;
 
-            order.AddItem(product, 1, Money.Create(99.99m, "USD").Value);
+            var productSnapshot = ProductSnapshot.Create(
+                name: product.Name,
+                sku: product.Sku,
+                slug: product.Slug.Value
+            ).Value;
+
+            order.AddItem(product.Id, null, 1, Money.Create(99.99m, "USD").Value, productSnapshot);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();
@@ -783,7 +789,13 @@ public class GetRecentOrdersEndpointV1Tests : ApiIntegrationTestBase
                     shippingMethod: "Express"
                 ).Value;
 
-                order.AddItem(product, 1, Money.Create(49.99m, "USD").Value);
+                var productSnapshot = ProductSnapshot.Create(
+                    name: product.Name,
+                    sku: product.Sku,
+                    slug: product.Slug.Value
+                ).Value;
+
+                order.AddItem(product.Id, null, 1, Money.Create(49.99m, "USD").Value, productSnapshot);
 
                 context.Orders.Add(order);
                 await context.SaveChangesAsync();

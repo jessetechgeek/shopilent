@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Shopilent.API.IntegrationTests.Common;
 using Shopilent.Domain.Catalog;
 using Shopilent.Domain.Catalog.ValueObjects;
+using Shopilent.Domain.Common.Enums;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
@@ -595,9 +596,17 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
                 shippingMethod: "Standard"
             ).Value;
 
-            order.AddItem(product1, 1, Money.Create(29.99m, "USD").Value);
-            order.AddItem(product2, 1, Money.Create(49.99m, "USD").Value);
-            order.AddItem(product3, 1, Money.Create(19.99m, "USD").Value);
+            var unitPrice1 = Money.Create(29.99m, "USD").Value;
+            var snapshot1 = ProductSnapshot.Create(product1.Name, product1.Sku, product1.Slug?.Value).Value;
+            order.AddItem(product1.Id, null, 1, unitPrice1, snapshot1);
+
+            var unitPrice2 = Money.Create(49.99m, "USD").Value;
+            var snapshot2 = ProductSnapshot.Create(product2.Name, product2.Sku, product2.Slug?.Value).Value;
+            order.AddItem(product2.Id, null, 1, unitPrice2, snapshot2);
+
+            var unitPrice3 = Money.Create(19.99m, "USD").Value;
+            var snapshot3 = ProductSnapshot.Create(product3.Name, product3.Sku, product3.Slug?.Value).Value;
+            order.AddItem(product3.Id, null, 1, unitPrice3, snapshot3);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();
@@ -632,7 +641,9 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
                 shippingMethod: "Standard"
             ).Value;
 
-            order.AddItem(product, 1, Money.Create(99.99m, "USD").Value);
+            var unitPrice = Money.Create(99.99m, "USD").Value;
+            var snapshot = ProductSnapshot.Create(product.Name, product.Sku, product.Slug?.Value).Value;
+            order.AddItem(product.Id, null, 1, unitPrice, snapshot);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();
@@ -682,7 +693,9 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
                 order.UpdateMetadata(kvp.Key, kvp.Value);
             }
 
-            order.AddItem(product, 1, Money.Create(99.99m, "USD").Value);
+            var unitPrice = Money.Create(99.99m, "USD").Value;
+            var snapshot = ProductSnapshot.Create(product.Name, product.Sku, product.Slug?.Value).Value;
+            order.AddItem(product.Id, null, 1, unitPrice, snapshot);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();
@@ -776,7 +789,13 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
                 shippingMethod: "Standard"
             ).Value;
 
-            order.AddItem(product, 1, Money.Create(99.99m, "USD").Value, variant);
+            var productSnapshot = ProductSnapshot.Create(
+                name: product.Name,
+                sku: product.Sku,
+                slug: product.Slug.Value
+            ).Value;
+
+            order.AddItem(product.Id, variant.Id, 1, Money.Create(99.99m, "USD").Value, productSnapshot);
 
             context.Orders.Add(order);
             await context.SaveChangesAsync();
