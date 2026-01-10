@@ -59,7 +59,7 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
 
         // Relationships
         builder.HasOne<Domain.Identity.User>()
-            .WithMany(u => u.Carts)
+            .WithMany()
             .HasForeignKey(c => c.UserId)
             .OnDelete(DeleteBehavior.SetNull);
 

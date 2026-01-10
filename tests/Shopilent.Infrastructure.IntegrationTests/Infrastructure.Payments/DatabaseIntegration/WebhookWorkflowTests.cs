@@ -9,6 +9,7 @@ using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Repositories.Read;
 using Shopilent.Domain.Payments.Repositories.Write;
 using Shopilent.Domain.Sales.Repositories.Write;
+using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -23,6 +24,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
     private IOrderWriteRepository _orderWriteRepository = null!;
     private IPaymentWriteRepository _paymentWriteRepository = null!;
     private IPaymentReadRepository _paymentReadRepository = null!;
+    private IAddressWriteRepository _addressWriteRepository = null!;
 
     public WebhookWorkflowTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -37,6 +39,7 @@ public class WebhookWorkflowTests : IntegrationTestBase
         _orderWriteRepository = GetService<IOrderWriteRepository>();
         _paymentWriteRepository = GetService<IPaymentWriteRepository>();
         _paymentReadRepository = GetService<IPaymentReadRepository>();
+        _addressWriteRepository = GetService<IAddressWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -47,7 +50,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -57,38 +61,39 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
 
         // Simulate minimal valid Stripe webhook payload for payment success
         var webhookPayload = $$"""
-        {
-            "id": "evt_test_webhook",
-            "object": "event",
-            "api_version": "2025-06-30",
-            "created": 1625097600,
-            "livemode": false,
-            "pending_webhooks": 1,
-            "request": {
-                "id": null,
-                "idempotency_key": null
-            },
-            "type": "payment_intent.succeeded",
-            "data": {
-                "object": {
-                    "id": "{{payment.ExternalReference}}",
-                    "object": "payment_intent",
-                    "amount": 10000,
-                    "currency": "usd",
-                    "status": "succeeded",
-                    "metadata": {
-                        "orderId": "{{order.Id}}"
-                    }
-                }
-            }
-        }
-        """;
+                               {
+                                   "id": "evt_test_webhook",
+                                   "object": "event",
+                                   "api_version": "2025-06-30",
+                                   "created": 1625097600,
+                                   "livemode": false,
+                                   "pending_webhooks": 1,
+                                   "request": {
+                                       "id": null,
+                                       "idempotency_key": null
+                                   },
+                                   "type": "payment_intent.succeeded",
+                                   "data": {
+                                       "object": {
+                                           "id": "{{payment.ExternalReference}}",
+                                           "object": "payment_intent",
+                                           "amount": 10000,
+                                           "currency": "usd",
+                                           "status": "succeeded",
+                                           "metadata": {
+                                               "orderId": "{{order.Id}}"
+                                           }
+                                       }
+                                   }
+                               }
+                               """;
 
         // Act - Process webhook through complete application flow
         var command = new ProcessWebhookCommandV1
@@ -122,7 +127,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -132,43 +138,44 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
 
         // Simulate minimal Stripe webhook payload for payment failure
         var webhookPayload = $$"""
-        {
-            "id": "evt_test_webhook_failed",
-            "object": "event",
-            "api_version": "2025-06-30",
-            "created": 1625097600,
-            "livemode": false,
-            "pending_webhooks": 1,
-            "request": {
-                "id": null,
-                "idempotency_key": null
-            },
-            "type": "payment_intent.payment_failed",
-            "data": {
-                "object": {
-                    "id": "{{payment.ExternalReference}}",
-                    "object": "payment_intent",
-                    "amount": 7500,
-                    "currency": "eur",
-                    "status": "requires_payment_method",
-                    "last_payment_error": {
-                        "code": "card_declined",
-                        "message": "Your card was declined.",
-                        "decline_code": "generic_decline"
-                    },
-                    "metadata": {
-                        "orderId": "{{order.Id}}"
-                    }
-                }
-            }
-        }
-        """;
+                               {
+                                   "id": "evt_test_webhook_failed",
+                                   "object": "event",
+                                   "api_version": "2025-06-30",
+                                   "created": 1625097600,
+                                   "livemode": false,
+                                   "pending_webhooks": 1,
+                                   "request": {
+                                       "id": null,
+                                       "idempotency_key": null
+                                   },
+                                   "type": "payment_intent.payment_failed",
+                                   "data": {
+                                       "object": {
+                                           "id": "{{payment.ExternalReference}}",
+                                           "object": "payment_intent",
+                                           "amount": 7500,
+                                           "currency": "eur",
+                                           "status": "requires_payment_method",
+                                           "last_payment_error": {
+                                               "code": "card_declined",
+                                               "message": "Your card was declined.",
+                                               "decline_code": "generic_decline"
+                                           },
+                                           "metadata": {
+                                               "orderId": "{{order.Id}}"
+                                           }
+                                       }
+                                   }
+                               }
+                               """;
 
         // Act - Process webhook through complete application flow
         var command = new ProcessWebhookCommandV1
@@ -203,7 +210,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -216,37 +224,38 @@ public class WebhookWorkflowTests : IntegrationTestBase
         payment.MarkAsSucceeded("pi_test_webhook_refund");
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
 
         // Simulate Stripe webhook payload for refund
         var webhookPayload = $$"""
-        {
-            "id": "evt_test_webhook_refund",
-            "object": "event",
-            "type": "charge.refunded",
-            "data": {
-                "object": {
-                    "id": "ch_test_charge",
-                    "object": "charge",
-                    "amount": 20000,
-                    "currency": "usd",
-                    "refunded": true,
-                    "amount_refunded": 20000,
-                    "payment_intent": "{{payment.ExternalReference}}",
-                    "refunds": {
-                        "data": [{
-                            "id": "re_test_refund",
-                            "amount": 20000,
-                            "currency": "usd",
-                            "reason": "requested_by_customer"
-                        }]
-                    }
-                }
-            }
-        }
-        """;
+                               {
+                                   "id": "evt_test_webhook_refund",
+                                   "object": "event",
+                                   "type": "charge.refunded",
+                                   "data": {
+                                       "object": {
+                                           "id": "ch_test_charge",
+                                           "object": "charge",
+                                           "amount": 20000,
+                                           "currency": "usd",
+                                           "refunded": true,
+                                           "amount_refunded": 20000,
+                                           "payment_intent": "{{payment.ExternalReference}}",
+                                           "refunds": {
+                                               "data": [{
+                                                   "id": "re_test_refund",
+                                                   "amount": 20000,
+                                                   "currency": "usd",
+                                                   "reason": "requested_by_customer"
+                                               }]
+                                           }
+                                       }
+                                   }
+                               }
+                               """;
 
         // Act - Process webhook through complete application flow
         var command = new ProcessWebhookCommandV1
@@ -279,29 +288,29 @@ public class WebhookWorkflowTests : IntegrationTestBase
 
         // Simulate webhook for payment that doesn't exist in our system
         var webhookPayload = """
-        {
-            "id": "evt_test_unknown",
-            "object": "event",
-            "api_version": "2025-06-30",
-            "created": 1625097600,
-            "livemode": false,
-            "pending_webhooks": 1,
-            "request": {
-                "id": null,
-                "idempotency_key": null
-            },
-            "type": "payment_intent.succeeded",
-            "data": {
-                "object": {
-                    "id": "pi_unknown_payment_12345",
-                    "object": "payment_intent",
-                    "amount": 5000,
-                    "currency": "usd",
-                    "status": "succeeded"
-                }
-            }
-        }
-        """;
+                             {
+                                 "id": "evt_test_unknown",
+                                 "object": "event",
+                                 "api_version": "2025-06-30",
+                                 "created": 1625097600,
+                                 "livemode": false,
+                                 "pending_webhooks": 1,
+                                 "request": {
+                                     "id": null,
+                                     "idempotency_key": null
+                                 },
+                                 "type": "payment_intent.succeeded",
+                                 "data": {
+                                     "object": {
+                                         "id": "pi_unknown_payment_12345",
+                                         "object": "payment_intent",
+                                         "amount": 5000,
+                                         "currency": "usd",
+                                         "status": "succeeded"
+                                     }
+                                 }
+                             }
+                             """;
 
         // Act - Process webhook through complete application flow
         var command = new ProcessWebhookCommandV1
@@ -332,31 +341,25 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var webhookPayload = """
-        {
-            "id": "evt_test_invalid",
-            "object": "event",
-            "type": "payment_intent.succeeded",
-            "data": {
-                "object": {
-                    "id": "pi_test_invalid",
-                    "status": "succeeded"
-                }
-            }
-        }
-        """;
+                             {
+                                 "id": "evt_test_invalid",
+                                 "object": "event",
+                                 "type": "payment_intent.succeeded",
+                                 "data": {
+                                     "object": {
+                                         "id": "pi_test_invalid",
+                                         "status": "succeeded"
+                                     }
+                                 }
+                             }
+                             """;
 
-        var headers = new Dictionary<string, string>
-        {
-            ["stripe-signature"] = "t=1625097600,v1=invalid_signature"
-        };
+        var headers = new Dictionary<string, string> { ["stripe-signature"] = "t=1625097600,v1=invalid_signature" };
 
         // Act - Test with invalid signature to verify signature validation
         var command = new ProcessWebhookCommandV1
         {
-            Provider = "Stripe",
-            WebhookPayload = webhookPayload,
-            Signature = "invalid_signature",
-            Headers = headers
+            Provider = "Stripe", WebhookPayload = webhookPayload, Signature = "invalid_signature", Headers = headers
         };
 
         var result = await _mediator.Send(command);
@@ -376,15 +379,12 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var malformedPayload = """
-        {
-            "invalid": "json",
-            "missing": "required_fields"
-        """; // Missing closing brace intentionally
+                               {
+                                   "invalid": "json",
+                                   "missing": "required_fields"
+                               """; // Missing closing brace intentionally
 
-        var headers = new Dictionary<string, string>
-        {
-            ["stripe-signature"] = "t=1625097600,v1=valid_signature_here"
-        };
+        var headers = new Dictionary<string, string> { ["stripe-signature"] = "t=1625097600,v1=valid_signature_here" };
 
         // Act
         var command = new ProcessWebhookCommandV1
@@ -411,27 +411,27 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var webhookPayload = """
-        {
-            "id": "evt_test_unsupported",
-            "object": "event",
-            "api_version": "2025-06-30",
-            "created": 1625097600,
-            "livemode": false,
-            "pending_webhooks": 1,
-            "request": {
-                "id": null,
-                "idempotency_key": null
-            },
-            "type": "charge.refunded",
-            "data": {
-                "object": {
-                    "id": "ch_test_charge",
-                    "object": "charge",
-                    "refunded": true
-                }
-            }
-        }
-        """;
+                             {
+                                 "id": "evt_test_unsupported",
+                                 "object": "event",
+                                 "api_version": "2025-06-30",
+                                 "created": 1625097600,
+                                 "livemode": false,
+                                 "pending_webhooks": 1,
+                                 "request": {
+                                     "id": null,
+                                     "idempotency_key": null
+                                 },
+                                 "type": "charge.refunded",
+                                 "data": {
+                                     "object": {
+                                         "id": "ch_test_charge",
+                                         "object": "charge",
+                                         "refunded": true
+                                     }
+                                 }
+                             }
+                             """;
 
         // Act - Process webhook through complete application flow
         var command = new ProcessWebhookCommandV1
@@ -458,8 +458,10 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order1 = OrderBuilder.Random().WithUser(user).Build();
-        var order2 = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuilder1 = OrderBuilder.Random().WithUser(user);
+        var order1 = orderBuilder1.Build();
+        var orderBuilder2 = OrderBuilder.Random().WithUser(user);
+        var order2 = orderBuilder2.Build();
 
         var payment1 = PaymentBuilder.Random()
             .WithOrder(order1)
@@ -478,6 +480,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuilder1.PersistAddressesAsync(_addressWriteRepository);
+        await orderBuilder2.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order1);
         await _orderWriteRepository.AddAsync(order2);
         await _paymentWriteRepository.AddAsync(payment1);
@@ -493,33 +497,33 @@ public class WebhookWorkflowTests : IntegrationTestBase
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
                 var payload = $$"""
-                {
-                    "id": "evt_concurrent_1",
-                    "object": "event",
-                    "api_version": "2025-06-30",
-                    "created": 1625097600,
-                    "livemode": false,
-                    "pending_webhooks": 1,
-                    "request": {
-                        "id": null,
-                        "idempotency_key": null
-                    },
-                    "type": "payment_intent.succeeded",
-                    "data": {
-                        "object": {
-                            "id": "pi_concurrent_1",
-                            "object": "payment_intent",
-                            "status": "succeeded",
-                            "amount": 10000,
-                            "currency": "usd",
-                            "customer": null,
-                            "metadata": {
-                                "orderId": "{{order1.Id}}"
-                            }
-                        }
-                    }
-                }
-                """;
+                                {
+                                    "id": "evt_concurrent_1",
+                                    "object": "event",
+                                    "api_version": "2025-06-30",
+                                    "created": 1625097600,
+                                    "livemode": false,
+                                    "pending_webhooks": 1,
+                                    "request": {
+                                        "id": null,
+                                        "idempotency_key": null
+                                    },
+                                    "type": "payment_intent.succeeded",
+                                    "data": {
+                                        "object": {
+                                            "id": "pi_concurrent_1",
+                                            "object": "payment_intent",
+                                            "status": "succeeded",
+                                            "amount": 10000,
+                                            "currency": "usd",
+                                            "customer": null,
+                                            "metadata": {
+                                                "orderId": "{{order1.Id}}"
+                                            }
+                                        }
+                                    }
+                                }
+                                """;
 
                 var command = new ProcessWebhookCommandV1
                 {
@@ -537,36 +541,36 @@ public class WebhookWorkflowTests : IntegrationTestBase
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
                 var payload = $$"""
-                {
-                    "id": "evt_concurrent_2",
-                    "object": "event",
-                    "api_version": "2025-06-30",
-                    "created": 1625097600,
-                    "livemode": false,
-                    "pending_webhooks": 1,
-                    "request": {
-                        "id": null,
-                        "idempotency_key": null
-                    },
-                    "type": "payment_intent.payment_failed",
-                    "data": {
-                        "object": {
-                            "id": "pi_concurrent_2",
-                            "object": "payment_intent",
-                            "status": "requires_payment_method",
-                            "amount": 15000,
-                            "currency": "usd",
-                            "customer": null,
-                            "last_payment_error": {
-                                "message": "Concurrent test failure"
-                            },
-                            "metadata": {
-                                "orderId": "{{order2.Id}}"
-                            }
-                        }
-                    }
-                }
-                """;
+                                {
+                                    "id": "evt_concurrent_2",
+                                    "object": "event",
+                                    "api_version": "2025-06-30",
+                                    "created": 1625097600,
+                                    "livemode": false,
+                                    "pending_webhooks": 1,
+                                    "request": {
+                                        "id": null,
+                                        "idempotency_key": null
+                                    },
+                                    "type": "payment_intent.payment_failed",
+                                    "data": {
+                                        "object": {
+                                            "id": "pi_concurrent_2",
+                                            "object": "payment_intent",
+                                            "status": "requires_payment_method",
+                                            "amount": 15000,
+                                            "currency": "usd",
+                                            "customer": null,
+                                            "last_payment_error": {
+                                                "message": "Concurrent test failure"
+                                            },
+                                            "metadata": {
+                                                "orderId": "{{order2.Id}}"
+                                            }
+                                        }
+                                    }
+                                }
+                                """;
 
                 var command = new ProcessWebhookCommandV1
                 {
@@ -605,7 +609,8 @@ public class WebhookWorkflowTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -615,37 +620,38 @@ public class WebhookWorkflowTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
 
         var webhookPayload = $$"""
-        {
-            "id": "evt_test_idempotent",
-            "object": "event",
-            "api_version": "2025-06-30",
-            "created": 1625097600,
-            "livemode": false,
-            "pending_webhooks": 1,
-            "request": {
-                "id": null,
-                "idempotency_key": null
-            },
-            "type": "payment_intent.succeeded",
-            "data": {
-                "object": {
-                    "id": "{{payment.ExternalReference}}",
-                    "object": "payment_intent",
-                    "amount": 8000,
-                    "currency": "usd",
-                    "status": "succeeded",
-                    "metadata": {
-                        "orderId": "{{order.Id}}"
-                    }
-                }
-            }
-        }
-        """;
+                               {
+                                   "id": "evt_test_idempotent",
+                                   "object": "event",
+                                   "api_version": "2025-06-30",
+                                   "created": 1625097600,
+                                   "livemode": false,
+                                   "pending_webhooks": 1,
+                                   "request": {
+                                       "id": null,
+                                       "idempotency_key": null
+                                   },
+                                   "type": "payment_intent.succeeded",
+                                   "data": {
+                                       "object": {
+                                           "id": "{{payment.ExternalReference}}",
+                                           "object": "payment_intent",
+                                           "amount": 8000,
+                                           "currency": "usd",
+                                           "status": "succeeded",
+                                           "metadata": {
+                                               "orderId": "{{order.Id}}"
+                                           }
+                                       }
+                                   }
+                               }
+                               """;
 
         // Act - Process the same webhook twice (retry scenario)
         var command = new ProcessWebhookCommandV1

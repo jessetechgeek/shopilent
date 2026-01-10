@@ -6,10 +6,10 @@ using Shopilent.Domain.Common.Exceptions;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity.Repositories.Write;
 using Shopilent.Domain.Payments;
-using Shopilent.Domain.Payments.Enums;
 using Shopilent.Domain.Payments.Repositories.Write;
+using Shopilent.Domain.Sales;
 using Shopilent.Domain.Sales.Repositories.Write;
-using Shopilent.Domain.Sales.ValueObjects;
+using Shopilent.Domain.Shipping.Repositories.Write;
 using Shopilent.Infrastructure.IntegrationTests.Common;
 using Shopilent.Infrastructure.IntegrationTests.TestData.Builders;
 
@@ -23,6 +23,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
     private IOrderWriteRepository _orderWriteRepository = null!;
     private IPaymentWriteRepository _paymentWriteRepository = null!;
     private IPaymentMethodWriteRepository _paymentMethodWriteRepository = null!;
+    private IAddressWriteRepository _addressWriteRepository = null!;
 
     public PaymentWriteRepositoryTests(IntegrationTestFixture integrationTestFixture)
         : base(integrationTestFixture)
@@ -36,6 +37,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         _orderWriteRepository = GetService<IOrderWriteRepository>();
         _paymentWriteRepository = GetService<IPaymentWriteRepository>();
         _paymentMethodWriteRepository = GetService<IPaymentMethodWriteRepository>();
+        _addressWriteRepository = GetService<IAddressWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -46,7 +48,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -55,6 +58,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
 
         // Act
@@ -88,7 +92,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .WithUser(user)
             .WithCreditCard()
             .Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -98,6 +103,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
 
         await _userWriteRepository.AddAsync(user);
         await _paymentMethodWriteRepository.AddAsync(paymentMethod);
+        await orderBuilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
 
         // Act
@@ -119,7 +125,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuiilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuiilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -127,6 +134,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuiilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
@@ -159,7 +167,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuiilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuiilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -167,6 +176,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuiilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
@@ -197,7 +207,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuiilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuiilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -205,6 +216,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuiilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
@@ -225,7 +237,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuiilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuiilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -233,6 +246,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuiilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
@@ -268,7 +282,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuiilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuiilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -279,6 +294,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         payment.MarkAsSucceeded(transactionId);
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuiilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
@@ -314,7 +330,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuiilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuiilder.Build();
         var externalReference = "ext_ref_write_test";
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
@@ -324,6 +341,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuiilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
@@ -358,7 +376,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuiilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuiilder.Build();
         var payment1 = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -373,6 +392,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuiilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment1);
         await _paymentWriteRepository.AddAsync(payment2);
@@ -411,9 +431,12 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order1 = OrderBuilder.Random().WithUser(user).Build();
-        var order2 = OrderBuilder.Random().WithUser(user).Build();
-        var order3 = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuilder1 = OrderBuilder.Random().WithUser(user);
+        var order1 = orderBuilder1.Build();
+        var orderBuilder2 = OrderBuilder.Random().WithUser(user);
+        var order2 = orderBuilder2.Build();
+        var orderBuilder3 = OrderBuilder.Random().WithUser(user);
+        var order3 = orderBuilder3.Build();
 
         var pendingPayment = PaymentBuilder.Random().WithOrder(order1).WithUser(user).Build();
         var succeededPayment = PaymentBuilder.Random().WithOrder(order2).WithUser(user).Build();
@@ -423,6 +446,9 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         failedPayment.MarkAsFailed("Payment failed");
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuilder1.PersistAddressesAsync(_addressWriteRepository);
+        await orderBuilder2.PersistAddressesAsync(_addressWriteRepository);
+        await orderBuilder3.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order1);
         await _orderWriteRepository.AddAsync(order2);
         await _orderWriteRepository.AddAsync(order3);
@@ -471,7 +497,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuiilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuiilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -479,6 +506,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuiilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();
@@ -526,21 +554,32 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
         var payments = new List<Payment>();
+        var orders = new List<Order>();
+        var orderBuilders = new List<OrderBuilder>();
 
         for (int i = 0; i < 3; i++)
         {
-            var order = OrderBuilder.Random().WithUser(user).Build();
+            var orderBuilder = OrderBuilder.Random().WithUser(user);
+            var order = orderBuilder.Build();
             var payment = PaymentBuilder.Random()
                 .WithOrder(order)
                 .WithUser(user)
                 .WithAmount(100m + (i * 10))
                 .Build();
 
+            orderBuilders.Add(orderBuilder);
+            orders.Add(order);
             payments.Add(payment);
-            await _orderWriteRepository.AddAsync(order);
         }
 
         await _userWriteRepository.AddAsync(user);
+
+        // Persist addresses and orders
+        for (int i = 0; i < orderBuilders.Count; i++)
+        {
+            await orderBuilders[i].PersistAddressesAsync(_addressWriteRepository);
+            await _orderWriteRepository.AddAsync(orders[i]);
+        }
 
         // Act - Add multiple payments
         foreach (var payment in payments)
@@ -581,7 +620,8 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
         await ResetDatabaseAsync();
 
         var user = UserBuilder.Random().WithVerifiedEmail().Build();
-        var order = OrderBuilder.Random().WithUser(user).Build();
+        var orderBuiilder = OrderBuilder.Random().WithUser(user);
+        var order = orderBuiilder.Build();
         var payment = PaymentBuilder.Random()
             .WithOrder(order)
             .WithUser(user)
@@ -589,6 +629,7 @@ public class PaymentWriteRepositoryTests : IntegrationTestBase
             .Build();
 
         await _userWriteRepository.AddAsync(user);
+        await orderBuiilder.PersistAddressesAsync(_addressWriteRepository);
         await _orderWriteRepository.AddAsync(order);
         await _paymentWriteRepository.AddAsync(payment);
         await _unitOfWork.CommitAsync();

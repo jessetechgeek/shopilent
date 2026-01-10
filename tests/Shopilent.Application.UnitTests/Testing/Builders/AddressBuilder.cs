@@ -1,3 +1,4 @@
+using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
@@ -31,39 +32,39 @@ public class AddressBuilder
         _id = id;
         return this;
     }
-    
+
     public AddressBuilder WithUser(User user)
     {
         _user = user;
         _userId = user.Id;
         return this;
     }
-    
+
     public AddressBuilder WithUserId(Guid userId)
     {
         _userId = userId;
         return this;
     }
-    
+
     public AddressBuilder WithFullName(string fullName)
     {
         _fullName = fullName;
         return this;
     }
-    
+
     public AddressBuilder WithCompany(string company)
     {
         _company = company;
         return this;
     }
-    
+
     public AddressBuilder WithStreetAddress(string streetAddress1, string streetAddress2 = null)
     {
         _streetAddress1 = streetAddress1;
         _streetAddress2 = streetAddress2;
         return this;
     }
-    
+
     public AddressBuilder WithLocation(string city, string state, string postalCode, string country = "US")
     {
         _city = city;
@@ -72,25 +73,25 @@ public class AddressBuilder
         _country = country;
         return this;
     }
-    
+
     public AddressBuilder WithAddressType(AddressType addressType)
     {
         _addressType = addressType;
         return this;
     }
-    
+
     public AddressBuilder WithPhoneNumber(string phoneNumber)
     {
         _phoneNumber = phoneNumber;
         return this;
     }
-    
+
     public AddressBuilder IsDefault()
     {
         _isDefault = true;
         return this;
     }
-    
+
     public AddressBuilder CreatedAt(DateTime createdAt)
     {
         _createdAt = createdAt;
@@ -99,13 +100,6 @@ public class AddressBuilder
 
     public Address Build()
     {
-        // Create a dummy user if none provided
-        if (_user == null)
-        {
-            var userBuilder = new UserBuilder().WithId(_userId);
-            _user = userBuilder.Build();
-        }
-
         var postalAddressResult = PostalAddress.Create(
             _streetAddress1,
             _city,
@@ -113,7 +107,7 @@ public class AddressBuilder
             _country,
             _postalCode,
             _streetAddress2);
-            
+
         if (postalAddressResult.IsFailure)
             throw new InvalidOperationException($"Invalid postal address: {postalAddressResult.Error.Message}");
 
@@ -126,21 +120,28 @@ public class AddressBuilder
             phone = phoneResult.Value;
         }
 
-        // Need to use User.AddAddress method since Address.Create is internal
-        var addressResult = _user.AddAddress(postalAddressResult.Value, _addressType, phone, _isDefault);
+        // Use Address public factory methods based on AddressType
+        Result<Address> addressResult = _addressType switch
+        {
+            AddressType.Shipping => Address.CreateShipping(_userId, postalAddressResult.Value, phone, _isDefault),
+            AddressType.Billing => Address.CreateBilling(_userId, postalAddressResult.Value, phone, _isDefault),
+            AddressType.Both => Address.CreateBoth(_userId, postalAddressResult.Value, phone, _isDefault),
+            _ => throw new InvalidOperationException($"Unknown address type: {_addressType}")
+        };
+
         if (addressResult.IsFailure)
             throw new InvalidOperationException($"Failed to create address: {addressResult.Error.Message}");
-            
+
         var address = addressResult.Value;
-        
+
         // Use reflection to set private properties
         SetPrivatePropertyValue(address, "Id", _id);
         SetPrivatePropertyValue(address, "CreatedAt", _createdAt);
         SetPrivatePropertyValue(address, "UpdatedAt", _updatedAt);
-        
+
         return address;
     }
-    
+
     private static void SetPrivatePropertyValue<T>(object obj, string propertyName, T value)
     {
         var propertyInfo = obj.GetType().GetProperty(propertyName);
@@ -150,10 +151,10 @@ public class AddressBuilder
         }
         else
         {
-            var fieldInfo = obj.GetType().GetField(propertyName, 
-                System.Reflection.BindingFlags.NonPublic | 
+            var fieldInfo = obj.GetType().GetField(propertyName,
+                System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance);
-                
+
             if (fieldInfo != null)
             {
                 fieldInfo.SetValue(obj, value);

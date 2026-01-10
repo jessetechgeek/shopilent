@@ -1,4 +1,5 @@
 using Bogus;
+using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Common.ValueObjects;
 using Shopilent.Domain.Identity;
 using Shopilent.Domain.Identity.ValueObjects;
@@ -100,11 +101,8 @@ public class AddressBuilder
 
     public Address Build()
     {
-        // Create a default user if none provided
-        if (_user == null)
-        {
-            _user = new UserBuilder().Build();
-        }
+        // Use userId from user if provided, otherwise generate one
+        var userId = _user?.Id ?? Guid.NewGuid();
 
         // Create postal address
         var postalAddressResult = PostalAddress.Create(
@@ -128,8 +126,15 @@ public class AddressBuilder
             phone = phoneResult.Value;
         }
 
-        // Create address through User aggregate since Address.Create is internal
-        var addressResult = _user.AddAddress(postalAddressResult.Value, _addressType, phone, _isDefault);
+        // Use Address public factory methods based on AddressType
+        Result<Address> addressResult = _addressType switch
+        {
+            AddressType.Shipping => Address.CreateShipping(userId, postalAddressResult.Value, phone, _isDefault),
+            AddressType.Billing => Address.CreateBilling(userId, postalAddressResult.Value, phone, _isDefault),
+            AddressType.Both => Address.CreateBoth(userId, postalAddressResult.Value, phone, _isDefault),
+            _ => throw new InvalidOperationException($"Unknown address type: {_addressType}")
+        };
+
         if (addressResult.IsFailure)
             throw new InvalidOperationException($"Failed to create address: {addressResult.Error.Message}");
 
@@ -181,18 +186,18 @@ public class AddressBuilder
     public AddressBuilder WithUniqueData()
     {
         var timestamp = DateTime.Now.Ticks;
-        
+
         _streetAddress1 = $"{timestamp % 9999} Test Street";
         _city = $"TestCity{timestamp % 999}";
         _state = "CA";
         _postalCode = $"{(timestamp % 90000) + 10000:D5}";
         _country = "US";
-        
+
         if (_phoneNumber != null)
         {
             _phoneNumber = $"{(timestamp % 900) + 100:D3}{(timestamp % 900) + 100:D3}{(timestamp % 9000) + 1000:D4}"; // Generate digits only
         }
-        
+
         return this;
     }
 }

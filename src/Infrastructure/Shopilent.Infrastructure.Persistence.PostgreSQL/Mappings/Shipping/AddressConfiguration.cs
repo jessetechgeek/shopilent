@@ -106,7 +106,7 @@ public class AddressConfiguration : IEntityTypeConfiguration<Address>
 
         // Relationships
         builder.HasOne<Domain.Identity.User>()
-            .WithMany(u => u.Addresses)
+            .WithMany()
             .HasForeignKey(a => a.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
