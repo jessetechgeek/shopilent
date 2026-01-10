@@ -757,7 +757,6 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
             var address = await CreateTestAddressForUserAsync(context, user);
             var product = await CreateTestProductAsync(context, "Test Product with Variants", 99.99m);
 
-            // Create a variant
             var variant = ProductVariant.Create(
                 productId: product.Id,
                 sku: $"SKU-VAR-{Guid.NewGuid():N}",
@@ -765,7 +764,7 @@ public class GetOrderDetailsEndpointV1Tests : ApiIntegrationTestBase
                 stockQuantity: 10
             ).Value;
 
-            product.AddVariant(variant);
+            await context.ProductVariants.AddAsync(variant);
 
             var order = Order.Create(
                 user: user,

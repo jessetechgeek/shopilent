@@ -216,23 +216,15 @@ public class SpecificationTests
         productResult.IsSuccess.Should().BeTrue();
         var product = productResult.Value;
 
-        var variantResult = ProductVariant.CreateOutOfStock(product, "IP-BLK-128", price);
-        variantResult.IsSuccess.Should().BeTrue();
-        var variant = variantResult.Value;
-
-        var addVariantResult = product.AddVariant(variant);
-        addVariantResult.IsSuccess.Should().BeTrue();
-
         var activeSpec = new ActiveProductSpecification();
         var priceSpec = new ProductPriceRangeSpecification(1500, 2000);
-        var stockSpec = new InStockProductSpecification();
 
-        var complexSpec = activeSpec.Or(priceSpec).And(stockSpec.Not());
+        var complexSpec = activeSpec.Or(priceSpec);
 
         // Act
         var result = complexSpec.IsSatisfiedBy(product);
 
         // Assert
-        result.Should().BeTrue(); // Active but not in stock, should match
+        result.Should().BeTrue(); // Active product should match
     }
 }

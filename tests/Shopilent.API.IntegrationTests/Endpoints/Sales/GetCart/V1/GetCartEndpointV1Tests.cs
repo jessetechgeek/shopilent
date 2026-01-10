@@ -522,14 +522,12 @@ public class GetCartEndpointV1Tests : ApiIntegrationTestBase
         var productResponse = await PostMultipartApiResponseAsync<CreateProductResponseV1>("v1/products", productRequest);
         AssertApiSuccess(productResponse);
 
-        // Get variant ID from database
         var variantId = await ExecuteDbContextAsync(async context =>
         {
-            var product = await context.Products
-                .Include(p => p.Variants)
-                .FirstOrDefaultAsync(p => p.Id == productResponse!.Data.Id);
+            var variant = await context.ProductVariants
+                .FirstOrDefaultAsync(v => v.ProductId == productResponse!.Data.Id);
 
-            return product?.Variants.FirstOrDefault()?.Id;
+            return variant?.Id;
         });
 
         // Restore customer authentication if needed

@@ -120,10 +120,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasForeignKey("ProductId")
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(p => p.Variants)
-            .WithOne()
-            .HasForeignKey("ProductId")
-            .OnDelete(DeleteBehavior.Cascade);
 
         // Indexes
         builder.HasIndex(p => p.Name);

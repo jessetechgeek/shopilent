@@ -43,30 +43,36 @@ internal sealed class UpdateCategoryParentCommandHandlerV1 : ICommandHandler<Upd
                 return Result.Failure<UpdateCategoryParentResponseV1>(CategoryErrors.NotFound(request.Id));
             }
 
-            // Get parent category if provided
+            // Update parent hierarchy
             if (request.ParentId.HasValue)
             {
+                // Check if trying to set category as its own parent
+                if (request.ParentId.Value == category.Id)
+                {
+                    return Result.Failure<UpdateCategoryParentResponseV1>(CategoryErrors.CircularReference);
+                }
+
                 var parentCategory = await _categoryWriteRepository.GetByIdAsync(request.ParentId.Value, cancellationToken);
                 if (parentCategory == null)
                 {
                     return Result.Failure<UpdateCategoryParentResponseV1>(CategoryErrors.NotFound(request.ParentId.Value));
                 }
 
-                // Set parent
-                var setParentResult = category.SetParent(parentCategory);
-                if (setParentResult.IsFailure)
+                var isCircular = await CheckCircularReferenceAsync(category.Id, request.ParentId.Value, cancellationToken);
+                if (isCircular)
                 {
-                    return Result.Failure<UpdateCategoryParentResponseV1>(setParentResult.Error);
+                    return Result.Failure<UpdateCategoryParentResponseV1>(CategoryErrors.CircularReference);
                 }
+
+                category.SetHierarchy(
+                    request.ParentId.Value,
+                    parentCategory.Level + 1,
+                    $"{parentCategory.Path}/{category.Slug.Value}");
             }
             else
             {
                 // Remove parent (set as root category)
-                var setParentResult = category.SetParent(null);
-                if (setParentResult.IsFailure)
-                {
-                    return Result.Failure<UpdateCategoryParentResponseV1>(setParentResult.Error);
-                }
+                category.SetHierarchy(null, 0, $"/{category.Slug.Value}");
             }
 
             // Set audit info if user context is available
@@ -113,5 +119,22 @@ internal sealed class UpdateCategoryParentCommandHandlerV1 : ICommandHandler<Upd
                     $"Failed to update category parent: {ex.Message}"
                 ));
         }
+    }
+
+    private async Task<bool> CheckCircularReferenceAsync(Guid categoryId, Guid parentId, CancellationToken cancellationToken)
+    {
+        var current = parentId;
+        while (current != Guid.Empty)
+        {
+            if (current == categoryId)
+                return true; // Circular reference detected
+
+            var parent = await _categoryReadRepository.GetByIdAsync(current, cancellationToken);
+            if (parent == null || !parent.ParentId.HasValue)
+                break;
+
+            current = parent.ParentId.Value;
+        }
+        return false;
     }
 }

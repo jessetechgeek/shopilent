@@ -11,41 +11,20 @@ public class ProductAttribute : Entity
         // Required by EF Core
     }
 
-    private ProductAttribute(Product product, Attribute attribute, object value)
+    private ProductAttribute(Guid productId, Guid attributeId, object value)
     {
-        ProductId = product.Id;
-        AttributeId = attribute.Id;
+        ProductId = productId;
+        AttributeId = attributeId;
         Values = new Dictionary<string, object> { { "value", value } };
     }
 
     // Add static factory method
-    internal static ProductAttribute Create(Product product, Attribute attribute, object value)
+    internal static ProductAttribute Create(Guid productId, Guid attributeId, object value)
     {
-        if (product == null)
-            throw new ArgumentNullException(nameof(product));
-
-        if (attribute == null)
-            throw new ArgumentNullException(nameof(attribute));
-
         if (value == null)
             throw new ArgumentException("Value cannot be null", nameof(value));
 
-        return new ProductAttribute(product, attribute, value);
-    }
-
-    // For use by the Product aggregate which should validate inputs
-    internal static Result<ProductAttribute> Create(Result<Product> productResult, Attribute attribute, object value)
-    {
-        if (productResult.IsFailure)
-            return Result.Failure<ProductAttribute>(productResult.Error);
-
-        if (attribute == null)
-            return Result.Failure<ProductAttribute>(AttributeErrors.NotFound(Guid.Empty));
-
-        if (value == null)
-            return Result.Failure<ProductAttribute>(AttributeErrors.InvalidConfigurationFormat);
-
-        return Result.Success(new ProductAttribute(productResult.Value, attribute, value));
+        return new ProductAttribute(productId, attributeId, value);
     }
 
     public Guid ProductId { get; private set; }

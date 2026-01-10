@@ -75,9 +75,19 @@ public class CategoryBuilder
 
     public Category Build()
     {
-        var category = Category.Create(_name, _slug, _parentCategory).Value;
+        var category = Category.Create(_name, _slug).Value;
+
+        // Set hierarchy if parent exists
+        if (_parentCategory != null)
+        {
+            category.SetHierarchy(
+                _parentCategory.Id,
+                _parentCategory.Level + 1,
+                $"{_parentCategory.Path}/{_slug.Value}");
+        }
+
         category.Update(_name, _slug, _description);
-        
+
         if (!_isActive)
         {
             category.Deactivate();

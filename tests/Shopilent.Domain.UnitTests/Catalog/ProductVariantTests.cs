@@ -90,7 +90,7 @@ public class ProductVariantTests
         var stockQuantity = 100;
 
         // Act
-        var result = ProductVariant.CreateInactive(product, sku, price, stockQuantity);
+        var result = ProductVariant.CreateInactive(product.Id, sku, price, stockQuantity);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -111,7 +111,7 @@ public class ProductVariantTests
         var price = Money.FromDollars(150).Value;
 
         // Act
-        var result = ProductVariant.CreateOutOfStock(product, "TEST-123", price);
+        var result = ProductVariant.CreateOutOfStock(product.Id, "TEST-123", price);
 
 
         // Assert
@@ -291,7 +291,7 @@ public class ProductVariantTests
     {
         // Arrange
         var product = CreateTestProduct();
-        var variantResult = ProductVariant.CreateInactive(product, "TEST-123", Money.FromDollars(100).Value);
+        var variantResult = ProductVariant.CreateInactive(product.Id, "TEST-123", Money.FromDollars(100).Value);
         variantResult.IsSuccess.Should().BeTrue();
         var variant = variantResult.Value;
         variant.IsActive.Should().BeFalse();
@@ -335,7 +335,7 @@ public class ProductVariantTests
         var attributeValue = "Blue";
 
         // Act
-        var result = variant.AddAttribute(attribute, attributeValue);
+        var result = variant.AddAttribute(attribute.Id, attributeValue);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -343,28 +343,6 @@ public class ProductVariantTests
         variant.VariantAttributes.First().AttributeId.Should().Be(attribute.Id);
     }
 
-    [Fact]
-    public void AddAttribute_WithNonVariantAttribute_ShouldReturnFailure()
-    {
-        // Arrange
-        var product = CreateTestProduct();
-        var variantResult = ProductVariant.Create(product.Id, "TEST-123", Money.FromDollars(100).Value);
-        variantResult.IsSuccess.Should().BeTrue();
-        var variant = variantResult.Value;
-
-        var attributeResult = Attribute.Create("Weight", "Weight", AttributeType.Number);
-        attributeResult.IsSuccess.Should().BeTrue();
-        var attribute = attributeResult.Value; // Not a variant attribute
-
-        var attributeValue = 500;
-
-        // Act
-        var result = variant.AddAttribute(attribute, attributeValue);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Code.Should().Be("ProductVariant.NonVariantAttribute");
-    }
 
     [Fact]
     public void AddAttribute_WithNullAttribute_ShouldReturnFailure()
@@ -375,11 +353,11 @@ public class ProductVariantTests
         variantResult.IsSuccess.Should().BeTrue();
         var variant = variantResult.Value;
 
-        Attribute attribute = null;
+        var attributeId = Guid.Empty;
         var attributeValue = "Blue";
 
         // Act
-        var result = variant.AddAttribute(attribute, attributeValue);
+        var result = variant.AddAttribute(attributeId, attributeValue);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -439,7 +417,7 @@ public class ProductVariantTests
         var attribute = CreateTestAttribute();
         var attributeValue = "Blue";
 
-        var addResult = variant.AddAttribute(attribute, attributeValue);
+        var addResult = variant.AddAttribute(attribute.Id, attributeValue);
         addResult.IsSuccess.Should().BeTrue();
 
         // Act
@@ -479,7 +457,7 @@ public class ProductVariantTests
         var attribute = CreateTestAttribute();
         var attributeValue = "Blue";
 
-        var addResult = variant.AddAttribute(attribute, attributeValue);
+        var addResult = variant.AddAttribute(attribute.Id, attributeValue);
         addResult.IsSuccess.Should().BeTrue();
 
         // Act
@@ -522,7 +500,7 @@ public class ProductVariantTests
         var initialValue = "Blue";
         var newValue = "Red";
 
-        var addResult = variant.AddAttribute(attribute, initialValue);
+        var addResult = variant.AddAttribute(attribute.Id, initialValue);
         addResult.IsSuccess.Should().BeTrue();
 
         // Act

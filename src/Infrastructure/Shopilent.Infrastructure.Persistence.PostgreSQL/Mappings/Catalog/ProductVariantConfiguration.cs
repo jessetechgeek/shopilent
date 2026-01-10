@@ -102,7 +102,7 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
 
         // Relationships
         builder.HasOne<Product>()
-            .WithMany(p => p.Variants)
+            .WithMany()
             .HasForeignKey(pv => pv.ProductId)
             .OnDelete(DeleteBehavior.Cascade);
 

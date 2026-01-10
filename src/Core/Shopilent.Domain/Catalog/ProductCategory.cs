@@ -1,6 +1,4 @@
-using Shopilent.Domain.Catalog.Errors;
 using Shopilent.Domain.Common;
-using Shopilent.Domain.Common.Results;
 
 namespace Shopilent.Domain.Catalog;
 
@@ -11,40 +9,16 @@ public class ProductCategory : Entity
         // Required by EF Core
     }
 
-    private ProductCategory(Product product, Category category)
+    private ProductCategory(Guid productId, Guid categoryId)
     {
-        ProductId = product.Id;
-        CategoryId = category.Id;
+        ProductId = productId;
+        CategoryId = categoryId;
     }
 
     // Add static factory method
-    internal static ProductCategory Create(Product product, Category category)
+    internal static ProductCategory Create(Guid productId, Guid categoryId)
     {
-        if (product == null)
-            throw new ArgumentNullException(nameof(product));
-
-        if (category == null)
-            throw new ArgumentNullException(nameof(category));
-
-        if (!category.IsActive)
-            throw new ArgumentException("Category is not active", nameof(category));
-
-        return new ProductCategory(product, category);
-    }
-
-    // For use by the aggregates which should validate inputs
-    internal static Result<ProductCategory> Create(Result<Product> productResult, Category category)
-    {
-        if (productResult.IsFailure)
-            return Result.Failure<ProductCategory>(productResult.Error);
-
-        if (category == null)
-            return Result.Failure<ProductCategory>(CategoryErrors.NotFound(Guid.Empty));
-
-        if (!category.IsActive)
-            return Result.Failure<ProductCategory>(CategoryErrors.InvalidCategoryStatus);
-
-        return Result.Success(new ProductCategory(productResult.Value, category));
+        return new ProductCategory(productId, categoryId);
     }
 
     public Guid ProductId { get; private set; }

@@ -50,26 +50,31 @@ internal sealed class
                 return Result.Failure<CreateCategoryResponseV1>(slugResult.Error);
             }
 
-            // Get parent category if provided
-            Category parentCategory = null;
-            if (request.ParentId.HasValue)
-            {
-                parentCategory =
-                    await _categoryWriteRepository.GetByIdAsync(request.ParentId.Value, cancellationToken);
-                if (parentCategory == null)
-                {
-                    return Result.Failure<CreateCategoryResponseV1>(CategoryErrors.NotFound(request.ParentId.Value));
-                }
-            }
-
-            // Create category
-            var categoryResult = Category.Create(request.Name, slugResult.Value, parentCategory);
+            // Create category (without parent - will be set later if needed)
+            var categoryResult = Category.Create(request.Name, slugResult.Value);
             if (categoryResult.IsFailure)
             {
                 return Result.Failure<CreateCategoryResponseV1>(categoryResult.Error);
             }
 
             var category = categoryResult.Value;
+
+            // Set hierarchy if parent category is provided
+            if (request.ParentId.HasValue)
+            {
+                var parentCategory =
+                    await _categoryWriteRepository.GetByIdAsync(request.ParentId.Value, cancellationToken);
+                if (parentCategory == null)
+                {
+                    return Result.Failure<CreateCategoryResponseV1>(CategoryErrors.NotFound(request.ParentId.Value));
+                }
+
+                // Compute hierarchy values in Application layer
+                category.SetHierarchy(
+                    request.ParentId.Value,
+                    parentCategory.Level + 1,
+                    $"{parentCategory.Path}/{category.Slug.Value}");
+            }
 
             // Set description if provided
             if (!string.IsNullOrEmpty(request.Description))

@@ -17,7 +17,6 @@ public class CategoryWriteRepository : AggregateWriteRepositoryBase<Category>, I
     public async Task<Category> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await DbContext.Categories
-            .Include(c => c.Children)
             .Include(c => c.ProductCategories)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
@@ -25,7 +24,6 @@ public class CategoryWriteRepository : AggregateWriteRepositoryBase<Category>, I
     public async Task<Category> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
     {
         return await DbContext.Categories
-            .Include(c => c.Children)
             .Include(c => c.ProductCategories)
             .FirstOrDefaultAsync(c => c.Slug.Value == slug, cancellationToken);
     }

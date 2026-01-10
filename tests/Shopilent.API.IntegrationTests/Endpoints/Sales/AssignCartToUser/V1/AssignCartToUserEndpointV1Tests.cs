@@ -482,10 +482,8 @@ public class AssignCartToUserEndpointV1Tests : ApiIntegrationTestBase
 
             var variant = variantResult.Value;
 
-            // Add variant to product
-            product.AddVariant(variant);
-
             await context.Products.AddAsync(product);
+            await context.ProductVariants.AddAsync(variant);
             await context.SaveChangesAsync();
 
             // Create cart

@@ -34,19 +34,22 @@ public class RootCategorySpecificationTests
         var parentSlugResult = Slug.Create("electronics");
         parentSlugResult.IsSuccess.Should().BeTrue();
         var parentSlug = parentSlugResult.Value;
-        
+
         var parentResult = Category.Create("Electronics", parentSlug);
         parentResult.IsSuccess.Should().BeTrue();
         var parent = parentResult.Value;
-        
+
         var childSlugResult = Slug.Create("phones");
         childSlugResult.IsSuccess.Should().BeTrue();
         var childSlug = childSlugResult.Value;
-        
-        var childResult = Category.Create("Phones", childSlug, parent);
+
+        var childResult = Category.Create("Phones", childSlug);
         childResult.IsSuccess.Should().BeTrue();
         var child = childResult.Value;
-        
+
+        // Set hierarchy to make it a child category
+        child.SetHierarchy(parent.Id, parent.Level + 1, $"{parent.Path}/{childSlug}");
+
         var specification = new RootCategorySpecification();
 
         // Act

@@ -13,29 +13,18 @@ public class Category : AggregateRoot
         // Required by EF Core
     }
 
-    private Category(string name, Slug slug, Category parent = null)
+    private Category(string name, Slug slug)
     {
         Name = name;
         Slug = slug;
-
-        if (parent != null)
-        {
-            ParentId = parent.Id;
-            Level = parent.Level + 1;
-            Path = $"{parent.Path}/{slug}";
-        }
-        else
-        {
-            Level = 0;
-            Path = $"/{slug}";
-        }
-
+        ParentId = null;
+        Level = 0;
+        Path = $"/{slug}";
         IsActive = true;
-        _children = new List<Category>();
         _productCategories = new List<ProductCategory>();
     }
 
-    public static Result<Category> Create(string name, Slug slug, Category parent = null)
+    public static Result<Category> Create(string name, Slug slug)
     {
         if (string.IsNullOrWhiteSpace(name))
             return Result.Failure<Category>(CategoryErrors.NameRequired);
@@ -43,14 +32,14 @@ public class Category : AggregateRoot
         if (slug == null || string.IsNullOrWhiteSpace(slug.Value))
             return Result.Failure<Category>(CategoryErrors.SlugRequired);
 
-        var category = new Category(name, slug, parent);
+        var category = new Category(name, slug);
         category.AddDomainEvent(new CategoryCreatedEvent(category.Id));
         return Result.Success(category);
     }
 
-    public static Result<Category> CreateInactive(string name, Slug slug, Category parent = null)
+    public static Result<Category> CreateInactive(string name, Slug slug)
     {
-        var result = Create(name, slug, parent);
+        var result = Create(name, slug);
         if (result.IsFailure)
             return result;
 
@@ -66,9 +55,6 @@ public class Category : AggregateRoot
     public int Level { get; private set; }
     public string Path { get; private set; }
     public bool IsActive { get; private set; }
-
-    private readonly List<Category> _children = new();
-    public IReadOnlyCollection<Category> Children => _children.AsReadOnly();
 
     private readonly List<ProductCategory> _productCategories = new();
     public IReadOnlyCollection<ProductCategory> ProductCategories => _productCategories.AsReadOnly();
@@ -108,45 +94,36 @@ public class Category : AggregateRoot
         return Result.Success();
     }
 
-    public Result SetParent(Category parent)
+    /// <summary>
+    /// Sets the category hierarchy values after they've been computed in the Application layer.
+    /// This method should be called after loading the parent category to compute Level and Path.
+    /// </summary>
+    /// <param name="parentId">The parent category ID, or null for root categories</param>
+    /// <param name="level">The computed hierarchy level (0 for root, parent.Level + 1 for children)</param>
+    /// <param name="path">The computed path (e.g., "/electronics/computers")</param>
+    public void SetHierarchy(Guid? parentId, int level, string path)
     {
-        if (parent == null)
-        {
-            ParentId = null;
-            Level = 0;
-            Path = $"/{Slug}";
-        }
-        else
-        {
-            // Check for circular reference
-            var currentParent = parent;
-            while (currentParent != null)
-            {
-                if (currentParent.Id == Id)
-                    return Result.Failure(CategoryErrors.CircularReference);
-
-                currentParent = currentParent.ParentId.HasValue ? null : null; // In real application, you would load the parent
-            }
-
-            ParentId = parent.Id;
-            Level = parent.Level + 1;
-            Path = $"{parent.Path}/{Slug}";
-        }
-
-        AddDomainEvent(new CategoryHierarchyChangedEvent(Id));
-        return Result.Success();
+        ParentId = parentId;
+        Level = level;
+        Path = path;
     }
 
-    public Result AddChild(Category child)
+    /// <summary>
+    /// Sets the parent category ID only.
+    /// Call SetHierarchy() separately to update Level and Path after computing in Application layer.
+    /// </summary>
+    /// <param name="parentId">The parent category ID, or null to make this a root category</param>
+    public Result SetParent(Guid? parentId)
     {
-        if (child == null)
-            return Result.Failure(CategoryErrors.NotFound(Guid.Empty));
+        if (ParentId == parentId)
+            return Result.Success(); // No change
 
-        var result = child.SetParent(this);
-        if (result.IsFailure)
-            return result;
+        ParentId = parentId;
 
-        _children.Add(child);
+        // Level and Path will be set separately via SetHierarchy()
+        // after Application layer loads parent and computes values
+
+        AddDomainEvent(new CategoryHierarchyChangedEvent(Id));
         return Result.Success();
     }
     
@@ -154,10 +131,8 @@ public class Category : AggregateRoot
     {
         if (_productCategories.Any())
             return Result.Failure(CategoryErrors.CannotDeleteWithProducts);
-    
-        if (_children.Any())
-            return Result.Failure(CategoryErrors.CannotDeleteWithChildren);
-    
+
+        // Children check moved to Application layer
         AddDomainEvent(new CategoryDeletedEvent(Id));
         return Result.Success();
     }
