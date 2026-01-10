@@ -119,7 +119,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
                     var category = await _categoryWriteRepository.GetByIdAsync(categoryId, cancellationToken);
                     if (category != null)
                     {
-                        product.AddCategory(category);
+                        product.AddCategory(category.Id);
                     }
                     else
                     {
@@ -139,7 +139,7 @@ internal sealed class CreateProductCommandHandlerV1 : ICommandHandler<CreateProd
                     if (attribute != null)
                     {
                         // Add the attribute to the product
-                        var addAttributeResult = product.AddAttribute(attribute, attributeDto.Value);
+                        var addAttributeResult = product.AddAttribute(attribute.Id, attributeDto.Value);
                         if (addAttributeResult.IsFailure)
                         {
                             _logger.LogWarning("Failed to add attribute {AttributeId} to product: {Error}",

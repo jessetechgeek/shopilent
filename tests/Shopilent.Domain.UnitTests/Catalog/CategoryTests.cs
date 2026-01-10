@@ -27,7 +27,6 @@ public class CategoryTests
         category.Level.Should().Be(0);
         category.Path.Should().Be($"/{slug}");
         category.IsActive.Should().BeTrue();
-        category.Children.Should().BeEmpty();
         category.ProductCategories.Should().BeEmpty();
         category.DomainEvents.Should().Contain(e => e is CategoryCreatedEvent);
     }
@@ -62,7 +61,7 @@ public class CategoryTests
     }
 
     [Fact]
-    public void Create_WithParent_ShouldCreateCategoryWithCorrectHierarchy()
+    public void SetHierarchy_ShouldSetCategoryHierarchyValues()
     {
         // Arrange
         var parentName = "Electronics";
@@ -79,12 +78,14 @@ public class CategoryTests
         childSlugResult.IsSuccess.Should().BeTrue();
         var childSlug = childSlugResult.Value;
 
-        // Act
-        var result = Category.Create(childName, childSlug, parent);
+        var childResult = Category.Create(childName, childSlug);
+        childResult.IsSuccess.Should().BeTrue();
+        var child = childResult.Value;
+
+        // Act - Application layer computes and sets hierarchy
+        child.SetHierarchy(parent.Id, parent.Level + 1, $"{parent.Path}/{childSlug}");
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
-        var child = result.Value;
         child.Name.Should().Be(childName);
         child.Slug.Should().Be(childSlug);
         child.ParentId.Should().Be(parent.Id);
@@ -177,7 +178,7 @@ public class CategoryTests
     }
 
     [Fact]
-    public void SetParent_ShouldUpdateCategoryHierarchy()
+    public void SetParent_ShouldUpdateParentId()
     {
         // Arrange
         var categoryResult = Category.Create("Smartphones", Slug.Create("smartphones").Value);
@@ -189,76 +190,36 @@ public class CategoryTests
         var parent = parentResult.Value;
 
         // Act
-        var result = category.SetParent(parent);
+        var result = category.SetParent(parent.Id);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         category.ParentId.Should().Be(parent.Id);
-        category.Level.Should().Be(1);
-        category.Path.Should().Be($"/{parent.Slug}/{category.Slug}");
         category.DomainEvents.Should().Contain(e => e is CategoryHierarchyChangedEvent);
     }
 
     [Fact]
-    public void SetParent_ToNull_ShouldMakeCategoryRoot()
+    public void SetParent_ToNull_ShouldClearParentId()
     {
         // Arrange
         var parentResult = Category.Create("Electronics", Slug.Create("electronics").Value);
         parentResult.IsSuccess.Should().BeTrue();
         var parent = parentResult.Value;
 
-        var categoryResult = Category.Create("Smartphones", Slug.Create("smartphones").Value, parent);
+        var categoryResult = Category.Create("Smartphones", Slug.Create("smartphones").Value);
         categoryResult.IsSuccess.Should().BeTrue();
         var category = categoryResult.Value;
+
+        // Set parent first
+        category.SetHierarchy(parent.Id, 1, $"/{parent.Slug}/{category.Slug}");
         category.ParentId.Should().Be(parent.Id);
 
-        // Act
+        // Act - Remove parent
         var result = category.SetParent(null);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         category.ParentId.Should().BeNull();
-        category.Level.Should().Be(0);
-        category.Path.Should().Be($"/{category.Slug}");
         category.DomainEvents.Should().Contain(e => e is CategoryHierarchyChangedEvent);
-    }
-
-    [Fact]
-    public void AddChild_ShouldAddChildAndUpdateHierarchy()
-    {
-        // Arrange
-        var parentResult = Category.Create("Electronics", Slug.Create("electronics").Value);
-        parentResult.IsSuccess.Should().BeTrue();
-        var parent = parentResult.Value;
-
-        var childResult = Category.Create("Smartphones", Slug.Create("smartphones").Value);
-        childResult.IsSuccess.Should().BeTrue();
-        var child = childResult.Value;
-
-        // Act
-        var result = parent.AddChild(child);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        child.ParentId.Should().Be(parent.Id);
-        child.Level.Should().Be(1);
-        child.Path.Should().Be($"/{parent.Slug}/{child.Slug}");
-        parent.Children.Should().Contain(c => c.Id == child.Id);
-    }
-
-    [Fact]
-    public void AddChild_WithNullChild_ShouldReturnFailure()
-    {
-        // Arrange
-        var parentResult = Category.Create("Electronics", Slug.Create("electronics").Value);
-        parentResult.IsSuccess.Should().BeTrue();
-        var parent = parentResult.Value;
-
-        // Act
-        var result = parent.AddChild(null);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Code.Should().Be("Category.NotFound");
     }
 }

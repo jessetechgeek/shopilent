@@ -16,6 +16,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
     private IProductWriteRepository _productWriteRepository = null!;
     private IProductReadRepository _productReadRepository = null!;
     private ICategoryWriteRepository _categoryWriteRepository = null!;
+    private IProductVariantWriteRepository _productVariantWriteRepository = null!;
 
     public ProductReadRepositoryTests(IntegrationTestFixture integrationTestFixture) : base(integrationTestFixture)
     {
@@ -27,6 +28,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         _productWriteRepository = GetService<IProductWriteRepository>();
         _productReadRepository = GetService<IProductReadRepository>();
         _categoryWriteRepository = GetService<ICategoryWriteRepository>();
+        _productVariantWriteRepository = GetService<IProductVariantWriteRepository>();
         return Task.CompletedTask;
     }
 
@@ -283,7 +285,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var products = ProductBuilder.CreateMany(2);
         foreach (var product in products)
         {
-            product.AddCategory(category);
+            product.AddCategory(category.Id);
             await _productWriteRepository.AddAsync(product);
         }
 
@@ -534,7 +536,7 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random()
             .WithSlug($"product-with-cat-{DateTime.Now.Ticks}")
             .Build();
-        product.AddCategory(category);
+        product.AddCategory(category.Id);
         await _productWriteRepository.AddAsync(product);
         await _unitOfWork.CommitAsync();
 
@@ -587,7 +589,6 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         await _productWriteRepository.AddAsync(product);
         await _unitOfWork.CommitAsync();
 
-        // Create variants
         var variant1 = ProductVariantBuilder.Random()
             .WithSku($"VAR1-{DateTime.Now.Ticks}")
             .BuildForProduct(product);
@@ -595,9 +596,8 @@ public class ProductReadRepositoryTests : IntegrationTestBase
             .WithSku($"VAR2-{DateTime.Now.Ticks}")
             .BuildForProduct(product);
 
-        product.AddVariant(variant1);
-        product.AddVariant(variant2);
-        await _productWriteRepository.UpdateAsync(product);
+        await _productVariantWriteRepository.AddAsync(variant1);
+        await _productVariantWriteRepository.AddAsync(variant2);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -640,18 +640,17 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         await _productWriteRepository.AddAsync(product);
         await _unitOfWork.CommitAsync();
 
-        // Create active and inactive variants
+        // Create active and inactive variants - ProductVariant is now a separate aggregate
         var activeVariant = ProductVariantBuilder.Random()
             .WithSku($"ACTIVE-VAR-{DateTime.Now.Ticks}")
-            .Build();
+            .BuildForProduct(product);
         var inactiveVariant = ProductVariantBuilder.Random()
             .WithSku($"INACTIVE-VAR-{DateTime.Now.Ticks}")
             .AsInactive()
-            .Build();
+            .BuildForProduct(product);
 
-        product.AddVariant(activeVariant);
-        product.AddVariant(inactiveVariant);
-        await _productWriteRepository.UpdateAsync(product);
+        await _productVariantWriteRepository.AddAsync(activeVariant);
+        await _productVariantWriteRepository.AddAsync(inactiveVariant);
         await _unitOfWork.CommitAsync();
 
         // Act
@@ -684,8 +683,8 @@ public class ProductReadRepositoryTests : IntegrationTestBase
         var product = ProductBuilder.Random()
             .WithSlug($"product-mixed-cats-{DateTime.Now.Ticks}")
             .Build();
-        product.AddCategory(activeCategory);
-        product.AddCategory(categoryToDeactivate);
+        product.AddCategory(activeCategory.Id);
+        product.AddCategory(categoryToDeactivate.Id);
         await _productWriteRepository.AddAsync(product);
         await _unitOfWork.CommitAsync();
 

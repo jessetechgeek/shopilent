@@ -64,7 +64,7 @@ public static class TestDbSeeder
             // Associate with category if provided
             if (category != null)
             {
-                product.AddCategory(category);
+                product.AddCategory(category.Id);
             }
 
             context.Products.Add(product);
@@ -113,13 +113,9 @@ public static class TestDbSeeder
             }
 
             var variant = variantResult.Value;
-            var addResult = product.AddVariant(variant);
 
-            if (addResult.IsFailure)
-            {
-                throw new InvalidOperationException($"Failed to add variant to product: {addResult.Error}");
-            }
-
+            // ProductVariant is now a separate aggregate - add directly to context
+            await context.ProductVariants.AddAsync(variant);
             await context.SaveChangesAsync();
             return variant;
         });
@@ -148,9 +144,18 @@ public static class TestDbSeeder
 
             var category = Category.Create(
                 name: categoryName,
-                slug: categorySlug,
-                parent: parent
+                slug: categorySlug
             ).Value;
+
+            // Set hierarchy if parent is provided
+            if (parent != null)
+            {
+                category.SetHierarchy(
+                    parentId: parent.Id,
+                    level: parent.Level + 1,
+                    path: $"{parent.Path}/{categorySlug.Value}"
+                );
+            }
 
             if (!isActive)
             {
@@ -500,7 +505,8 @@ public static class TestDbSeeder
             }
 
             var variant = variantResult.Value;
-            product.AddVariant(variant);
+
+            await context.ProductVariants.AddAsync(variant);
             await context.SaveChangesAsync();
 
             // Create anonymous cart
@@ -1049,8 +1055,7 @@ public static class TestDbSeeder
 
                 var category = Category.Create(
                     name: categoryName,
-                    slug: categorySlug,
-                    parent: null
+                    slug: categorySlug
                 ).Value;
 
                 context.Categories.Add(category);
@@ -1072,7 +1077,7 @@ public static class TestDbSeeder
                         sku: $"SKU-{Guid.NewGuid():N}"
                     ).Value;
 
-                    product.AddCategory(category);
+                    product.AddCategory(category.Id);
 
                     context.Products.Add(product);
                     await context.SaveChangesAsync();
@@ -1094,7 +1099,8 @@ public static class TestDbSeeder
                         if (variantResult.IsSuccess)
                         {
                             var variant = variantResult.Value;
-                            product.AddVariant(variant);
+
+                            await context.ProductVariants.AddAsync(variant);
                             variants.Add(variant);
                         }
                     }

@@ -88,7 +88,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 
         // Relationships
         builder.HasOne<Category>()
-            .WithMany(c => c.Children)
+            .WithMany()
             .HasForeignKey(c => c.ParentId)
             .OnDelete(DeleteBehavior.Cascade);
 

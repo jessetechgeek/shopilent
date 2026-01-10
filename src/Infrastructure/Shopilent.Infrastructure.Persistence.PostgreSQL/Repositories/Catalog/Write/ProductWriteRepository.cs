@@ -21,8 +21,6 @@ public class ProductWriteRepository : AggregateWriteRepositoryBase<Product>, IPr
             return await DbContext.Products
                 .Include(p => p.Categories)
                 .Include(p => p.Attributes)
-                .Include(p => p.Variants)
-                .ThenInclude(v => v.VariantAttributes)
                 .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
         }
         catch (Exception ex)
@@ -38,8 +36,6 @@ public class ProductWriteRepository : AggregateWriteRepositoryBase<Product>, IPr
         return await DbContext.Products
             .Include(p => p.Categories)
             .Include(p => p.Attributes)
-            .Include(p => p.Variants)
-            .ThenInclude(v => v.VariantAttributes)
             .FirstOrDefaultAsync(p => p.Slug.Value == slug, cancellationToken);
     }
 

@@ -144,7 +144,7 @@ internal sealed class
             foreach (var attributeEntry in attributeValues)
             {
                 var attribute = await _attributeWriteRepository.GetByIdAsync(attributeEntry.Key, cancellationToken);
-                var attributeValueResult = variant.AddAttribute(attribute, attributeEntry.Value);
+                var attributeValueResult = variant.AddAttribute(attribute.Id, attributeEntry.Value);
                 if (attributeValueResult.IsFailure)
                 {
                     return Result.Failure<AddProductVariantResponseV1>(attributeValueResult.Error);
@@ -201,14 +201,6 @@ internal sealed class
                 variant.SetCreationAuditInfo(_currentUserContext.UserId);
             }
 
-            // Add variant to product
-            var addResult = product.AddVariant(variant);
-            if (addResult.IsFailure)
-            {
-                return Result.Failure<AddProductVariantResponseV1>(addResult.Error);
-            }
-
-            // Add to repository
             await _productVariantWriteRepository.AddAsync(variant, cancellationToken);
 
             // Save changes

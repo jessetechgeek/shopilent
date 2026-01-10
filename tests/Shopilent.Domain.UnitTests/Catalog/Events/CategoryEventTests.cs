@@ -125,7 +125,7 @@ public class CategoryEventTests
         child.ClearDomainEvents(); // Clear the creation event
 
         // Act
-        var result = child.SetParent(parent);
+        var result = child.SetParent(parent.Id);
         result.IsSuccess.Should().BeTrue();
 
         // Assert

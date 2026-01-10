@@ -3,7 +3,6 @@ using Shopilent.Domain.Catalog.Events;
 using Shopilent.Domain.Catalog.ValueObjects;
 using Shopilent.Domain.Common;
 using Shopilent.Domain.Common.Errors;
-using Shopilent.Domain.Common.Events;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Common.ValueObjects;
 
@@ -27,7 +26,6 @@ public class Product : AggregateRoot
 
         _categories = new List<ProductCategory>();
         _attributes = new List<ProductAttribute>();
-        _variants = new List<ProductVariant>();
     }
 
     public static Result<Product> Create(string name, Slug slug, Money basePrice, string sku = null)
@@ -83,9 +81,6 @@ public class Product : AggregateRoot
     private readonly List<ProductAttribute> _attributes = new();
     public IReadOnlyCollection<ProductAttribute> Attributes => _attributes.AsReadOnly();
 
-    private readonly List<ProductVariant> _variants = new();
-    public IReadOnlyCollection<ProductVariant> Variants => _variants.AsReadOnly();
-
     private readonly List<ProductImage> _images = new();
     public IReadOnlyCollection<ProductImage> Images => _images.AsReadOnly();
 
@@ -130,59 +125,58 @@ public class Product : AggregateRoot
         return Result.Success();
     }
 
-    public Result AddCategory(Category category)
+    public Result AddCategory(Guid categoryId)
     {
-        if (category == null)
+        if (categoryId == Guid.Empty)
             return Result.Failure(CategoryErrors.NotFound(Guid.Empty));
 
-        if (_categories.Exists(pc => pc.CategoryId == category.Id))
+        if (_categories.Exists(pc => pc.CategoryId == categoryId))
             return Result.Success(); // Already added
 
-        var productCategory = ProductCategory.Create(this, category);
+        var productCategory = ProductCategory.Create(Id, categoryId);
         _categories.Add(productCategory);
-        AddDomainEvent(new ProductCategoryAddedEvent(Id, category.Id));
+        AddDomainEvent(new ProductCategoryAddedEvent(Id, categoryId));
         return Result.Success();
     }
 
-    public Result RemoveCategory(Category category)
+    public Result RemoveCategory(Guid categoryId)
     {
-        if (category == null)
+        if (categoryId == Guid.Empty)
             return Result.Failure(CategoryErrors.NotFound(Guid.Empty));
 
-        var productCategory = _categories.Find(pc => pc.CategoryId == category.Id);
+        var productCategory = _categories.Find(pc => pc.CategoryId == categoryId);
         if (productCategory == null)
-            return Result.Failure(CategoryErrors.NotFound(category.Id));
+            return Result.Failure(CategoryErrors.NotFound(categoryId));
 
         _categories.Remove(productCategory);
-        AddDomainEvent(new ProductCategoryRemovedEvent(Id, category.Id));
+        AddDomainEvent(new ProductCategoryRemovedEvent(Id, categoryId));
         return Result.Success();
     }
 
-    public Result AddAttribute(Attribute attribute, object value)
+    public Result AddAttribute(Guid attributeId, object value)
     {
-        if (attribute == null)
+        if (attributeId == Guid.Empty)
             return Result.Failure(AttributeErrors.NotFound(Guid.Empty));
 
-        if (_attributes.Exists(pa => pa.AttributeId == attribute.Id))
+        if (_attributes.Exists(pa => pa.AttributeId == attributeId))
             return Result.Success(); // Already added
 
-        var productAttribute = ProductAttribute.Create(this, attribute, value);
+        var productAttribute = ProductAttribute.Create(Id, attributeId, value);
         _attributes.Add(productAttribute);
         return Result.Success();
     }
 
-    public Result RemoveAttribute(Attribute attribute)
+    public Result RemoveAttribute(Guid attributeId)
     {
-        if (attribute == null)
-            return Result.Failure(Error.Validation(message: "Attribute cannot be null"));
+        if (attributeId == Guid.Empty)
+            return Result.Failure(AttributeErrors.NotFound(Guid.Empty));
 
-        var productAttribute = Attributes.FirstOrDefault(pa => pa.AttributeId == attribute.Id);
+        var productAttribute = Attributes.FirstOrDefault(pa => pa.AttributeId == attributeId);
         if (productAttribute == null)
             return Result.Failure(Error.Validation(message: "Attribute is not associated with this product"));
 
         // Remove the attribute
         _attributes.Remove(productAttribute);
-
         return Result.Success();
     }
 
@@ -204,20 +198,6 @@ public class Product : AggregateRoot
         return Result.Success();
     }
 
-    public Result AddVariant(ProductVariant variant)
-    {
-        if (variant == null)
-            return Result.Failure(ProductVariantErrors.NotFound(Guid.Empty));
-
-        // Check if the SKU is already used
-        if (!string.IsNullOrEmpty(variant.Sku) && _variants.Exists(v => v.Sku == variant.Sku))
-            return Result.Failure(ProductVariantErrors.DuplicateSku(variant.Sku));
-
-        _variants.Add(variant);
-        AddDomainEvent(new ProductVariantAddedEvent(Id, variant.Id));
-        return Result.Success();
-    }
-
     public Result UpdateMetadata(string key, object value)
     {
         if (string.IsNullOrWhiteSpace(key))
@@ -227,111 +207,10 @@ public class Product : AggregateRoot
         return Result.Success();
     }
 
-    // Methods for operating on variants
-    public Result UpdateVariantStock(Guid variantId, int newQuantity)
-    {
-        var variant = _variants.Find(v => v.Id == variantId);
-        if (variant == null)
-            return Result.Failure(ProductVariantErrors.NotFound(variantId));
-
-        return variant.SetStockQuantity(newQuantity, this);
-    }
-
-    public Result AddVariantStock(Guid variantId, int quantity)
-    {
-        var variant = _variants.Find(v => v.Id == variantId);
-        if (variant == null)
-            return Result.Failure(ProductVariantErrors.NotFound(variantId));
-
-        return variant.AddStock(quantity, this);
-    }
-
-    public Result RemoveVariantStock(Guid variantId, int quantity)
-    {
-        var variant = _variants.Find(v => v.Id == variantId);
-        if (variant == null)
-            return Result.Failure(ProductVariantErrors.NotFound(variantId));
-
-        return variant.RemoveStock(quantity, this);
-    }
-
-    public Result ActivateVariant(Guid variantId)
-    {
-        var variant = _variants.Find(v => v.Id == variantId);
-        if (variant == null)
-            return Result.Failure(ProductVariantErrors.NotFound(variantId));
-
-        return variant.Activate(this);
-    }
-
-    public Result DeactivateVariant(Guid variantId)
-    {
-        var variant = _variants.Find(v => v.Id == variantId);
-        if (variant == null)
-            return Result.Failure(ProductVariantErrors.NotFound(variantId));
-
-        return variant.Deactivate(this);
-    }
-
-    public Result AddVariantAttribute(Guid variantId, Attribute attribute, object value)
-    {
-        var variant = _variants.Find(v => v.Id == variantId);
-        if (variant == null)
-            return Result.Failure(ProductVariantErrors.NotFound(variantId));
-
-        return variant.AddAttribute(attribute, value, this);
-    }
-
-    public Result UpdateVariantMetadata(Guid variantId, string key, object value)
-    {
-        var variant = _variants.Find(v => v.Id == variantId);
-        if (variant == null)
-            return Result.Failure(ProductVariantErrors.NotFound(variantId));
-
-        return variant.UpdateMetadata(key, value, this);
-    }
-
-    public Result UpdateVariant(Guid variantId, string sku, Money price)
-    {
-        var variant = _variants.Find(v => v.Id == variantId);
-        if (variant == null)
-            return Result.Failure(ProductVariantErrors.NotFound(variantId));
-
-        return variant.Update(sku, price, this);
-    }
-
-    // Method to get a variant by ID
-    public Result<ProductVariant> GetVariant(Guid variantId)
-    {
-        var variant = _variants.Find(v => v.Id == variantId);
-        if (variant == null)
-            return Result.Failure<ProductVariant>(ProductVariantErrors.NotFound(variantId));
-
-        return Result.Success(variant);
-    }
-
-    public void RaiseVariantEvent(DomainEvent domainEvent)
-    {
-        AddDomainEvent(domainEvent);
-    }
-
     public Result Delete()
     {
-        if (!_variants.Any())
-        {
-            AddDomainEvent(new ProductDeletedEvent(Id));
-            return Result.Success();
-        }
-        else
-        {
-            foreach (var variant in _variants)
-            {
-                AddDomainEvent(new ProductVariantDeletedEvent(Id, variant.Id));
-            }
-
-            AddDomainEvent(new ProductDeletedEvent(Id));
-            return Result.Success();
-        }
+        AddDomainEvent(new ProductDeletedEvent(Id));
+        return Result.Success();
     }
 
     public Result AddImage(ProductImage image)

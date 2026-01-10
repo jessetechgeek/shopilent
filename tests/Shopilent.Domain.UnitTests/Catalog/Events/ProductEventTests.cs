@@ -155,7 +155,7 @@ public class ProductEventTests
         product.ClearDomainEvents(); // Clear the creation event
 
         // Act
-        var result = product.AddCategory(category);
+        var result = product.AddCategory(category.Id);
         result.IsSuccess.Should().BeTrue();
 
         // Assert
@@ -189,13 +189,13 @@ public class ProductEventTests
         categoryResult.IsSuccess.Should().BeTrue();
         var category = categoryResult.Value;
 
-        var addCategoryResult = product.AddCategory(category);
+        var addCategoryResult = product.AddCategory(category.Id);
         addCategoryResult.IsSuccess.Should().BeTrue();
 
         product.ClearDomainEvents(); // Clear previous events
 
         // Act
-        var result = product.RemoveCategory(category);
+        var result = product.RemoveCategory(category.Id);
         result.IsSuccess.Should().BeTrue();
 
         // Assert
@@ -203,42 +203,5 @@ public class ProductEventTests
         var categoryEvent = (ProductCategoryRemovedEvent)domainEvent;
         categoryEvent.ProductId.Should().Be(product.Id);
         categoryEvent.CategoryId.Should().Be(category.Id);
-    }
-
-    [Fact]
-    public void Product_WhenVariantAdded_ShouldRaiseProductVariantAddedEvent()
-    {
-        // Arrange
-        var productSlugResult = Slug.Create("test-product");
-        productSlugResult.IsSuccess.Should().BeTrue();
-        var productSlug = productSlugResult.Value;
-
-        var moneyResult = Money.FromDollars(100);
-        moneyResult.IsSuccess.Should().BeTrue();
-        var money = moneyResult.Value;
-
-        var productResult = Product.Create("Test Product", productSlug, money);
-        productResult.IsSuccess.Should().BeTrue();
-        var product = productResult.Value;
-
-        var variantPriceResult = Money.FromDollars(120);
-        variantPriceResult.IsSuccess.Should().BeTrue();
-        var variantPrice = variantPriceResult.Value;
-
-        var variantResult = ProductVariant.Create(product.Id, "V1", variantPrice, 10);
-        variantResult.IsSuccess.Should().BeTrue();
-        var variant = variantResult.Value;
-
-        product.ClearDomainEvents(); // Clear the creation event
-
-        // Act
-        var result = product.AddVariant(variant);
-        result.IsSuccess.Should().BeTrue();
-
-        // Assert
-        var domainEvent = product.DomainEvents.Should().ContainSingle(e => e is ProductVariantAddedEvent).Subject;
-        var variantEvent = (ProductVariantAddedEvent)domainEvent;
-        variantEvent.ProductId.Should().Be(product.Id);
-        variantEvent.VariantId.Should().Be(variant.Id);
     }
 }

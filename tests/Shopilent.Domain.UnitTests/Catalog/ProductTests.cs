@@ -38,7 +38,6 @@ public class ProductTests
         product.IsActive.Should().BeTrue();
         product.Categories.Should().BeEmpty();
         product.Attributes.Should().BeEmpty();
-        product.Variants.Should().BeEmpty();
         product.DomainEvents.Should().Contain(e => e is ProductCreatedEvent);
     }
 
@@ -245,7 +244,7 @@ public class ProductTests
         var category = categoryResult.Value;
 
         // Act
-        var result = product.AddCategory(category);
+        var result = product.AddCategory(category.Id);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -271,13 +270,13 @@ public class ProductTests
         categoryResult.IsSuccess.Should().BeTrue();
         var category = categoryResult.Value;
 
-        product.AddCategory(category);
+        product.AddCategory(category.Id);
 
         // Pre-check
         product.Categories.Should().HaveCount(1);
 
         // Act
-        var result = product.AddCategory(category);
+        var result = product.AddCategory(category.Id);
 
         // Assert - still only one category
         result.IsSuccess.Should().BeTrue();
@@ -296,7 +295,7 @@ public class ProductTests
         var product = productResult.Value;
 
         // Act
-        var result = product.AddCategory(null);
+        var result = product.AddCategory(Guid.Empty);
 
         // Assert
         result.IsFailure.Should().BeTrue();
@@ -320,11 +319,11 @@ public class ProductTests
         categoryResult.IsSuccess.Should().BeTrue();
         var category = categoryResult.Value;
 
-        product.AddCategory(category);
+        product.AddCategory(category.Id);
         product.Categories.Should().HaveCount(1);
 
         // Act
-        var result = product.RemoveCategory(category);
+        var result = product.RemoveCategory(category.Id);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -350,71 +349,12 @@ public class ProductTests
         var attributeValue = "Blue";
 
         // Act
-        var result = product.AddAttribute(attribute, attributeValue);
+        var result = product.AddAttribute(attribute.Id, attributeValue);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         product.Attributes.Should().HaveCount(1);
         product.Attributes.First().AttributeId.Should().Be(attribute.Id);
-    }
-
-    [Fact]
-    public void AddVariant_ShouldAddVariantToProduct()
-    {
-        // Arrange
-        var productResult = Product.Create(
-            "iPhone 13",
-            Slug.Create("iphone-13").Value,
-            Money.FromDollars(999).Value);
-        productResult.IsSuccess.Should().BeTrue();
-        var product = productResult.Value;
-
-        var variantResult = ProductVariant.Create(
-            product.Id,
-            "IP13-128GB",
-            Money.FromDollars(1099).Value,
-            100);
-        variantResult.IsSuccess.Should().BeTrue();
-        var variant = variantResult.Value;
-
-        // Act
-        var result = product.AddVariant(variant);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        product.Variants.Should().HaveCount(1);
-        product.Variants.First().Id.Should().Be(variant.Id);
-        product.DomainEvents.Should().Contain(e => e is ProductVariantAddedEvent);
-    }
-
-    [Fact]
-    public void AddVariant_WithDuplicateSku_ShouldReturnFailure()
-    {
-        // Arrange
-        var productResult = Product.Create(
-            "iPhone 13",
-            Slug.Create("iphone-13").Value,
-            Money.FromDollars(999).Value);
-        productResult.IsSuccess.Should().BeTrue();
-        var product = productResult.Value;
-
-        var sku = "IP13-128GB";
-        var variant1Result = ProductVariant.Create(product.Id, sku, Money.FromDollars(1099).Value, 100);
-        variant1Result.IsSuccess.Should().BeTrue();
-        var variant1 = variant1Result.Value;
-
-        product.AddVariant(variant1);
-
-        var variant2Result = ProductVariant.Create(product.Id, sku, Money.FromDollars(1199).Value, 50);
-        variant2Result.IsSuccess.Should().BeTrue();
-        var variant2 = variant2Result.Value;
-
-        // Act
-        var result = product.AddVariant(variant2);
-
-        // Assert
-        result.IsFailure.Should().BeTrue();
-        result.Error.Code.Should().Be("ProductVariant.DuplicateSku");
     }
 
     [Fact]

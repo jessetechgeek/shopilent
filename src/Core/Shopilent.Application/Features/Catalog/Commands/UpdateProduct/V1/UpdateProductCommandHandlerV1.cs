@@ -136,7 +136,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                     var categoryToRemove = await _categoryWriteRepository.GetByIdAsync(categoryId, cancellationToken);
                     if (categoryToRemove != null)
                     {
-                        product.RemoveCategory(categoryToRemove);
+                        product.RemoveCategory(categoryToRemove.Id);
                     }
                 }
 
@@ -147,7 +147,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                     var category = await _categoryWriteRepository.GetByIdAsync(categoryId, cancellationToken);
                     if (category != null)
                     {
-                        product.AddCategory(category);
+                        product.AddCategory(category.Id);
                     }
                     else
                     {
@@ -195,7 +195,7 @@ internal sealed class UpdateProductCommandHandlerV1 : ICommandHandler<UpdateProd
                 {
                     if (attributeEntities.TryGetValue(attributeDto.AttributeId, out var attribute))
                     {
-                        var addResult = product.AddAttribute(attribute, attributeDto.Value);
+                        var addResult = product.AddAttribute(attribute.Id, attributeDto.Value);
                         if (addResult.IsFailure)
                         {
                             _logger.LogWarning("Failed to add attribute {AttributeId} to product: {Error}",

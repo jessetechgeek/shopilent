@@ -407,7 +407,7 @@ public class ProductWriteRepositoryTests : IntegrationTestBase
 
         // Create product and add category
         var product = ProductBuilder.Random().Build();
-        product.AddCategory(category);
+        product.AddCategory(category.Id);
 
         await _productWriteRepository.AddAsync(product);
         await _unitOfWork.CommitAsync();
