@@ -1,33 +1,35 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Caching;
-using Shopilent.Application.Abstractions.Outbox;
-using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Application.Abstractions.Search;
 using Shopilent.Application.Common.Models;
 using Shopilent.Domain.Catalog.Events;
+using Shopilent.Domain.Catalog.Repositories.Read;
 
 namespace Shopilent.Application.Features.Catalog.EventHandlers;
 
-internal sealed  class ProductCategoryRemovedEventHandler : INotificationHandler<DomainEventNotification<ProductCategoryRemovedEvent>>
+internal sealed class
+    ProductCategoryRemovedEventHandler : INotificationHandler<DomainEventNotification<ProductCategoryRemovedEvent>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<ProductCategoryRemovedEventHandler> _logger;
+    private readonly IProductReadRepository _productReadRepository;
     private readonly ICacheService _cacheService;
-    private readonly IOutboxService _outboxService;
+    private readonly ISearchService _searchService;
+    private readonly ILogger<ProductCategoryRemovedEventHandler> _logger;
 
     public ProductCategoryRemovedEventHandler(
-        IUnitOfWork unitOfWork,
-        ILogger<ProductCategoryRemovedEventHandler> logger,
+        IProductReadRepository productReadRepository,
         ICacheService cacheService,
-        IOutboxService outboxService)
+        ISearchService searchService,
+        ILogger<ProductCategoryRemovedEventHandler> logger)
     {
-        _unitOfWork = unitOfWork;
-        _logger = logger;
+        _productReadRepository = productReadRepository;
         _cacheService = cacheService;
-        _outboxService = outboxService;
+        _searchService = searchService;
+        _logger = logger;
     }
 
-    public async Task Handle(DomainEventNotification<ProductCategoryRemovedEvent> notification, CancellationToken cancellationToken)
+    public async Task Handle(DomainEventNotification<ProductCategoryRemovedEvent> notification,
+        CancellationToken cancellationToken)
     {
         var domainEvent = notification.DomainEvent;
 
@@ -40,6 +42,27 @@ internal sealed  class ProductCategoryRemovedEventHandler : INotificationHandler
             // Invalidate product cache
             await _cacheService.RemoveAsync($"product-{domainEvent.ProductId}", cancellationToken);
 
+            // Get product to retrieve slug for slug-based cache invalidation
+            var product = await _productReadRepository.GetDetailByIdAsync(domainEvent.ProductId, cancellationToken);
+            if (product != null)
+            {
+                await _cacheService.RemoveAsync($"product-slug-{product.Slug}", cancellationToken);
+                _logger.LogInformation("Invalidated slug-based cache for product slug: {ProductSlug}", product.Slug);
+
+                var searchDocument = ProductSearchDocument.FromProductDto(product);
+                var result = await _searchService.IndexProductAsync(searchDocument, cancellationToken);
+
+                if (result.IsFailure)
+                {
+                    _logger.LogError("Failed to re-index product {ProductId}: {ErrorMessage}",
+                        domainEvent.ProductId, result.Error.Message);
+                }
+                else
+                {
+                    _logger.LogDebug("Successfully re-indexed product {ProductId}", domainEvent.ProductId);
+                }
+            }
+
             // Invalidate category product lists
             await _cacheService.RemoveByPatternAsync($"category-products-{domainEvent.CategoryId}", cancellationToken);
 
@@ -48,7 +71,8 @@ internal sealed  class ProductCategoryRemovedEventHandler : INotificationHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing ProductCategoryRemovedEvent for ProductId: {ProductId}, CategoryId: {CategoryId}",
+            _logger.LogError(ex,
+                "Error processing ProductCategoryRemovedEvent for ProductId: {ProductId}, CategoryId: {CategoryId}",
                 domainEvent.ProductId, domainEvent.CategoryId);
         }
     }
