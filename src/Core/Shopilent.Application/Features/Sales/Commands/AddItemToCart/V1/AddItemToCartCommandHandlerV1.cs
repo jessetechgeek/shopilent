@@ -148,7 +148,26 @@ internal sealed class AddItemToCartCommandHandlerV1 : ICommandHandler<AddItemToC
                     return Result.Failure<AddItemToCartResponseV1>(
                         CartErrors.ProductVariantNotFound(request.VariantId.Value));
                 }
+
+                // Check stock for variant
+                int existingQuantity = cart.Items
+                    .Where(i => i.ProductId == product.Id && i.VariantId == variant.Id)
+                    .Sum(i => i.Quantity);
+
+                int totalQuantity = existingQuantity + request.Quantity;
+
+                if (totalQuantity > variant.StockQuantity)
+                {
+                    _logger.LogWarning(
+                        "Insufficient stock for variant. VariantId: {VariantId}, Requested: {Requested}, Available: {Available}",
+                        variant.Id, totalQuantity, variant.StockQuantity);
+
+                    return Result.Failure<AddItemToCartResponseV1>(
+                        ProductVariantErrors.InsufficientStock(totalQuantity, variant.StockQuantity));
+                }
             }
+
+
 
             // Add item to cart
             var addItemResult = cart.AddItem(product.Id, request.Quantity, variant?.Id);
