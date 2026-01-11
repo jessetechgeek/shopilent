@@ -2,6 +2,8 @@ using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
 using Shopilent.Application.Abstractions.Persistence;
+using Shopilent.Domain.Catalog.Errors;
+using Shopilent.Domain.Catalog.Repositories.Write;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Sales.Errors;
@@ -15,17 +17,20 @@ internal sealed class
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICartWriteRepository _cartWriteRepository;
+    private readonly IProductVariantWriteRepository _productVariantWriteRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<UpdateCartItemQuantityCommandHandlerV1> _logger;
 
     public UpdateCartItemQuantityCommandHandlerV1(
         IUnitOfWork unitOfWork,
         ICartWriteRepository cartWriteRepository,
+        IProductVariantWriteRepository productVariantWriteRepository,
         ICurrentUserContext currentUserContext,
         ILogger<UpdateCartItemQuantityCommandHandlerV1> logger)
     {
         _unitOfWork = unitOfWork;
         _cartWriteRepository = cartWriteRepository;
+        _productVariantWriteRepository = productVariantWriteRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
     }
@@ -48,6 +53,33 @@ internal sealed class
             if (_currentUserContext.UserId.HasValue && cart.UserId != _currentUserContext.UserId.Value)
             {
                 return Result.Failure<UpdateCartItemQuantityResponseV1>(CartErrors.CartNotFound(Guid.Empty));
+            }
+
+            // Get the cart item to check for variant
+            var cartItem = cart.Items.FirstOrDefault(i => i.Id == request.CartItemId);
+            if (cartItem == null)
+            {
+                return Result.Failure<UpdateCartItemQuantityResponseV1>(CartErrors.ItemNotFound(request.CartItemId));
+            }
+
+            // Check stock if item has a variant
+            if (cartItem.VariantId.HasValue)
+            {
+                var variant = await _productVariantWriteRepository.GetByIdAsync(cartItem.VariantId.Value, cancellationToken);
+                if (variant == null)
+                {
+                    return Result.Failure<UpdateCartItemQuantityResponseV1>(CartErrors.ProductVariantNotFound(cartItem.VariantId.Value));
+                }
+
+                if (request.Quantity > variant.StockQuantity)
+                {
+                    _logger.LogWarning(
+                        "Insufficient stock for variant update. VariantId: {VariantId}, Requested: {Requested}, Available: {Available}",
+                        variant.Id, request.Quantity, variant.StockQuantity);
+
+                    return Result.Failure<UpdateCartItemQuantityResponseV1>(
+                        ProductVariantErrors.InsufficientStock(request.Quantity, variant.StockQuantity));
+                }
             }
 
             // Update the cart item quantity

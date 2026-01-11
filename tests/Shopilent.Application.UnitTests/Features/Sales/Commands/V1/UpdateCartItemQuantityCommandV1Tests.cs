@@ -21,16 +21,20 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockUnitOfWork.Object);
         services.AddTransient(sp => Fixture.MockCartWriteRepository.Object);
+        services.AddTransient(sp => Fixture.MockProductVariantWriteRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
         services.AddTransient(sp => Fixture.GetLogger<UpdateCartItemQuantityCommandHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<UpdateCartItemQuantityCommandV1>();
         });
 
         // Register validator
-        services.AddTransient<FluentValidation.IValidator<UpdateCartItemQuantityCommandV1>, UpdateCartItemQuantityCommandValidatorV1>();
+        services
+            .AddTransient<FluentValidation.IValidator<UpdateCartItemQuantityCommandV1>,
+                UpdateCartItemQuantityCommandValidatorV1>();
 
         var provider = services.BuildServiceProvider();
         _mediator = provider.GetRequiredService<IMediator>();
@@ -45,11 +49,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var cartItemId = Guid.NewGuid();
         var newQuantity = 5;
 
-        var command = new UpdateCartItemQuantityCommandV1
-        {
-            CartItemId = cartItemId,
-            Quantity = newQuantity
-        };
+        var command = new UpdateCartItemQuantityCommandV1 { CartItemId = cartItemId, Quantity = newQuantity };
 
         var user = new UserBuilder().WithId(userId).Build();
         var cart = new CartBuilder().WithId(cartId).WithUser(user).Build();
@@ -95,11 +95,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var cartItemId = Guid.NewGuid();
         var newQuantity = 3;
 
-        var command = new UpdateCartItemQuantityCommandV1
-        {
-            CartItemId = cartItemId,
-            Quantity = newQuantity
-        };
+        var command = new UpdateCartItemQuantityCommandV1 { CartItemId = cartItemId, Quantity = newQuantity };
 
         var cart = new CartBuilder().WithId(cartId).Build(); // Anonymous cart
         var product = new ProductBuilder().Build();
@@ -142,11 +138,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var userId = Guid.NewGuid();
         var cartItemId = Guid.NewGuid();
 
-        var command = new UpdateCartItemQuantityCommandV1
-        {
-            CartItemId = cartItemId,
-            Quantity = 2
-        };
+        var command = new UpdateCartItemQuantityCommandV1 { CartItemId = cartItemId, Quantity = 2 };
 
         // Setup authenticated user
         Fixture.SetAuthenticatedUser(userId);
@@ -178,11 +170,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var cartId = Guid.NewGuid();
         var cartItemId = Guid.NewGuid();
 
-        var command = new UpdateCartItemQuantityCommandV1
-        {
-            CartItemId = cartItemId,
-            Quantity = 4
-        };
+        var command = new UpdateCartItemQuantityCommandV1 { CartItemId = cartItemId, Quantity = 4 };
 
         var otherUser = new UserBuilder().WithId(otherUserId).Build();
         var cart = new CartBuilder().WithId(cartId).WithUser(otherUser).Build();
@@ -217,11 +205,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var cartItemId = Guid.NewGuid();
         var zeroQuantity = 0;
 
-        var command = new UpdateCartItemQuantityCommandV1
-        {
-            CartItemId = cartItemId,
-            Quantity = zeroQuantity
-        };
+        var command = new UpdateCartItemQuantityCommandV1 { CartItemId = cartItemId, Quantity = zeroQuantity };
 
         var user = new UserBuilder().WithId(userId).Build();
         var cart = new CartBuilder().WithId(cartId).WithUser(user).Build();
@@ -267,11 +251,7 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
         var cartItemId = Guid.NewGuid();
         var newQuantity = 7;
 
-        var command = new UpdateCartItemQuantityCommandV1
-        {
-            CartItemId = cartItemId,
-            Quantity = newQuantity
-        };
+        var command = new UpdateCartItemQuantityCommandV1 { CartItemId = cartItemId, Quantity = newQuantity };
 
         var cart = new CartBuilder().WithId(cartId).Build(); // Anonymous cart (no user)
         var product = new ProductBuilder().Build();
@@ -308,7 +288,8 @@ public class UpdateCartItemQuantityCommandV1Tests : TestBase
     private static void SetPrivatePropertyValue<T>(object obj, string propertyName, T value)
     {
         var propertyInfo = obj.GetType().GetProperty(propertyName,
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance);
         propertyInfo?.SetValue(obj, value);
     }
 }
