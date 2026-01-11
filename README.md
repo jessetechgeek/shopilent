@@ -302,22 +302,22 @@ The solution contains **18 projects** organized by architectural layer:
 ### 📦 Core Layer (Business Logic)
 ```
 src/Core/
-├── Shopilent.Domain              → Entities, Value Objects, Domain Events, Specifications
-└── Shopilent.Application          → CQRS Commands/Queries, MediatR Handlers, Validators
+├── Shopilent.Domain                → Entities, Value Objects, Domain Events, Specifications
+└── Shopilent.Application           → CQRS Commands/Queries, MediatR Handlers, Validators
 ```
 
 ### 🔧 Infrastructure Layer (Technical Concerns)
 ```
 src/Infrastructure/
-├── Shopilent.Infrastructure                    → Domain Events, Email, Image Processing
-├── Shopilent.Infrastructure.Persistence.PostgreSQL  → EF Core, Dapper, Repositories
-├── Shopilent.Infrastructure.Cache.Redis        → Distributed Caching, Pattern Invalidation
-├── Shopilent.Infrastructure.Identity           → JWT Authentication & Authorization
-├── Shopilent.Infrastructure.S3ObjectStorage    → Multi-provider Storage (S3, MinIO)
-├── Shopilent.Infrastructure.Payments           → Payment Providers (Stripe)
-├── Shopilent.Infrastructure.Logging            → Serilog, Seq Integration
-├── Shopilent.Infrastructure.Search.Meilisearch → Full-text Search Engine
-└── Shopilent.Infrastructure.Realtime.SignalR   → Real-time Communication
+├── Shopilent.Infrastructure                            → Domain Events, Email, Image Processing
+├── Shopilent.Infrastructure.Persistence.PostgreSQL     → EF Core, Dapper, Repositories
+├── Shopilent.Infrastructure.Cache.Redis                → Distributed Caching, Pattern Invalidation
+├── Shopilent.Infrastructure.Identity                   → JWT Authentication & Authorization
+├── Shopilent.Infrastructure.S3ObjectStorage            → Multi-provider Storage (S3, MinIO)
+├── Shopilent.Infrastructure.Payments                   → Payment Providers (Stripe)
+├── Shopilent.Infrastructure.Logging                    → Serilog, Seq Integration
+├── Shopilent.Infrastructure.Search.Meilisearch         → Full-text Search Engine
+└── Shopilent.Infrastructure.Realtime.SignalR           → Real-time Communication
 ```
 
 ### 🌐 Presentation Layer (User Interfaces)
@@ -333,12 +333,12 @@ src/UI/
 ### 🧪 Test Projects (Quality Assurance)
 ```
 tests/
-├── Shopilent.Domain.UnitTests              → Pure domain logic tests
-├── Shopilent.Application.UnitTests         → CQRS handler tests with mocks
-├── Shopilent.Infrastructure.IntegrationTests  → Database & external service tests
-├── Shopilent.API.IntegrationTests          → API endpoint integration tests
-├── Shopilent.FunctionalTests               → End-to-end workflow tests
-└── Shopilent.ArchitectureTests             → Architecture rule enforcement
+├── Shopilent.Domain.UnitTests                  → Pure domain logic tests
+├── Shopilent.Application.UnitTests             → CQRS handler tests with mocks
+├── Shopilent.Infrastructure.IntegrationTests   → Database & external service tests
+├── Shopilent.API.IntegrationTests              → API endpoint integration tests
+├── Shopilent.FunctionalTests                   → End-to-end workflow tests
+└── Shopilent.ArchitectureTests                 → Architecture rule enforcement
 ```
 
 ## 📚 Technical Decisions
