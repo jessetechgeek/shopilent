@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Identity;
 using Shopilent.Application.Abstractions.Messaging;
+using Shopilent.Application.Abstractions.S3Storage;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Sales.DTOs;
@@ -13,15 +14,18 @@ internal sealed class GetCartQueryHandlerV1 : IQueryHandler<GetCartQueryV1, Cart
     private readonly ICartReadRepository _cartReadRepository;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly ILogger<GetCartQueryHandlerV1> _logger;
+    private readonly IS3StorageService _s3StorageService;
 
     public GetCartQueryHandlerV1(
         ICartReadRepository cartReadRepository,
         ICurrentUserContext currentUserContext,
-        ILogger<GetCartQueryHandlerV1> logger)
+        ILogger<GetCartQueryHandlerV1> logger,
+        IS3StorageService s3StorageService)
     {
         _cartReadRepository = cartReadRepository;
         _currentUserContext = currentUserContext;
         _logger = logger;
+        _s3StorageService = s3StorageService;
     }
 
     public async Task<Result<CartDto?>> Handle(GetCartQueryV1 request, CancellationToken cancellationToken)
@@ -54,6 +58,9 @@ internal sealed class GetCartQueryHandlerV1 : IQueryHandler<GetCartQueryV1, Cart
 
             if (cart != null)
             {
+                // Transform image keys to presigned URLs
+                await TransformCartItemImagesAsync(cart, cancellationToken);
+
                 _logger.LogInformation("Retrieved cart {CartId} for user {UserId} with {ItemCount} items",
                     cart.Id, cart.UserId ?? Guid.Empty, cart.TotalItems);
             }
@@ -74,6 +81,29 @@ internal sealed class GetCartQueryHandlerV1 : IQueryHandler<GetCartQueryV1, Cart
                 Error.Failure(
                     code: "Cart.GetFailed",
                     message: $"Failed to retrieve cart: {ex.Message}"));
+        }
+    }
+
+    private async Task TransformCartItemImagesAsync(CartDto cart, CancellationToken cancellationToken)
+    {
+        foreach (var item in cart.Items)
+        {
+            if (!string.IsNullOrEmpty(item.ImageUrl))
+            {
+                var imageUrlResult = await _s3StorageService.GetPublicUrlAsync(
+                    item.ImageUrl,
+                    cancellationToken);
+
+                if (imageUrlResult.IsSuccess)
+                {
+                    item.ImageUrl = imageUrlResult.Value;
+                }
+                else
+                {
+                    // If we can't get the URL, set to null or empty
+                    item.ImageUrl = null;
+                }
+            }
         }
     }
 }
