@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Shopilent.Domain.Sales;
@@ -49,6 +50,20 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                         (SELECT thumbnail_key FROM product_variant_images WHERE variant_id = ci.variant_id AND is_default = true LIMIT 1),
                         (SELECT thumbnail_key FROM product_images WHERE product_id = ci.product_id AND is_default = true LIMIT 1)
                     ) AS ImageUrl,
+                    COALESCE(
+                        (SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'variantId', va.variant_id,
+                                'attributeId', va.attribute_id,
+                                'attributeName', a.name,
+                                'attributeDisplayName', a.display_name,
+                                'value', va.value
+                            )
+                        )
+                        FROM variant_attributes va
+                        JOIN attributes a ON va.attribute_id = a.id
+                        WHERE va.variant_id = ci.variant_id), '[]'::jsonb
+                    )::text AS VariantAttributesJson,
                     ci.created_at AS CreatedAt,
                     ci.updated_at AS UpdatedAt
                 FROM cart_items ci
@@ -57,8 +72,8 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                 WHERE ci.cart_id = @CartId
                 ORDER BY ci.created_at DESC";
 
-            cart.Items = (await Connection.QueryAsync<CartItemDto>(
-                itemsSql, new { CartId = id })).ToList();
+            var rawItems = await Connection.QueryAsync<CartItemRaw>(itemsSql, new { CartId = id });
+            cart.Items = DeserializeCartItems(rawItems);
 
             // Calculate total amount and total items
             cart.TotalAmount = cart.Items.Sum(i => i.TotalPrice);
@@ -102,6 +117,20 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                         (SELECT thumbnail_key FROM product_variant_images WHERE variant_id = ci.variant_id AND is_default = true LIMIT 1),
                         (SELECT thumbnail_key FROM product_images WHERE product_id = ci.product_id AND is_default = true LIMIT 1)
                     ) AS ImageUrl,
+                    COALESCE(
+                        (SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'variantId', va.variant_id,
+                                'attributeId', va.attribute_id,
+                                'attributeName', a.name,
+                                'attributeDisplayName', a.display_name,
+                                'value', va.value
+                            )
+                        )
+                        FROM variant_attributes va
+                        JOIN attributes a ON va.attribute_id = a.id
+                        WHERE va.variant_id = ci.variant_id), '[]'::jsonb
+                    )::text AS VariantAttributesJson,
                     ci.created_at AS CreatedAt,
                     ci.updated_at AS UpdatedAt
                 FROM cart_items ci
@@ -110,8 +139,8 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                 WHERE ci.cart_id = @CartId
                 ORDER BY ci.created_at DESC";
 
-            cart.Items = (await Connection.QueryAsync<CartItemDto>(
-                itemsSql, new { CartId = cart.Id })).ToList();
+            var rawItems = await Connection.QueryAsync<CartItemRaw>(itemsSql, new { CartId = cart.Id });
+            cart.Items = DeserializeCartItems(rawItems);
 
             // Calculate total amount and total items
             cart.TotalAmount = cart.Items.Sum(i => i.TotalPrice);
@@ -157,6 +186,20 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                         (SELECT thumbnail_key FROM product_variant_images WHERE variant_id = ci.variant_id AND is_default = true LIMIT 1),
                         (SELECT thumbnail_key FROM product_images WHERE product_id = ci.product_id AND is_default = true LIMIT 1)
                     ) AS ImageUrl,
+                    COALESCE(
+                        (SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'variantId', va.variant_id,
+                                'attributeId', va.attribute_id,
+                                'attributeName', a.name,
+                                'attributeDisplayName', a.display_name,
+                                'value', va.value
+                            )
+                        )
+                        FROM variant_attributes va
+                        JOIN attributes a ON va.attribute_id = a.id
+                        WHERE va.variant_id = ci.variant_id), '[]'::jsonb
+                    )::text AS VariantAttributesJson,
                     ci.created_at AS CreatedAt,
                     ci.updated_at AS UpdatedAt
                 FROM cart_items ci
@@ -165,8 +208,8 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                 WHERE ci.cart_id = @CartId
                 ORDER BY ci.created_at DESC";
 
-            cart.Items = (await Connection.QueryAsync<CartItemDto>(
-                itemsSql, new { CartId = cart.Id })).ToList();
+            var rawItems = await Connection.QueryAsync<CartItemRaw>(itemsSql, new { CartId = cart.Id });
+            cart.Items = DeserializeCartItems(rawItems);
 
             // Calculate total amount and total items
             cart.TotalAmount = cart.Items.Sum(i => i.TotalPrice);
@@ -218,6 +261,20 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                         (SELECT thumbnail_key FROM product_variant_images WHERE variant_id = ci.variant_id AND is_default = true LIMIT 1),
                         (SELECT thumbnail_key FROM product_images WHERE product_id = ci.product_id AND is_default = true LIMIT 1)
                     ) AS ImageUrl,
+                    COALESCE(
+                        (SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'variantId', va.variant_id,
+                                'attributeId', va.attribute_id,
+                                'attributeName', a.name,
+                                'attributeDisplayName', a.display_name,
+                                'value', va.value
+                            )
+                        )
+                        FROM variant_attributes va
+                        JOIN attributes a ON va.attribute_id = a.id
+                        WHERE va.variant_id = ci.variant_id), '[]'::jsonb
+                    )::text AS VariantAttributesJson,
                     ci.created_at AS CreatedAt,
                     ci.updated_at AS UpdatedAt
                 FROM cart_items ci
@@ -226,8 +283,8 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                 WHERE ci.cart_id = @CartId
                 ORDER BY ci.created_at DESC";
 
-            cart.Items = (await Connection.QueryAsync<CartItemDto>(
-                itemsSql, new { CartId = cart.Id })).ToList();
+            var rawItems = await Connection.QueryAsync<CartItemRaw>(itemsSql, new { CartId = cart.Id });
+            cart.Items = DeserializeCartItems(rawItems);
 
             // Calculate total amount and total items
             cart.TotalAmount = cart.Items.Sum(i => i.TotalPrice);
@@ -235,5 +292,117 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
         }
 
         return cartList;
+    }
+
+    private static List<CartItemDto> DeserializeCartItems(IEnumerable<CartItemRaw> rawItems)
+    {
+        var items = new List<CartItemDto>();
+
+        foreach (var raw in rawItems)
+        {
+            var item = new CartItemDto
+            {
+                Id = raw.Id,
+                CartId = raw.CartId,
+                ProductId = raw.ProductId,
+                ProductName = raw.ProductName,
+                ProductSlug = raw.ProductSlug,
+                VariantId = raw.VariantId,
+                VariantSku = raw.VariantSku,
+                UnitPrice = raw.UnitPrice,
+                Currency = raw.Currency,
+                Quantity = raw.Quantity,
+                TotalPrice = raw.TotalPrice,
+                ImageUrl = raw.ImageUrl,
+                CreatedAt = raw.CreatedAt,
+                UpdatedAt = raw.UpdatedAt,
+                VariantAttributes = new List<CartItemVariantAttributeDto>()
+            };
+
+            if (!string.IsNullOrEmpty(raw.VariantAttributesJson))
+            {
+                try
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+
+                    // Deserialize to temporary raw attribute structure
+                    var rawAttributes = JsonSerializer.Deserialize<List<RawVariantAttribute>>(
+                        raw.VariantAttributesJson, options);
+
+                    if (rawAttributes != null)
+                    {
+                        // Map to simplified DTO
+                        item.VariantAttributes = rawAttributes.Select(attr => new CartItemVariantAttributeDto
+                        {
+                            AttributeDisplayName = attr.AttributeDisplayName,
+                            Value = ExtractValueString(attr.Value)
+                        }).ToList();
+                    }
+                }
+                catch
+                {
+                    item.VariantAttributes = new List<CartItemVariantAttributeDto>();
+                }
+            }
+
+            items.Add(item);
+        }
+
+        return items;
+    }
+
+    private static string ExtractValueString(JsonElement valueElement)
+    {
+        try
+        {
+            // If it's a JSON object with a "value" property, extract it
+            if (valueElement.ValueKind == JsonValueKind.Object)
+            {
+                if (valueElement.TryGetProperty("value", out var nestedValue))
+                {
+                    return nestedValue.GetString() ?? string.Empty;
+                }
+            }
+            // If it's a direct string value
+            else if (valueElement.ValueKind == JsonValueKind.String)
+            {
+                return valueElement.GetString() ?? string.Empty;
+            }
+
+            // Fallback: convert to string
+            return valueElement.ToString();
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private class RawVariantAttribute
+    {
+        public string AttributeDisplayName { get; set; }
+        public JsonElement Value { get; set; }
+    }
+
+    private class CartItemRaw
+    {
+        public Guid Id { get; set; }
+        public Guid CartId { get; set; }
+        public Guid ProductId { get; set; }
+        public string ProductName { get; set; }
+        public string ProductSlug { get; set; }
+        public Guid? VariantId { get; set; }
+        public string VariantSku { get; set; }
+        public decimal UnitPrice { get; set; }
+        public string Currency { get; set; }
+        public int Quantity { get; set; }
+        public decimal TotalPrice { get; set; }
+        public string ImageUrl { get; set; }
+        public string VariantAttributesJson { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }
