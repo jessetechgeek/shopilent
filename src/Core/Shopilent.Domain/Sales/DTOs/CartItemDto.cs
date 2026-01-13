@@ -14,6 +14,7 @@ public class CartItemDto
     public int Quantity { get; set; }
     public decimal TotalPrice { get; set; }
     public string ImageUrl { get; set; }
+    public List<CartItemVariantAttributeDto> VariantAttributes { get; set; } = new();
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
