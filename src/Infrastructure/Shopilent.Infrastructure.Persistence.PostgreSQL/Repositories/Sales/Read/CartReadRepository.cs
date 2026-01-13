@@ -45,7 +45,10 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                     p.currency AS Currency,
                     ci.quantity AS Quantity,
                     (COALESCE(pv.price, p.base_price) * ci.quantity) AS TotalPrice,
-                    NULL AS ImageUrl,
+                    COALESCE(
+                        (SELECT thumbnail_key FROM product_variant_images WHERE variant_id = ci.variant_id AND is_default = true LIMIT 1),
+                        (SELECT thumbnail_key FROM product_images WHERE product_id = ci.product_id AND is_default = true LIMIT 1)
+                    ) AS ImageUrl,
                     ci.created_at AS CreatedAt,
                     ci.updated_at AS UpdatedAt
                 FROM cart_items ci
@@ -95,7 +98,10 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                     p.currency AS Currency,
                     ci.quantity AS Quantity,
                     (COALESCE(pv.price, p.base_price) * ci.quantity) AS TotalPrice,
-                    NULL AS ImageUrl,
+                    COALESCE(
+                        (SELECT thumbnail_key FROM product_variant_images WHERE variant_id = ci.variant_id AND is_default = true LIMIT 1),
+                        (SELECT thumbnail_key FROM product_images WHERE product_id = ci.product_id AND is_default = true LIMIT 1)
+                    ) AS ImageUrl,
                     ci.created_at AS CreatedAt,
                     ci.updated_at AS UpdatedAt
                 FROM cart_items ci
@@ -147,7 +153,10 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                     p.currency AS Currency,
                     ci.quantity AS Quantity,
                     (COALESCE(pv.price, p.base_price) * ci.quantity) AS TotalPrice,
-                    NULL AS ImageUrl,
+                    COALESCE(
+                        (SELECT thumbnail_key FROM product_variant_images WHERE variant_id = ci.variant_id AND is_default = true LIMIT 1),
+                        (SELECT thumbnail_key FROM product_images WHERE product_id = ci.product_id AND is_default = true LIMIT 1)
+                    ) AS ImageUrl,
                     ci.created_at AS CreatedAt,
                     ci.updated_at AS UpdatedAt
                 FROM cart_items ci
@@ -205,7 +214,10 @@ public class CartReadRepository : AggregateReadRepositoryBase<Cart, CartDto>, IC
                     p.currency AS Currency,
                     ci.quantity AS Quantity,
                     (COALESCE(pv.price, p.base_price) * ci.quantity) AS TotalPrice,
-                    NULL AS ImageUrl,
+                    COALESCE(
+                        (SELECT thumbnail_key FROM product_variant_images WHERE variant_id = ci.variant_id AND is_default = true LIMIT 1),
+                        (SELECT thumbnail_key FROM product_images WHERE product_id = ci.product_id AND is_default = true LIMIT 1)
+                    ) AS ImageUrl,
                     ci.created_at AS CreatedAt,
                     ci.updated_at AS UpdatedAt
                 FROM cart_items ci

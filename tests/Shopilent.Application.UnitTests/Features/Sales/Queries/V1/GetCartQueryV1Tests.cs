@@ -19,6 +19,7 @@ public class GetCartQueryV1Tests : TestBase
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockCartReadRepository.Object);
         services.AddTransient(sp => Fixture.MockCurrentUserContext.Object);
+        services.AddTransient(sp => Fixture.MockS3StorageService.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetCartQueryHandlerV1>());
 
         // Set up MediatR
@@ -26,9 +27,6 @@ public class GetCartQueryV1Tests : TestBase
         {
             cfg.RegisterServicesFromAssemblyContaining<GetCartQueryV1>();
         });
-
-        // Register validator if it exists
-        // services.AddTransient<FluentValidation.IValidator<GetCartQueryV1>, GetCartQueryValidatorV1>();
 
         var provider = services.BuildServiceProvider();
         _mediator = provider.GetRequiredService<IMediator>();
