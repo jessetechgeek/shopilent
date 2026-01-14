@@ -228,37 +228,35 @@ public class CreateAddressEndpointV1Tests : ApiIntegrationTestBase
     }
 
     [Fact]
-    public async Task CreateAddress_WithDefaultBilling_ShouldNotAffectDefaultShipping()
+    public async Task CreateAddress_WithNewDefault_ShouldUnsetPreviousDefault()
     {
         // Arrange
         var accessToken = await AuthenticateAsCustomerAsync();
         SetAuthenticationHeader(accessToken);
 
-        // Create default shipping address
-        var shippingRequest = AddressTestDataV1.DefaultManagement.CreateDefaultShippingAddress();
-        var shippingResponse = await PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", shippingRequest);
-        AssertApiSuccess(shippingResponse);
-        var shippingAddressId = shippingResponse!.Data.Id;
+        // Create first default address
+        var firstRequest = AddressTestDataV1.DefaultManagement.CreateDefaultShippingAddress();
+        var firstResponse = await PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", firstRequest);
+        AssertApiSuccess(firstResponse);
+        var firstAddressId = firstResponse!.Data.Id;
 
-        // Create default billing address
-        var billingRequest = AddressTestDataV1.DefaultManagement.CreateDefaultBillingAddress();
-        var billingResponse = await PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", billingRequest);
+        // Create second default address (different type, but should still unset the first)
+        var secondRequest = AddressTestDataV1.DefaultManagement.CreateDefaultBillingAddress();
+        var secondResponse = await PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", secondRequest);
 
         // Assert
-        AssertApiSuccess(billingResponse);
+        AssertApiSuccess(secondResponse);
 
-        // Verify both are still default (different types)
+        // Verify only the new address is default (single default per user, regardless of type)
         await ExecuteDbContextAsync(async context =>
         {
-            var shippingAddress = await context.Addresses.FirstOrDefaultAsync(a => a.Id == shippingAddressId);
-            shippingAddress.Should().NotBeNull();
-            shippingAddress!.IsDefault.Should().BeTrue();
-            shippingAddress.AddressType.Should().Be(AddressType.Shipping);
+            var firstAddress = await context.Addresses.FirstOrDefaultAsync(a => a.Id == firstAddressId);
+            firstAddress.Should().NotBeNull();
+            firstAddress!.IsDefault.Should().BeFalse();
 
-            var billingAddress = await context.Addresses.FirstOrDefaultAsync(a => a.Id == billingResponse!.Data.Id);
-            billingAddress.Should().NotBeNull();
-            billingAddress!.IsDefault.Should().BeTrue();
-            billingAddress.AddressType.Should().Be(AddressType.Billing);
+            var secondAddress = await context.Addresses.FirstOrDefaultAsync(a => a.Id == secondResponse!.Data.Id);
+            secondAddress.Should().NotBeNull();
+            secondAddress!.IsDefault.Should().BeTrue();
         });
     }
 
