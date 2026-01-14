@@ -145,7 +145,7 @@ public class Address : AggregateRoot
         IsDefault = isDefault;
 
         if (isDefault)
-            AddDomainEvent(new DefaultAddressChangedEvent(Id, UserId, AddressType));
+            AddDomainEvent(new DefaultAddressChangedEvent(Id, UserId));
 
         AddDomainEvent(new AddressUpdatedEvent(Id));
         return Result.Success();
