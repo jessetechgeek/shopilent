@@ -81,15 +81,11 @@ internal sealed class SetAddressDefaultCommandHandlerV1 : ICommandHandler<SetAdd
                 return Result.Success(currentDefaultDto);
             }
 
-            // Get all addresses of the same type for this user to unset any existing defaults
+            // Get all addresses for this user to unset any existing defaults
             var userAddresses = await _addressWriteRepository.GetByUserIdAsync(userId, cancellationToken);
-            var addressesOfSameType = userAddresses
-                .Where(a => a.AddressType == address.AddressType ||
-                            address.AddressType == Domain.Shipping.Enums.AddressType.Both)
-                .ToList();
 
-            // Unset any existing default addresses of the same type
-            foreach (var existingAddress in addressesOfSameType.Where(a => a.IsDefault && a.Id != address.Id))
+            // Unset ALL existing default addresses (not just same type)
+            foreach (var existingAddress in userAddresses.Where(a => a.IsDefault && a.Id != address.Id))
             {
                 var unsetResult = existingAddress.SetDefault(false);
                 if (unsetResult.IsFailure)

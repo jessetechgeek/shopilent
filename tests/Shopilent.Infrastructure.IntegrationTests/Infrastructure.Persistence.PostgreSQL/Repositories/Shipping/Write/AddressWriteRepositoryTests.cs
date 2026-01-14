@@ -358,7 +358,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.CommitAsync();
 
         // Act
-        var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -385,7 +385,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.CommitAsync();
 
         // Act
-        var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id);
 
         // Assert
         result.Should().BeNull();
@@ -431,7 +431,7 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
         await _unitOfWork.CommitAsync();
 
         // Request default address for shipping
-        var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id);
 
         // Assert - Should return the Shipping address
         result.Should().NotBeNull();

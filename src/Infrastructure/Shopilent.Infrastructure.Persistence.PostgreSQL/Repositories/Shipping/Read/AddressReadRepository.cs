@@ -88,65 +88,30 @@ public class AddressReadRepository : AggregateReadRepositoryBase<Address, Addres
         return addressDtos.ToList();
     }
 
-    public async Task<AddressDto> GetDefaultAddressAsync(Guid userId, AddressType addressType,
+    public async Task<AddressDto> GetDefaultAddressAsync(Guid userId,
         CancellationToken cancellationToken = default)
     {
-        string sql;
-        object parameters;
+        const string sql = @"
+            SELECT
+                id AS Id,
+                user_id AS UserId,
+                address_line1 AS AddressLine1,
+                address_line2 AS AddressLine2,
+                city AS City,
+                state AS State,
+                postal_code AS PostalCode,
+                country AS Country,
+                phone AS Phone,
+                is_default AS IsDefault,
+                address_type AS AddressType,
+                created_at AS CreatedAt,
+                updated_at AS UpdatedAt
+            FROM addresses
+            WHERE user_id = @UserId
+            AND is_default = true
+            LIMIT 1";
 
-        if (addressType == AddressType.Both)
-        {
-            sql = @"
-                SELECT 
-                    id AS Id,
-                    user_id AS UserId,
-                    address_line1 AS AddressLine1,
-                    address_line2 AS AddressLine2,
-                    city AS City,
-                    state AS State,
-                    postal_code AS PostalCode,
-                    country AS Country,
-                    phone AS Phone,
-                    is_default AS IsDefault,
-                    address_type AS AddressType,
-                    created_at AS CreatedAt,
-                    updated_at AS UpdatedAt
-                FROM addresses
-                WHERE user_id = @UserId
-                AND is_default = true
-                AND (address_type = @AddressType OR address_type = 'Both')
-                ORDER BY address_type DESC
-                LIMIT 1";
-
-            parameters = new { UserId = userId, AddressType = addressType.ToString() };
-        }
-        else
-        {
-            sql = @"
-                SELECT 
-                    id AS Id,
-                    user_id AS UserId,
-                    address_line1 AS AddressLine1,
-                    address_line2 AS AddressLine2,
-                    city AS City,
-                    state AS State,
-                    postal_code AS PostalCode,
-                    country AS Country,
-                    phone AS Phone,
-                    is_default AS IsDefault,
-                    address_type AS AddressType,
-                    created_at AS CreatedAt,
-                    updated_at AS UpdatedAt
-                FROM addresses
-                WHERE user_id = @UserId
-                AND is_default = true
-                AND (address_type = @AddressType OR address_type = 'Both')
-                LIMIT 1";
-
-            parameters = new { UserId = userId, AddressType = addressType.ToString() };
-        }
-
-        return await Connection.QueryFirstOrDefaultAsync<AddressDto>(sql, parameters);
+        return await Connection.QueryFirstOrDefaultAsync<AddressDto>(sql, new { UserId = userId });
     }
 
     public async Task<IReadOnlyList<AddressDto>> GetByAddressTypeAsync(Guid userId, AddressType addressType,
