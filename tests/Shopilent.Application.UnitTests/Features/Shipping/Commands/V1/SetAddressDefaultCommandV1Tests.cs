@@ -265,7 +265,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
     }
 
     [Fact]
-    public async Task SetAddressDefault_WithShippingAddress_UnsetsOtherShippingDefaults()
+    public async Task SetAddressDefault_WithShippingAddress_UnsetsAllOtherDefaults()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -280,7 +280,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
 
         var address = CreateTestAddress(addressId, userId, AddressType.Shipping, false);
         var otherShippingAddress = CreateTestAddress(otherShippingAddressId, userId, AddressType.Shipping, true); // Currently default shipping
-        var billingAddress = CreateTestAddress(billingAddressId, userId, AddressType.Billing, true); // Should remain default billing
+        var billingAddress = CreateTestAddress(billingAddressId, userId, AddressType.Billing, true); // Should also be unset (changed behavior)
         var addresses = new List<Address> { address, otherShippingAddress, billingAddress };
 
         var addressDto = CreateTestAddressDto(addressId, userId, AddressType.Shipping, true);
@@ -319,10 +319,10 @@ public class SetAddressDefaultCommandV1Tests : TestBase
         result.Value.IsDefault.Should().BeTrue();
         result.Value.AddressType.Should().Be(AddressType.Shipping);
 
-        // Verify update was called twice: once to unset old default, once to set new default
+        // Verify update was called three times: unset shipping default, unset billing default, set new default
         Fixture.MockAddressWriteRepository.Verify(
             repo => repo.UpdateAsync(It.IsAny<Address>(), CancellationToken),
-            Times.Exactly(2));
+            Times.Exactly(3));
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(
@@ -331,7 +331,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
     }
 
     [Fact]
-    public async Task SetAddressDefault_WithBillingAddress_UnsetsOtherBillingDefaults()
+    public async Task SetAddressDefault_WithBillingAddress_UnsetsAllOtherDefaults()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -346,7 +346,7 @@ public class SetAddressDefaultCommandV1Tests : TestBase
 
         var address = CreateTestAddress(addressId, userId, AddressType.Billing, false);
         var otherBillingAddress = CreateTestAddress(otherBillingAddressId, userId, AddressType.Billing, true); // Currently default billing
-        var shippingAddress = CreateTestAddress(shippingAddressId, userId, AddressType.Shipping, true); // Should remain default shipping
+        var shippingAddress = CreateTestAddress(shippingAddressId, userId, AddressType.Shipping, true); // Should also be unset (changed behavior)
         var addresses = new List<Address> { address, otherBillingAddress, shippingAddress };
 
         var addressDto = CreateTestAddressDto(addressId, userId, AddressType.Billing, true);
@@ -385,10 +385,10 @@ public class SetAddressDefaultCommandV1Tests : TestBase
         result.Value.IsDefault.Should().BeTrue();
         result.Value.AddressType.Should().Be(AddressType.Billing);
 
-        // Verify update was called twice: once to unset old default, once to set new default
+        // Verify update was called three times: unset billing default, unset shipping default, set new default
         Fixture.MockAddressWriteRepository.Verify(
             repo => repo.UpdateAsync(It.IsAny<Address>(), CancellationToken),
-            Times.Exactly(2));
+            Times.Exactly(3));
 
         // Verify save was called
         Fixture.MockUnitOfWork.Verify(

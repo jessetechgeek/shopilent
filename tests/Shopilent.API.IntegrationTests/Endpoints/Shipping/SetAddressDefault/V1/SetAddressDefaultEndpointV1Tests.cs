@@ -134,7 +134,7 @@ public class SetAddressDefaultEndpointV1Tests : ApiIntegrationTestBase
     }
 
     [Fact]
-    public async Task SetAddressDefault_WithShippingAddress_ShouldNotAffectBillingAddressDefault()
+    public async Task SetAddressDefault_WithDifferentAddressType_ShouldUnsetPreviousDefault()
     {
         // Arrange
         var accessToken = await AuthenticateAsCustomerAsync();
@@ -158,19 +158,17 @@ public class SetAddressDefaultEndpointV1Tests : ApiIntegrationTestBase
         // Assert
         AssertApiSuccess(response);
 
-        // Verify billing address is still default
+        // Verify billing address is no longer default (single default per user, regardless of type)
         await ExecuteDbContextAsync(async context =>
         {
             var billing = await context.Addresses.FirstOrDefaultAsync(a => a.Id == billingAddressId);
             var shipping = await context.Addresses.FirstOrDefaultAsync(a => a.Id == shippingAddressId);
 
             billing.Should().NotBeNull();
-            billing!.IsDefault.Should().BeTrue();
-            billing.AddressType.Should().Be(AddressType.Billing);
+            billing!.IsDefault.Should().BeFalse();
 
             shipping.Should().NotBeNull();
             shipping!.IsDefault.Should().BeTrue();
-            shipping.AddressType.Should().Be(AddressType.Shipping);
         });
     }
 
@@ -432,7 +430,7 @@ public class SetAddressDefaultEndpointV1Tests : ApiIntegrationTestBase
     }
 
     [Fact]
-    public async Task SetAddressDefault_WithMixedAddressTypes_ShouldMaintainSeparateDefaults()
+    public async Task SetAddressDefault_WithMixedAddressTypes_ShouldHaveSingleDefault()
     {
         // Arrange
         var accessToken = await AuthenticateAsCustomerAsync();
@@ -456,19 +454,17 @@ public class SetAddressDefaultEndpointV1Tests : ApiIntegrationTestBase
         // Assert
         AssertApiSuccess(response);
 
-        // Verify both types have their own defaults
+        // Verify only the new address is default (single default per user)
         await ExecuteDbContextAsync(async context =>
         {
             var shipping = await context.Addresses.FirstOrDefaultAsync(a => a.Id == shippingAddressId);
             var billing = await context.Addresses.FirstOrDefaultAsync(a => a.Id == billingAddressId);
 
             shipping.Should().NotBeNull();
-            shipping!.IsDefault.Should().BeTrue();
-            shipping.AddressType.Should().Be(AddressType.Shipping);
+            shipping!.IsDefault.Should().BeFalse();
 
             billing.Should().NotBeNull();
             billing!.IsDefault.Should().BeTrue();
-            billing.AddressType.Should().Be(AddressType.Billing);
         });
     }
 
@@ -483,28 +479,20 @@ public class SetAddressDefaultEndpointV1Tests : ApiIntegrationTestBase
         var accessToken = await AuthenticateAsCustomerAsync();
         SetAuthenticationHeader(accessToken);
 
-        // Create addresses of different types to avoid conflicts
-        var shippingRequest = AddressTestDataV1.Creation.CreateShippingAddressRequest(isDefault: false);
-        var shippingResponse = await PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", shippingRequest);
-        AssertApiSuccess(shippingResponse);
-        var shippingId = shippingResponse!.Data.Id;
-
-        var billingRequest = AddressTestDataV1.Creation.CreateBillingAddressRequest(isDefault: false);
-        var billingResponse = await PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", billingRequest);
-        AssertApiSuccess(billingResponse);
-        var billingId = billingResponse!.Data.Id;
-
-        var bothRequest = AddressTestDataV1.Creation.CreateBothAddressRequest(isDefault: false);
-        var bothResponse = await PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", bothRequest);
-        AssertApiSuccess(bothResponse);
-        var bothId = bothResponse!.Data.Id;
-
-        var addressIds = new List<Guid> { shippingId, billingId, bothId };
+        // Create multiple addresses
+        var addressIds = new List<Guid>();
+        for (int i = 0; i < 3; i++)
+        {
+            var createRequest = AddressTestDataV1.Creation.CreateValidRequest(isDefault: false);
+            var createResponse = await PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", createRequest);
+            AssertApiSuccess(createResponse);
+            addressIds.Add(createResponse!.Data.Id);
+        }
 
         // Process outbox messages to ensure initial state is clean
         await ProcessOutboxMessagesAsync();
 
-        // Act - Set addresses of different types as default concurrently
+        // Act - Set addresses as default concurrently (they will compete for the single default slot)
         var tasks = addressIds
             .Select(id => PutAsync($"v1/addresses/{id}/default", new { }))
             .ToList();
@@ -514,10 +502,11 @@ public class SetAddressDefaultEndpointV1Tests : ApiIntegrationTestBase
         // Process outbox messages after concurrent operations
         await ProcessOutboxMessagesAsync();
 
-        // Assert - All requests should succeed since they're different types
-        responses.Should().AllSatisfy(r => r.IsSuccessStatusCode.Should().BeTrue());
+        // Assert - At least one request should succeed, others may fail due to concurrency
+        var successCount = responses.Count(r => r.IsSuccessStatusCode);
+        successCount.Should().BeGreaterOrEqualTo(1, "at least one request should succeed");
 
-        // Verify addresses were set as default
+        // Verify exactly one address is default (single default per user)
         await ExecuteDbContextAsync(async context =>
         {
             var addresses = await context.Addresses
@@ -525,8 +514,7 @@ public class SetAddressDefaultEndpointV1Tests : ApiIntegrationTestBase
                 .ToListAsync();
 
             addresses.Should().HaveCount(3);
-            // At least some addresses should be default (exact count depends on Both type behavior)
-            addresses.Should().Contain(a => a.IsDefault);
+            addresses.Count(a => a.IsDefault).Should().Be(1, "exactly one address should be default");
         });
     }
 

@@ -212,7 +212,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
         await _unitOfWork.CommitAsync();
 
         // Act
-        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -240,7 +240,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
         await _unitOfWork.CommitAsync();
 
         // Act
-        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Billing);
+        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -250,7 +250,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task GetDefaultAddressAsync_HasDefaultBothTypeAddress_ShouldReturnForAnyType()
+    public async Task GetDefaultAddressAsync_ReturnsOnlyOneDefault_RegardlessOfType()
     {
         // Arrange
         await ResetDatabaseAsync();
@@ -267,20 +267,13 @@ public class AddressReadRepositoryTests : IntegrationTestBase
         await _addressWriteRepository.AddAsync(defaultBothAddress);
         await _unitOfWork.CommitAsync();
 
-        // Act - Should return the "Both" address for shipping requests
-        var shippingResult = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
-
-        // Act - Should return the "Both" address for billing requests
-        var billingResult = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Billing);
+        // Act - Should return the default address regardless of its type
+        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id);
 
         // Assert
-        shippingResult.Should().NotBeNull();
-        shippingResult!.Id.Should().Be(defaultBothAddress.Id);
-        shippingResult.AddressType.Should().Be(AddressType.Both);
-
-        billingResult.Should().NotBeNull();
-        billingResult!.Id.Should().Be(defaultBothAddress.Id);
-        billingResult.AddressType.Should().Be(AddressType.Both);
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(defaultBothAddress.Id);
+        result.AddressType.Should().Be(AddressType.Both);
     }
 
     [Fact]
@@ -301,7 +294,7 @@ public class AddressReadRepositoryTests : IntegrationTestBase
         await _unitOfWork.CommitAsync();
 
         // Act
-        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id);
 
         // Assert
         result.Should().BeNull();
@@ -315,46 +308,44 @@ public class AddressReadRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
 
-        // Create first default "Both" address
-        var defaultBothAddress = new AddressBuilder()
+        // Create first "Both" address (not default)
+        var bothAddress = new AddressBuilder()
             .WithUser(user)
             .WithUniqueData()
             .AsBoth()
-            .IsDefault()
             .Build();
 
-        // Create second default "Shipping" address
-        var defaultShippingAddress = new AddressBuilder()
+        // Create second "Shipping" address (will be set as default)
+        var shippingAddress = new AddressBuilder()
             .WithUser(user)
             .WithUniqueData()
             .AsShipping()
-            .IsDefault()
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _addressWriteRepository.AddAsync(defaultBothAddress);
-        await _addressWriteRepository.AddAsync(defaultShippingAddress);
+        await _addressWriteRepository.AddAsync(bothAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.CommitAsync();
 
-        // Act - Manually unset the previous default (this would be done in application layer)
-        var bothAddress = await _addressWriteRepository.GetByIdAsync(defaultBothAddress.Id);
-        bothAddress!.SetDefault(false);
-        await _addressWriteRepository.UpdateAsync(bothAddress);
+        // Act - Set shipping address as default (only one default allowed per user)
+        var addressToSetDefault = await _addressWriteRepository.GetByIdAsync(shippingAddress.Id);
+        addressToSetDefault!.SetDefault(true);
+        await _addressWriteRepository.UpdateAsync(addressToSetDefault);
         await _unitOfWork.CommitAsync();
 
-        // Request default address for shipping
-        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id, AddressType.Shipping);
+        // Request default address (no type parameter needed)
+        var result = await _addressReadRepository.GetDefaultAddressAsync(user.Id);
 
-        // Assert - Should return the Shipping address
+        // Assert - Should return the Shipping address (the only default)
         result.Should().NotBeNull();
         result!.AddressType.Should().Be(AddressType.Shipping);
-        result.Id.Should().Be(defaultShippingAddress.Id);
+        result.Id.Should().Be(shippingAddress.Id);
 
         // Verify only one default address exists
         var allAddresses = await _addressReadRepository.GetByUserIdAsync(user.Id);
         allAddresses.Count(a => a.IsDefault).Should().Be(1);
-        allAddresses.First(a => a.Id == defaultBothAddress.Id).IsDefault.Should().BeFalse();
-        allAddresses.First(a => a.Id == defaultShippingAddress.Id).IsDefault.Should().BeTrue();
+        allAddresses.First(a => a.Id == bothAddress.Id).IsDefault.Should().BeFalse();
+        allAddresses.First(a => a.Id == shippingAddress.Id).IsDefault.Should().BeTrue();
     }
 
     [Fact]

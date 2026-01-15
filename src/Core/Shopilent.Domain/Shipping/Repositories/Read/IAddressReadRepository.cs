@@ -8,8 +8,7 @@ public interface IAddressReadRepository : IAggregateReadRepository<AddressDto>
 {
     Task<IReadOnlyList<AddressDto>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
-    Task<AddressDto> GetDefaultAddressAsync(Guid userId, AddressType addressType,
-        CancellationToken cancellationToken = default);
+    Task<AddressDto> GetDefaultAddressAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<AddressDto>> GetByAddressTypeAsync(Guid userId, AddressType addressType,
         CancellationToken cancellationToken = default);

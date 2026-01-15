@@ -114,6 +114,12 @@ public class AddressConfiguration : IEntityTypeConfiguration<Address>
         builder.HasIndex(a => a.UserId);
         builder.HasIndex(a => new { a.UserId, a.IsDefault, a.AddressType });
 
+        // Unique partial index to enforce "only one default address per user" constraint
+        // This prevents race conditions by making the database enforce the business rule
+        builder.HasIndex(a => a.UserId)
+            .IsUnique()
+            .HasFilter("\"is_default\" = true");
+
         // Optimistic Concurrency
         builder.Property(a => a.Version)
             .HasColumnName("version")

@@ -31,25 +31,11 @@ public class AddressWriteRepository : AggregateWriteRepositoryBase<Address>, IAd
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Address> GetDefaultAddressAsync(Guid userId, AddressType addressType,
+    public async Task<Address> GetDefaultAddressAsync(Guid userId,
         CancellationToken cancellationToken = default)
     {
-        if (addressType == AddressType.Both)
-        {
-            return await DbContext.Addresses
-                .Where(a => a.UserId == userId &&
-                            a.IsDefault &&
-                            (a.AddressType == addressType || a.AddressType == AddressType.Both))
-                .OrderByDescending(a => a.AddressType) // Prefer 'Both' type
-                .FirstOrDefaultAsync(cancellationToken);
-        }
-        else
-        {
-            return await DbContext.Addresses
-                .Where(a => a.UserId == userId &&
-                            a.IsDefault &&
-                            (a.AddressType == addressType || a.AddressType == AddressType.Both))
-                .FirstOrDefaultAsync(cancellationToken);
-        }
+        return await DbContext.Addresses
+            .Where(a => a.UserId == userId && a.IsDefault)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }

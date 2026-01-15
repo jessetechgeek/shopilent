@@ -84,12 +84,11 @@ internal sealed class CreateAddressCommandHandlerV1 : ICommandHandler<CreateAddr
                 phoneNumber = phoneResult.Value;
             }
 
-            // If this is set as default, unset other default addresses of the same type
+            // If this is set as default, unset all other default addresses
             if (request.IsDefault)
             {
                 var existingAddresses = await _addressWriteRepository.GetByUserIdAsync(userId, cancellationToken);
-                foreach (var existingAddress in existingAddresses.Where(a =>
-                             a.AddressType == request.AddressType && a.IsDefault))
+                foreach (var existingAddress in existingAddresses.Where(a => a.IsDefault))
                 {
                     var unsetResult = existingAddress.SetDefault(false);
                     if (unsetResult.IsFailure)

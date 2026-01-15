@@ -48,8 +48,8 @@ internal sealed class AddressCreatedEventHandler : INotificationHandler<DomainEv
 
             if (address != null && address.IsDefault)
             {
-                // If it's a default address, clear specific default address caches
-                await _cacheService.RemoveByPatternAsync($"default-address-{address.AddressType}-{domainEvent.UserId}",
+                // If it's a default address, clear all default address caches for this user
+                await _cacheService.RemoveByPatternAsync($"default-address-*-{domainEvent.UserId}",
                     cancellationToken);
             }
         }
