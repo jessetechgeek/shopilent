@@ -399,50 +399,48 @@ public class AddressWriteRepositoryTests : IntegrationTestBase
 
         var user = new UserBuilder().Build();
 
-        // Create first default "Both" address
-        var defaultBothAddress = new AddressBuilder()
+        // Create first "Both" address (not default)
+        var bothAddress = new AddressBuilder()
             .WithUser(user)
             .WithUniqueData()
             .AsBoth()
-            .IsDefault()
             .Build();
 
-        // Create second default "Shipping" address
-        var defaultShippingAddress = new AddressBuilder()
+        // Create second "Shipping" address (not default yet)
+        var shippingAddress = new AddressBuilder()
             .WithUser(user)
             .WithUniqueData()
             .AsShipping()
-            .IsDefault()
             .Build();
 
         await _userWriteRepository.AddAsync(user);
-        await _addressWriteRepository.AddAsync(defaultBothAddress);
-        await _addressWriteRepository.AddAsync(defaultShippingAddress);
+        await _addressWriteRepository.AddAsync(bothAddress);
+        await _addressWriteRepository.AddAsync(shippingAddress);
         await _unitOfWork.CommitAsync();
 
         // Detach entities to simulate real-world scenario
-        DbContext.Entry(defaultBothAddress).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
-        DbContext.Entry(defaultShippingAddress).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+        DbContext.Entry(bothAddress).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+        DbContext.Entry(shippingAddress).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
 
-        // Act - Manually unset the previous default (this would be done in application layer)
-        var bothAddress = await _addressWriteRepository.GetByIdAsync(defaultBothAddress.Id);
-        bothAddress!.SetDefault(false);
-        await _addressWriteRepository.UpdateAsync(bothAddress);
+        // Act - Set shipping address as default (only one default allowed per user)
+        var addressToSetDefault = await _addressWriteRepository.GetByIdAsync(shippingAddress.Id);
+        addressToSetDefault!.SetDefault(true);
+        await _addressWriteRepository.UpdateAsync(addressToSetDefault);
         await _unitOfWork.CommitAsync();
 
-        // Request default address for shipping
+        // Request default address
         var result = await _addressWriteRepository.GetDefaultAddressAsync(user.Id);
 
         // Assert - Should return the Shipping address
         result.Should().NotBeNull();
         result!.AddressType.Should().Be(AddressType.Shipping);
-        result.Id.Should().Be(defaultShippingAddress.Id);
+        result.Id.Should().Be(shippingAddress.Id);
 
         // Verify only one default address exists
         var allAddresses = await _addressWriteRepository.GetByUserIdAsync(user.Id);
         allAddresses.Count(a => a.IsDefault).Should().Be(1);
-        allAddresses.First(a => a.Id == defaultBothAddress.Id).IsDefault.Should().BeFalse();
-        allAddresses.First(a => a.Id == defaultShippingAddress.Id).IsDefault.Should().BeTrue();
+        allAddresses.First(a => a.Id == bothAddress.Id).IsDefault.Should().BeFalse();
+        allAddresses.First(a => a.Id == shippingAddress.Id).IsDefault.Should().BeTrue();
     }
 
     [Fact]

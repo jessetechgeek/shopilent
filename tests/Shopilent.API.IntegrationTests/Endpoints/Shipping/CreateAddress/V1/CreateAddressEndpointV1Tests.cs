@@ -969,7 +969,8 @@ public class CreateAddressEndpointV1Tests : ApiIntegrationTestBase
         SetAuthenticationHeader(accessToken);
         var tasks = Enumerable.Range(0, 5)
             .Select(i => AddressTestDataV1.Creation.CreateValidRequest(
-                addressLine1: $"Address {i}, Main Street"))
+                addressLine1: $"Address {i}, Main Street",
+                isDefault: false))
             .Select(request => PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", request))
             .ToList();
 

@@ -541,9 +541,11 @@ public class DeleteAddressEndpointV1Tests : ApiIntegrationTestBase
         var accessToken = await AuthenticateAsCustomerAsync();
         SetAuthenticationHeader(accessToken);
 
-        // Create multiple addresses first
+        // Create multiple addresses first (not default to avoid unique constraint violations)
         var createTasks = Enumerable.Range(0, 5)
-            .Select(i => AddressTestDataV1.Creation.CreateValidRequest(addressLine1: $"Concurrent Address {i}"))
+            .Select(i => AddressTestDataV1.Creation.CreateValidRequest(
+                addressLine1: $"Concurrent Address {i}",
+                isDefault: false))
             .Select(request => PostApiResponseAsync<object, CreateAddressResponseV1>("v1/addresses", request))
             .ToList();
 
