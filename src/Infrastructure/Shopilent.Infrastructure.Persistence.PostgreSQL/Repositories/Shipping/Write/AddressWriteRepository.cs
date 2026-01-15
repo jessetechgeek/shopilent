@@ -25,12 +25,9 @@ public class AddressWriteRepository : AggregateWriteRepositoryBase<Address>, IAd
         CancellationToken cancellationToken = default)
     {
         return await DbContext.Addresses
-            .FromSqlRaw(@"
-                SELECT a.*
-                FROM addresses a
-                WHERE a.user_id = {0}
-                ORDER BY a.is_default DESC, a.created_at DESC
-                FOR UPDATE", userId)
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.IsDefault)
+            .ThenByDescending(a => a.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
