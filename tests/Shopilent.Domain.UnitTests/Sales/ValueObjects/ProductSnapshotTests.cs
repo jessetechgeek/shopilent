@@ -408,4 +408,155 @@ public class ProductSnapshotTests
         var snapshot = result.Value;
         snapshot.VariantAttributes.Should().BeNull();
     }
+
+    [Fact]
+    public void Create_WithImageKeys_ShouldCreateSnapshotWithImages()
+    {
+        // Arrange
+        var name = "Test Product";
+        var imageKey = "products/test-image.jpg";
+        var thumbnailKey = "products/thumbnails/test-image-thumb.jpg";
+
+        // Act
+        var result = ProductSnapshot.Create(name, imageKey: imageKey, thumbnailKey: thumbnailKey);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var snapshot = result.Value;
+        snapshot.Name.Should().Be(name);
+        snapshot.ImageKey.Should().Be(imageKey);
+        snapshot.ThumbnailKey.Should().Be(thumbnailKey);
+    }
+
+    [Fact]
+    public void Create_WithoutImageKeys_ShouldCreateSnapshotWithNullImages()
+    {
+        // Arrange
+        var name = "Test Product";
+
+        // Act
+        var result = ProductSnapshot.Create(name);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var snapshot = result.Value;
+        snapshot.ImageKey.Should().BeNull();
+        snapshot.ThumbnailKey.Should().BeNull();
+    }
+
+    [Fact]
+    public void ToDictionary_WithImageKeys_ShouldIncludeImageKeysInDictionary()
+    {
+        // Arrange
+        var name = "Test Product";
+        var imageKey = "products/test-image.jpg";
+        var thumbnailKey = "products/thumbnails/test-image-thumb.jpg";
+        var snapshot = ProductSnapshot.Create(name, imageKey: imageKey, thumbnailKey: thumbnailKey).Value;
+
+        // Act
+        var dict = snapshot.ToDictionary();
+
+        // Assert
+        dict.Should().ContainKey("name");
+        dict["name"].Should().Be(name);
+        dict.Should().ContainKey("image_key");
+        dict["image_key"].Should().Be(imageKey);
+        dict.Should().ContainKey("thumbnail_key");
+        dict["thumbnail_key"].Should().Be(thumbnailKey);
+    }
+
+    [Fact]
+    public void ToDictionary_WithoutImageKeys_ShouldNotIncludeImageKeysInDictionary()
+    {
+        // Arrange
+        var name = "Test Product";
+        var snapshot = ProductSnapshot.Create(name).Value;
+
+        // Act
+        var dict = snapshot.ToDictionary();
+
+        // Assert
+        dict.Should().ContainKey("name");
+        dict.Should().NotContainKey("image_key");
+        dict.Should().NotContainKey("thumbnail_key");
+    }
+
+    [Fact]
+    public void FromDictionary_WithImageKeys_ShouldCreateSnapshotWithImages()
+    {
+        // Arrange
+        var dict = new Dictionary<string, object>
+        {
+            { "name", "Test Product" },
+            { "image_key", "products/test-image.jpg" },
+            { "thumbnail_key", "products/thumbnails/test-image-thumb.jpg" }
+        };
+
+        // Act
+        var result = ProductSnapshot.FromDictionary(dict);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var snapshot = result.Value;
+        snapshot.Name.Should().Be("Test Product");
+        snapshot.ImageKey.Should().Be("products/test-image.jpg");
+        snapshot.ThumbnailKey.Should().Be("products/thumbnails/test-image-thumb.jpg");
+    }
+
+    [Fact]
+    public void FromDictionary_WithAllFieldsIncludingImages_ShouldCreateCompleteSnapshot()
+    {
+        // Arrange
+        var dict = new Dictionary<string, object>
+        {
+            { "name", "Test Product" },
+            { "sku", "PROD-001" },
+            { "slug", "test-product" },
+            { "variant_sku", "VAR-001" },
+            { "variant_attributes", new Dictionary<string, object> { { "Color", "Red" } } },
+            { "image_key", "products/test-image.jpg" },
+            { "thumbnail_key", "products/thumbnails/test-image-thumb.jpg" }
+        };
+
+        // Act
+        var result = ProductSnapshot.FromDictionary(dict);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var snapshot = result.Value;
+        snapshot.Name.Should().Be("Test Product");
+        snapshot.Sku.Should().Be("PROD-001");
+        snapshot.Slug.Should().Be("test-product");
+        snapshot.VariantSku.Should().Be("VAR-001");
+        snapshot.VariantAttributes.Should().NotBeNull();
+        snapshot.ImageKey.Should().Be("products/test-image.jpg");
+        snapshot.ThumbnailKey.Should().Be("products/thumbnails/test-image-thumb.jpg");
+    }
+
+    [Fact]
+    public void FromDictionary_ThenToDictionary_WithImages_ShouldRoundTripSuccessfully()
+    {
+        // Arrange
+        var originalDict = new Dictionary<string, object>
+        {
+            { "name", "Test Product" },
+            { "sku", "PROD-001" },
+            { "image_key", "products/test-image.jpg" },
+            { "thumbnail_key", "products/thumbnails/test-image-thumb.jpg" }
+        };
+
+        // Act
+        var snapshot = ProductSnapshot.FromDictionary(originalDict).Value;
+        var resultDict = snapshot.ToDictionary();
+
+        // Assert
+        resultDict.Should().ContainKey("name");
+        resultDict["name"].Should().Be(originalDict["name"]);
+        resultDict.Should().ContainKey("sku");
+        resultDict["sku"].Should().Be(originalDict["sku"]);
+        resultDict.Should().ContainKey("image_key");
+        resultDict["image_key"].Should().Be(originalDict["image_key"]);
+        resultDict.Should().ContainKey("thumbnail_key");
+        resultDict["thumbnail_key"].Should().Be(originalDict["thumbnail_key"]);
+    }
 }

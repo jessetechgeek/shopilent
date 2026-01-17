@@ -245,13 +245,31 @@ internal sealed class
                         );
                 }
 
+                // Get default image (prefer variant image, fallback to product image)
+                string imageKey = null;
+                string thumbnailKey = null;
+
+                var defaultImage = variant?.Images.FirstOrDefault(i => i.IsDefault) ?? variant?.Images.FirstOrDefault();
+                if (defaultImage == null)
+                {
+                    defaultImage = product.Images.FirstOrDefault(i => i.IsDefault) ?? product.Images.FirstOrDefault();
+                }
+
+                if (defaultImage != null)
+                {
+                    imageKey = defaultImage.ImageKey;
+                    thumbnailKey = defaultImage.ThumbnailKey;
+                }
+
                 // Create product snapshot
                 var snapshotResult = ProductSnapshot.Create(
                     product.Name,
                     product.Sku,
                     product.Slug?.Value,
                     variant?.Sku,
-                    variantAttributesDict
+                    variantAttributesDict,
+                    imageKey,
+                    thumbnailKey
                 );
 
                 if (snapshotResult.IsFailure)

@@ -10,6 +10,7 @@ public class OrderItemDto
     public decimal UnitPrice { get; set; }
     public decimal TotalPrice { get; set; }
     public string Currency { get; set; }
+    public string ImageUrl { get; set; }
     public Dictionary<string, object> ProductData { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
