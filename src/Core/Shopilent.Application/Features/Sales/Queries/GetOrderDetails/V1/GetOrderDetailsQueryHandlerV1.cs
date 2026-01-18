@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Shopilent.Application.Abstractions.Messaging;
+using Shopilent.Application.Abstractions.S3Storage;
 using Shopilent.Domain.Common.Errors;
 using Shopilent.Domain.Common.Results;
 using Shopilent.Domain.Sales.DTOs;
@@ -12,13 +13,16 @@ internal sealed class GetOrderDetailsQueryHandlerV1 : IQueryHandler<GetOrderDeta
 {
     private readonly IOrderReadRepository _orderReadRepository;
     private readonly ILogger<GetOrderDetailsQueryHandlerV1> _logger;
+    private readonly IS3StorageService _s3StorageService;
 
     public GetOrderDetailsQueryHandlerV1(
         IOrderReadRepository orderReadRepository,
-        ILogger<GetOrderDetailsQueryHandlerV1> logger)
+        ILogger<GetOrderDetailsQueryHandlerV1> logger,
+        IS3StorageService s3StorageService)
     {
         _orderReadRepository = orderReadRepository;
         _logger = logger;
+        _s3StorageService = s3StorageService;
     }
 
     public async Task<Result<OrderDetailDto>> Handle(GetOrderDetailsQueryV1 request,
@@ -49,6 +53,9 @@ internal sealed class GetOrderDetailsQueryHandlerV1 : IQueryHandler<GetOrderDeta
                     Error.Forbidden("Order.AccessDenied", "You are not authorized to view this order"));
             }
 
+            // Transform image keys to presigned URLs for order items
+            await TransformOrderItemImagesAsync(orderDetails, cancellationToken);
+
             _logger.LogInformation("Successfully retrieved order details for OrderId: {OrderId}", request.OrderId);
             return Result.Success(orderDetails);
         }
@@ -75,5 +82,31 @@ internal sealed class GetOrderDetailsQueryHandlerV1 : IQueryHandler<GetOrderDeta
 
         // Regular users (customers) can only view their own orders
         return order.UserId == currentUserId;
+    }
+
+    private async Task TransformOrderItemImagesAsync(OrderDetailDto order, CancellationToken cancellationToken)
+    {
+        foreach (var item in order.Items)
+        {
+            // Extract thumbnail_key from productData
+            if (item.ProductData != null && item.ProductData.ContainsKey("thumbnail_key"))
+            {
+                var thumbnailKey = item.ProductData["thumbnail_key"]?.ToString();
+
+                if (!string.IsNullOrEmpty(thumbnailKey))
+                {
+                    var imageUrlResult = await _s3StorageService.GetPublicUrlAsync(thumbnailKey, cancellationToken);
+
+                    if (imageUrlResult.IsSuccess)
+                    {
+                        item.ImageUrl = imageUrlResult.Value;
+                    }
+                }
+
+                // Remove image keys from productData as they're now in ImageUrl
+                item.ProductData.Remove("image_key");
+                item.ProductData.Remove("thumbnail_key");
+            }
+        }
     }
 }

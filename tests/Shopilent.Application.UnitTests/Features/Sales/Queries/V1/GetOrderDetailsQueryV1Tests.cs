@@ -20,10 +20,12 @@ public class GetOrderDetailsQueryV1Tests : TestBase
 
         // Register handler dependencies
         services.AddTransient(sp => Fixture.MockOrderReadRepository.Object);
+        services.AddTransient(sp => Fixture.MockS3StorageService.Object);
         services.AddTransient(sp => Fixture.GetLogger<GetOrderDetailsQueryHandlerV1>());
 
         // Set up MediatR
-        services.AddMediatR(cfg => {
+        services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssemblyContaining<GetOrderDetailsQueryV1>();
         });
 
@@ -43,10 +45,7 @@ public class GetOrderDetailsQueryV1Tests : TestBase
 
         var query = new GetOrderDetailsQueryV1
         {
-            OrderId = orderId,
-            CurrentUserId = userId,
-            IsAdmin = false,
-            IsManager = false
+            OrderId = orderId, CurrentUserId = userId, IsAdmin = false, IsManager = false
         };
 
         var orderDetails = new OrderDetailDto
@@ -103,10 +102,7 @@ public class GetOrderDetailsQueryV1Tests : TestBase
 
         var query = new GetOrderDetailsQueryV1
         {
-            OrderId = orderId,
-            CurrentUserId = adminUserId,
-            IsAdmin = true,
-            IsManager = false
+            OrderId = orderId, CurrentUserId = adminUserId, IsAdmin = true, IsManager = false
         };
 
         var orderDetails = new OrderDetailDto
@@ -151,10 +147,7 @@ public class GetOrderDetailsQueryV1Tests : TestBase
 
         var query = new GetOrderDetailsQueryV1
         {
-            OrderId = orderId,
-            CurrentUserId = managerUserId,
-            IsAdmin = false,
-            IsManager = true
+            OrderId = orderId, CurrentUserId = managerUserId, IsAdmin = false, IsManager = true
         };
 
         var orderDetails = new OrderDetailDto
@@ -193,10 +186,7 @@ public class GetOrderDetailsQueryV1Tests : TestBase
 
         var query = new GetOrderDetailsQueryV1
         {
-            OrderId = orderId,
-            CurrentUserId = userId,
-            IsAdmin = false,
-            IsManager = false
+            OrderId = orderId, CurrentUserId = userId, IsAdmin = false, IsManager = false
         };
 
         // Mock repository calls - order not found
@@ -227,10 +217,7 @@ public class GetOrderDetailsQueryV1Tests : TestBase
 
         var query = new GetOrderDetailsQueryV1
         {
-            OrderId = orderId,
-            CurrentUserId = currentUserId,
-            IsAdmin = false,
-            IsManager = false
+            OrderId = orderId, CurrentUserId = currentUserId, IsAdmin = false, IsManager = false
         };
 
         var orderDetails = new OrderDetailDto
@@ -318,10 +305,7 @@ public class GetOrderDetailsQueryV1Tests : TestBase
 
         var query = new GetOrderDetailsQueryV1
         {
-            OrderId = orderId,
-            CurrentUserId = userId,
-            IsAdmin = false,
-            IsManager = false
+            OrderId = orderId, CurrentUserId = userId, IsAdmin = false, IsManager = false
         };
 
         // Mock repository calls to throw exception

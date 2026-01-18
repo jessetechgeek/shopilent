@@ -10,19 +10,25 @@ public class ProductSnapshot
     public string Slug { get; }
     public string VariantSku { get; }
     public Dictionary<string, object> VariantAttributes { get; }
+    public string ImageKey { get; }
+    public string ThumbnailKey { get; }
 
     private ProductSnapshot(
         string name,
         string sku,
         string slug,
         string variantSku = null,
-        Dictionary<string, object> variantAttributes = null)
+        Dictionary<string, object> variantAttributes = null,
+        string imageKey = null,
+        string thumbnailKey = null)
     {
         Name = name;
         Sku = sku;
         Slug = slug;
         VariantSku = variantSku;
         VariantAttributes = variantAttributes;
+        ImageKey = imageKey;
+        ThumbnailKey = thumbnailKey;
     }
 
     public static Result<ProductSnapshot> Create(
@@ -30,13 +36,15 @@ public class ProductSnapshot
         string sku = null,
         string slug = null,
         string variantSku = null,
-        Dictionary<string, object> variantAttributes = null)
+        Dictionary<string, object> variantAttributes = null,
+        string imageKey = null,
+        string thumbnailKey = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             return Result.Failure<ProductSnapshot>(ProductSnapshotErrors.NameRequired);
 
         // SKU is optional - allow null/empty
-        return Result.Success(new ProductSnapshot(name, sku, slug, variantSku, variantAttributes));
+        return Result.Success(new ProductSnapshot(name, sku, slug, variantSku, variantAttributes, imageKey, thumbnailKey));
     }
 
     // Convert to dictionary for storage
@@ -59,6 +67,12 @@ public class ProductSnapshot
         if (VariantAttributes != null && VariantAttributes.Any())
             dict["variant_attributes"] = VariantAttributes;
 
+        if (!string.IsNullOrWhiteSpace(ImageKey))
+            dict["image_key"] = ImageKey;
+
+        if (!string.IsNullOrWhiteSpace(ThumbnailKey))
+            dict["thumbnail_key"] = ThumbnailKey;
+
         return dict;
     }
 
@@ -72,6 +86,8 @@ public class ProductSnapshot
         var sku = dict.ContainsKey("sku") ? dict["sku"]?.ToString() : null;
         var slug = dict.ContainsKey("slug") ? dict["slug"]?.ToString() : null;
         var variantSku = dict.ContainsKey("variant_sku") ? dict["variant_sku"]?.ToString() : null;
+        var imageKey = dict.ContainsKey("image_key") ? dict["image_key"]?.ToString() : null;
+        var thumbnailKey = dict.ContainsKey("thumbnail_key") ? dict["thumbnail_key"]?.ToString() : null;
 
         Dictionary<string, object> variantAttributes = null;
         if (dict.ContainsKey("variant_attributes"))
@@ -79,6 +95,6 @@ public class ProductSnapshot
             variantAttributes = dict["variant_attributes"] as Dictionary<string, object>;
         }
 
-        return Create(name, sku, slug, variantSku, variantAttributes);
+        return Create(name, sku, slug, variantSku, variantAttributes, imageKey, thumbnailKey);
     }
 }
