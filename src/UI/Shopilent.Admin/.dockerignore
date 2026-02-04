@@ -9,6 +9,9 @@ pnpm-debug.log*
 dist
 build
 
+# Vite cache
+.vite
+
 # Environment files
 .env
 .env.local
@@ -22,6 +25,11 @@ build
 *.swp
 *.swo
 *~
+
+# MSBuild/Visual Studio build artifacts
+obj
+bin
+*.esproj.user
 
 # Testing
 coverage
@@ -40,9 +48,10 @@ Thumbs.db
 README.md
 *.md
 
-# Docker files (except Dockerfile)
+# Docker files
 docker-compose*.yml
 !docker-compose.example.yml
+.dockerignore
 
 # CI/CD
 .github
