@@ -44,6 +44,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS production
 # Set working directory
 WORKDIR /app
 
+# Install curl for health check and clean up apt cache
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Create a non-root user for running the application
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
