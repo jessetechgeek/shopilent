@@ -5,7 +5,7 @@ import type {HealthCheckResponse} from '@/models/health';
 
 // Create a separate axios instance for health endpoint (not under /api prefix)
 const healthClient = axios.create({
-  baseURL: env.apiUrl.replace('/api', ''), // Remove /api prefix
+  baseURL: env.apiUrl.replace(/\/api$/, ''), // Remove /api path suffix
   headers: {
     'Content-Type': 'application/json',
   },
