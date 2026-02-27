@@ -134,6 +134,8 @@ public class ApiIntegrationTestFixture : IAsyncLifetime
                 ["Stripe:WebhookSecret"] = "whsec_test_api_integration_webhook_secret",
                 ["Stripe:ApiVersion"] = "2025-06-30",
                 ["Stripe:EnableTestMode"] = "true",
+                // Disable API rate limiting for integration tests to avoid flaky 429 responses.
+                ["RateLimiting:Enabled"] = "false",
                 // CORS configuration for API tests
                 ["Cors:AllowedOrigins:0"] = "http://localhost:3000",
                 ["Cors:AllowedOrigins:1"] = "http://localhost:5173"
