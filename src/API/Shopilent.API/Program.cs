@@ -3,6 +3,7 @@ using FastEndpoints;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
+using Shopilent.API.Common.Extensions;
 using Shopilent.API.Common.Services;
 using Shopilent.Application.Extensions;
 using Shopilent.Infrastructure.Cache.Redis.Extensions;
@@ -37,6 +38,7 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddFastEndpoints();
 builder.Services.AddAuthorization();
+builder.Services.AddApiRateLimiting(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
@@ -72,6 +74,7 @@ app.UseHttpsRedirection();
 app.MapHealthChecks("health", new HealthCheckOptions { ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse });
 
 app.UseCors();
+app.UseApiRateLimiting();
 
 app.UseAuthentication();
 app.UseAuthorization();
