@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Shopilent.API.Common.Configuration;
@@ -12,6 +13,54 @@ public sealed class IpRateLimitingMiddleware
         public long WindowStartUnix { get; set; }
         public int Count { get; set; }
         public object SyncRoot { get; } = new();
+    }
+
+    private sealed class IpNetwork
+    {
+        private readonly IPAddress _networkAddress;
+        private readonly int _prefixLength;
+        private readonly byte[] _maskBytes;
+
+        public IpNetwork(string cidr)
+        {
+            var parts = cidr.Split('/');
+            _networkAddress = IPAddress.Parse(parts[0]);
+            _prefixLength = int.Parse(parts[1]);
+            _maskBytes = BuildMask(_networkAddress.AddressFamily, _prefixLength);
+        }
+
+        public bool Contains(IPAddress address)
+        {
+            if (address.AddressFamily != _networkAddress.AddressFamily)
+                return false;
+
+            var addrBytes = address.GetAddressBytes();
+            var netBytes = _networkAddress.GetAddressBytes();
+
+            for (var i = 0; i < addrBytes.Length; i++)
+            {
+                if ((addrBytes[i] & _maskBytes[i]) != (netBytes[i] & _maskBytes[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static byte[] BuildMask(System.Net.Sockets.AddressFamily family, int prefixLength)
+        {
+            var length = family == System.Net.Sockets.AddressFamily.InterNetworkV6 ? 16 : 4;
+            var mask = new byte[length];
+            var fullBytes = prefixLength / 8;
+            var remainder = prefixLength % 8;
+
+            for (var i = 0; i < fullBytes && i < length; i++)
+                mask[i] = 0xFF;
+
+            if (fullBytes < length && remainder > 0)
+                mask[fullBytes] = (byte)(0xFF << (8 - remainder));
+
+            return mask;
+        }
     }
 
     private static readonly ConcurrentDictionary<string, WindowCounter> Counters = new();
@@ -29,6 +78,13 @@ public sealed class IpRateLimitingMiddleware
     {
         var options = _optionsMonitor.CurrentValue;
         if (!options.Enabled)
+        {
+            await _next(context);
+            return;
+        }
+
+        var remoteIp = context.Connection.RemoteIpAddress;
+        if (remoteIp is not null && IsTrustedNetwork(remoteIp, options.TrustedNetworks))
         {
             await _next(context);
             return;
@@ -139,6 +195,30 @@ public sealed class IpRateLimitingMiddleware
 
         var normalized = prefix.StartsWith('/') ? prefix : $"/{prefix}";
         return normalized.EndsWith('/') ? normalized[..^1] : normalized;
+    }
+
+    private static bool IsTrustedNetwork(IPAddress address, List<string> trustedNetworks)
+    {
+        if (trustedNetworks.Count == 0)
+            return false;
+
+        // Unwrap IPv4-mapped IPv6 addresses (e.g. ::ffff:172.18.0.2)
+        var addr = address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address;
+
+        foreach (var cidr in trustedNetworks)
+        {
+            try
+            {
+                if (new IpNetwork(cidr).Contains(addr))
+                    return true;
+            }
+            catch
+            {
+                // skip malformed CIDR
+            }
+        }
+
+        return false;
     }
 
     private static void MaybeCleanupStaleCounters(long nowUnix, int windowSeconds)
