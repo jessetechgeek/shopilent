@@ -86,8 +86,17 @@ public sealed class IpRateLimitingMiddleware
         var remoteIp = context.Connection.RemoteIpAddress;
         if (remoteIp is not null && IsTrustedNetwork(remoteIp, options.TrustedNetworks))
         {
-            await _next(context);
-            return;
+            var forwarded = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(forwarded))
+            {
+                var forwardedIp = forwarded.Split(',')[0].Trim();
+                context.Items["RateLimitIp"] = forwardedIp;
+            }
+            else
+            {
+                await _next(context);
+                return;
+            }
         }
 
         var apiPrefix = NormalizePrefix(options.ApiPrefix);
@@ -111,7 +120,9 @@ public sealed class IpRateLimitingMiddleware
 
         MaybeCleanupStaleCounters(nowUnix, windowSeconds);
 
-        var ipAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var ipAddress = context.Items.TryGetValue("RateLimitIp", out var overrideIp) && overrideIp is string s
+            ? s
+            : context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var counterKey = $"{policyName}:{ipAddress}";
         var counter = Counters.GetOrAdd(counterKey, _ => new WindowCounter
         {
