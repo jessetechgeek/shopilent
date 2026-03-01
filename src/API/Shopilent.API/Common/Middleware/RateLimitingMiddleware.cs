@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
@@ -6,7 +7,7 @@ using Shopilent.API.Common.Configuration;
 
 namespace Shopilent.API.Common.Middleware;
 
-public sealed class IpRateLimitingMiddleware
+public sealed class RateLimitingMiddleware
 {
     private sealed class WindowCounter
     {
@@ -68,7 +69,7 @@ public sealed class IpRateLimitingMiddleware
     private readonly RequestDelegate _next;
     private readonly IOptionsMonitor<RateLimitingOptions> _optionsMonitor;
 
-    public IpRateLimitingMiddleware(RequestDelegate next, IOptionsMonitor<RateLimitingOptions> optionsMonitor)
+    public RateLimitingMiddleware(RequestDelegate next, IOptionsMonitor<RateLimitingOptions> optionsMonitor)
     {
         _next = next;
         _optionsMonitor = optionsMonitor;
@@ -120,10 +121,8 @@ public sealed class IpRateLimitingMiddleware
 
         MaybeCleanupStaleCounters(nowUnix, windowSeconds);
 
-        var ipAddress = context.Items.TryGetValue("RateLimitIp", out var overrideIp) && overrideIp is string s
-            ? s
-            : context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var counterKey = $"{policyName}:{ipAddress}";
+        var subject = GetRateLimitSubject(context);
+        var counterKey = $"{policyName}:{subject}";
         var counter = Counters.GetOrAdd(counterKey, _ => new WindowCounter
         {
             WindowStartUnix = windowStartUnix,
@@ -206,6 +205,48 @@ public sealed class IpRateLimitingMiddleware
 
         var normalized = prefix.StartsWith('/') ? prefix : $"/{prefix}";
         return normalized.EndsWith('/') ? normalized[..^1] : normalized;
+    }
+
+    /// <summary>
+    /// Returns the rate limit subject for the request.
+    /// Priority: authenticated user ID > forwarded IP (from trusted internal source) > remote IP.
+    /// Using user ID for authenticated requests prevents shared-IP false positives (offices, NAT)
+    /// and ensures limits follow the user regardless of IP changes.
+    /// </summary>
+    private static string GetRateLimitSubject(HttpContext context)
+    {
+        // Prefer user ID for authenticated requests — more accurate than IP
+        var userId = TryGetUserIdFromJwt(context);
+        if (userId is not null)
+            return $"user:{userId}";
+
+        // Fall back to forwarded IP (set earlier for trusted internal sources)
+        if (context.Items.TryGetValue("RateLimitIp", out var overrideIp) && overrideIp is string ip)
+            return $"ip:{ip}";
+
+        return $"ip:{context.Connection.RemoteIpAddress?.ToString() ?? "unknown"}";
+    }
+
+    /// <summary>
+    /// Extracts the user ID from the access token cookie without full signature validation.
+    /// We only need the subject claim as a stable rate-limit key — the actual auth pipeline
+    /// validates the token fully before any protected endpoint is reached.
+    /// </summary>
+    private static string? TryGetUserIdFromJwt(HttpContext context)
+    {
+        var token = context.Request.Cookies["accessToken"];
+        if (string.IsNullOrEmpty(token))
+            return null;
+
+        try
+        {
+            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+            return jwt.Subject; // "sub" claim = user ID
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static bool IsTrustedNetwork(IPAddress address, List<string> trustedNetworks)

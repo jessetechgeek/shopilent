@@ -13,6 +13,6 @@ public static class RateLimitingExtensions
 
     public static IApplicationBuilder UseApiRateLimiting(this IApplicationBuilder app)
     {
-        return app.UseMiddleware<IpRateLimitingMiddleware>();
+        return app.UseMiddleware<RateLimitingMiddleware>();
     }
 }
