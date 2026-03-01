@@ -1,11 +1,13 @@
 using System.Collections.Concurrent;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Shopilent.API.Common.Configuration;
 
 namespace Shopilent.API.Common.Middleware;
 
-public sealed class IpRateLimitingMiddleware
+public sealed class RateLimitingMiddleware
 {
     private sealed class WindowCounter
     {
@@ -14,12 +16,60 @@ public sealed class IpRateLimitingMiddleware
         public object SyncRoot { get; } = new();
     }
 
+    private sealed class IpNetwork
+    {
+        private readonly IPAddress _networkAddress;
+        private readonly int _prefixLength;
+        private readonly byte[] _maskBytes;
+
+        public IpNetwork(string cidr)
+        {
+            var parts = cidr.Split('/');
+            _networkAddress = IPAddress.Parse(parts[0]);
+            _prefixLength = int.Parse(parts[1]);
+            _maskBytes = BuildMask(_networkAddress.AddressFamily, _prefixLength);
+        }
+
+        public bool Contains(IPAddress address)
+        {
+            if (address.AddressFamily != _networkAddress.AddressFamily)
+                return false;
+
+            var addrBytes = address.GetAddressBytes();
+            var netBytes = _networkAddress.GetAddressBytes();
+
+            for (var i = 0; i < addrBytes.Length; i++)
+            {
+                if ((addrBytes[i] & _maskBytes[i]) != (netBytes[i] & _maskBytes[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static byte[] BuildMask(System.Net.Sockets.AddressFamily family, int prefixLength)
+        {
+            var length = family == System.Net.Sockets.AddressFamily.InterNetworkV6 ? 16 : 4;
+            var mask = new byte[length];
+            var fullBytes = prefixLength / 8;
+            var remainder = prefixLength % 8;
+
+            for (var i = 0; i < fullBytes && i < length; i++)
+                mask[i] = 0xFF;
+
+            if (fullBytes < length && remainder > 0)
+                mask[fullBytes] = (byte)(0xFF << (8 - remainder));
+
+            return mask;
+        }
+    }
+
     private static readonly ConcurrentDictionary<string, WindowCounter> Counters = new();
     private static long _lastCleanupUnix;
     private readonly RequestDelegate _next;
     private readonly IOptionsMonitor<RateLimitingOptions> _optionsMonitor;
 
-    public IpRateLimitingMiddleware(RequestDelegate next, IOptionsMonitor<RateLimitingOptions> optionsMonitor)
+    public RateLimitingMiddleware(RequestDelegate next, IOptionsMonitor<RateLimitingOptions> optionsMonitor)
     {
         _next = next;
         _optionsMonitor = optionsMonitor;
@@ -32,6 +82,22 @@ public sealed class IpRateLimitingMiddleware
         {
             await _next(context);
             return;
+        }
+
+        var remoteIp = context.Connection.RemoteIpAddress;
+        if (remoteIp is not null && IsTrustedNetwork(remoteIp, options.TrustedNetworks))
+        {
+            var forwarded = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(forwarded))
+            {
+                var forwardedIp = forwarded.Split(',')[0].Trim();
+                context.Items["RateLimitIp"] = forwardedIp;
+            }
+            else
+            {
+                await _next(context);
+                return;
+            }
         }
 
         var apiPrefix = NormalizePrefix(options.ApiPrefix);
@@ -55,8 +121,8 @@ public sealed class IpRateLimitingMiddleware
 
         MaybeCleanupStaleCounters(nowUnix, windowSeconds);
 
-        var ipAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var counterKey = $"{policyName}:{ipAddress}";
+        var subject = GetRateLimitSubject(context);
+        var counterKey = $"{policyName}:{subject}";
         var counter = Counters.GetOrAdd(counterKey, _ => new WindowCounter
         {
             WindowStartUnix = windowStartUnix,
@@ -139,6 +205,72 @@ public sealed class IpRateLimitingMiddleware
 
         var normalized = prefix.StartsWith('/') ? prefix : $"/{prefix}";
         return normalized.EndsWith('/') ? normalized[..^1] : normalized;
+    }
+
+    /// <summary>
+    /// Returns the rate limit subject for the request.
+    /// Priority: authenticated user ID > forwarded IP (from trusted internal source) > remote IP.
+    /// Using user ID for authenticated requests prevents shared-IP false positives (offices, NAT)
+    /// and ensures limits follow the user regardless of IP changes.
+    /// </summary>
+    private static string GetRateLimitSubject(HttpContext context)
+    {
+        // Prefer user ID for authenticated requests — more accurate than IP
+        var userId = TryGetUserIdFromJwt(context);
+        if (userId is not null)
+            return $"user:{userId}";
+
+        // Fall back to forwarded IP (set earlier for trusted internal sources)
+        if (context.Items.TryGetValue("RateLimitIp", out var overrideIp) && overrideIp is string ip)
+            return $"ip:{ip}";
+
+        return $"ip:{context.Connection.RemoteIpAddress?.ToString() ?? "unknown"}";
+    }
+
+    /// <summary>
+    /// Extracts the user ID from the access token cookie without full signature validation.
+    /// We only need the subject claim as a stable rate-limit key — the actual auth pipeline
+    /// validates the token fully before any protected endpoint is reached.
+    /// </summary>
+    private static string? TryGetUserIdFromJwt(HttpContext context)
+    {
+        var token = context.Request.Cookies["accessToken"];
+        if (string.IsNullOrEmpty(token))
+            return null;
+
+        try
+        {
+            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+            return jwt.Subject; // "sub" claim = user ID
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static bool IsTrustedNetwork(IPAddress address, List<string> trustedNetworks)
+    {
+        if (trustedNetworks.Count == 0)
+            return false;
+
+        // Unwrap IPv4-mapped IPv6 addresses (e.g. ::ffff:172.18.0.2)
+        var addr = address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address;
+
+        foreach (var cidr in trustedNetworks)
+        {
+            try
+            {
+                if (new IpNetwork(cidr).Contains(addr))
+                    return true;
+            }
+            catch
+            {
+                // skip malformed CIDR
+            }
+        }
+
+        return false;
     }
 
     private static void MaybeCleanupStaleCounters(long nowUnix, int windowSeconds)

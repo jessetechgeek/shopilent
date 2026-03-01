@@ -2,6 +2,7 @@ using System.Text.Json;
 using FastEndpoints;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 using Shopilent.API.Common.Extensions;
 using Shopilent.API.Common.Services;
@@ -53,6 +54,20 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Configure forwarded headers for reverse proxy (Traefik, nginx, etc.)
+// This is essential for cookies, HTTPS detection, and client IP when behind a proxy
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+
+// In production behind Docker network, trust the proxy network
+// In development without proxy, this has no effect
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 if (app.Environment.IsDevelopment())
 {
